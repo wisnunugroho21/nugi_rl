@@ -108,3 +108,10 @@ class Agent:
             self.actor.eval()
             self.critic.eval()
             print('Model is evaluating...')
+
+    def get_weights(self):
+        return [param.data for name, param in self.actor.named_parameters()]
+
+    def set_weights(self, actor_w):
+        for params_cur, params_new in zip(self.actor.named_parameters(), actor_w):
+            params_cur[1].data = torch.FloatTensor(params_new).to(set_device(self.use_gpu))

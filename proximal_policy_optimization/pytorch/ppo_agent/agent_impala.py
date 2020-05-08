@@ -2,57 +2,21 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
 
+from agent import Agent
 from memory.on_policy_impala_memory import OnMemoryImpala
 from utils.pytorch_utils import set_device
 
-class AgentImpala:  
+class AgentImpala(Agent):  
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim,
                 is_training_mode = True, policy_kl_range = 0.0008, policy_params = 20, 
                 value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
                 minibatch = 4, PPO_epochs = 4, gamma = 0.99, 
-                lam = 0.95, learning_rate = 2.5e-4, folder = 'model', use_gpu = True):   
+                lam = 0.95, learning_rate = 2.5e-4, folder = 'model', use_gpu = True):
 
-        self.policy_kl_range    = policy_kl_range 
-        self.policy_params      = policy_params
-        self.value_clip         = value_clip    
-        self.entropy_coef       = entropy_coef
-        self.vf_loss_coef       = vf_loss_coef
-        self.minibatch          = minibatch       
-        self.PPO_epochs         = PPO_epochs
-        self.is_training_mode   = is_training_mode
-        self.action_dim         = action_dim 
-        self.learning_rate      = learning_rate   
-        self.folder             = folder                
-
-        self.actor              = Actor_Model(state_dim, action_dim, use_gpu)
-        self.actor_old          = Actor_Model(state_dim, action_dim, use_gpu)
-        self.actor_optimizer    = Adam(self.actor.parameters(), lr = learning_rate)
-
-        self.critic             = Critic_Model(state_dim, action_dim, use_gpu)
-        self.critic_old         = Critic_Model(state_dim, action_dim, use_gpu)
-        self.critic_optimizer   = Adam(self.critic.parameters(), lr = learning_rate)
-
-        self.memory             = OnMemoryImpala()
-        self.device             = set_device(use_gpu)
-        self.use_gpu            = use_gpu
-
-        if is_training_mode:
-            self.actor.train()
-            self.critic.train()
-            print('Model is training...')
-
-        else:
-            self.actor.eval()
-            self.critic.eval()
-            print('Model is evaluating...')
-
-    def set_params(self, params):
-        self.value_clip         = self.value_clip * params if self.value_clip is not None else self.value_clip
-        self.policy_kl_range    = self.policy_kl_range * params
-        self.policy_params      = self.policy_params * params
-
-    def act(self, state):
-        pass
+        super(AgentImpala, self).__init__(Actor_Model, Critic_Model, state_dim, action_dim, 
+                is_training_mode, policy_kl_range, policy_params, value_clip, 
+                entropy_coef, vf_loss_coef, minibatch, PPO_epochs, 
+                gamma, lam, learning_rate, folder, use_gpu) 
 
     # Get loss and Do backpropagation
     def training_ppo(self, states, actions, rewards, dones, next_states, worker_action_data): 
@@ -79,38 +43,3 @@ class AgentImpala:
         # Copy new weights into old policy:
         self.actor_old.load_state_dict(self.actor.state_dict())
         self.critic_old.load_state_dict(self.critic.state_dict())
-
-    def save_weights(self):
-        torch.save({
-            'model_state_dict': self.actor.state_dict(),
-            'optimizer_state_dict': self.actor_optimizer.state_dict()
-            }, self.folder + '/actor.tar')
-        
-        torch.save({
-            'model_state_dict': self.critic.state_dict(),
-            'optimizer_state_dict': self.critic_optimizer.state_dict()
-            }, self.folder + '/critic.tar')
-        
-    def load_weights(self):
-        actor_checkpoint = torch.load(self.folder + '/actor.tar')
-        self.actor.load_state_dict(actor_checkpoint['model_state_dict'])
-        self.actor_optimizer.load_state_dict(actor_checkpoint['optimizer_state_dict'])
-
-        critic_checkpoint = torch.load(self.folder + '/critic.tar')
-        self.critic.load_state_dict(critic_checkpoint['model_state_dict'])
-        self.critic_optimizer.load_state_dict(critic_checkpoint['optimizer_state_dict'])
-
-        if self.is_training_mode:
-            self.actor.train()
-            self.critic.train()
-
-        else:
-            self.actor.eval()
-            self.critic.eval()
-
-    def get_weights(self):
-        return [param.data for name, param in self.actor.named_parameters()]
-
-    def set_weights(self, actor_w):
-        for params_cur, params_new in zip(self.actor.named_parameters(), actor_w):
-            params_cur[1].data = torch.FloatTensor(params_new).to(set_device(self.use_gpu))
