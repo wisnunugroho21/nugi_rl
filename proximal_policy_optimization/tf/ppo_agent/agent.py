@@ -68,13 +68,13 @@ class Agent:
         self.critic_old.set_weights(self.critic.get_weights())
 
     def save_weights(self):
-        pass
+        self.actor.save_weights(self.folder + '/actor_ppo', save_format='tf')
+        self.actor_old.save_weights(self.folder + '/actor_old_ppo', save_format='tf')
+        self.critic.save_weights(self.folder + '/critic_ppo', save_format='tf')
+        self.critic_old.save_weights(self.folder + '/critic_old_ppo', save_format='tf')
         
     def load_weights(self):
-        pass
-
-    def get_weights(self):
-        pass
-
-    def set_weights(self, actor_w):
-        pass
+        self.actor.load_weights(self.folder + '/actor_ppo')
+        self.actor_old.load_weights(self.folder + '/actor_old_ppo')
+        self.critic.load_weights(self.folder + '/critic_ppo')
+        self.critic_old.load_weights(self.folder + '/critic_old_ppo')
