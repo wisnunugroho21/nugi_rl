@@ -1,1 +1,1 @@
-# nugi_rl_framework
+# Reinforcement Learning Framework
