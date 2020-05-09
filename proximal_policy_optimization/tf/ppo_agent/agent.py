@@ -49,11 +49,8 @@ class Agent:
         pass
 
     # Update the model
-    def update_ppo(self, memory = None):        
-        if memory is None:
-            memory = self.memory 
-
-        batch_size = 1 if int(len(memory) / self.minibatch) == 0 else int(len(memory) / self.minibatch)
+    def update_ppo(self):        
+        batch_size = 1 if int(len(self.memory) / self.minibatch) == 0 else int(len(self.memory) / self.minibatch)
 
         # Optimize policy for K epochs:
         for _ in range(self.PPO_epochs):       

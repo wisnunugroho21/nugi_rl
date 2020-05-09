@@ -1,6 +1,4 @@
-import torch
-from torch.utils.data import Dataset, DataLoader
-from torch.optim import Adam
+import tensorflow as tf
 
 from agent import Agent
 from memory.on_policy_impala_memory import OnMemoryImpala
@@ -23,16 +21,12 @@ class AgentImpala(Agent):
         pass
 
     # Update the model
-    def update_ppo(self, memory = None):        
-        if memory is None:
-            memory = self.memory 
-
-        batch_size = 1 if int(len(memory) / self.minibatch) == 0 else int(len(memory) / self.minibatch)
-        dataloader = DataLoader(memory, batch_size, shuffle = False)
+    def update_ppo(self):       
+        batch_size = 1 if int(len(self.memory) / self.minibatch) == 0 else int(len(self.memory) / self.minibatch)
 
         # Optimize policy for K epochs:
         for _ in range(self.PPO_epochs):       
-            for states, actions, rewards, dones, next_states, worker_action_data in dataloader: 
+            for states, actions, rewards, dones, next_states, worker_action_data in self.memory.get_all_items(to_tensor_dataset = True).batch(batch_size): 
                 self.training_ppo(states.float().to(self.device), actions.float().to(self.device), \
                     rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device), \
                     worker_action_data.float().to(self.device))
@@ -41,5 +35,5 @@ class AgentImpala(Agent):
         self.memory.clearMemory()
 
         # Copy new weights into old policy:
-        self.actor_old.load_state_dict(self.actor.state_dict())
-        self.critic_old.load_state_dict(self.critic.state_dict())
+        self.actor_old.set_weights(self.actor.get_weights())
+        self.critic_old.set_weights(self.critic.get_weights())
