@@ -3,8 +3,10 @@ from flask_socketio import SocketIO, send, emit
 from datetime import datetime
 import numpy as np
 import requests
+from mongoengine import *
 
 from memory.on_policy_impala_memory import OnMemoryImpala
+from utils.mongodb_utils import Observation, Weight
 
 ############## Hyperparameters ##############
 render      = False # If you want to display the image. Turn this off if you run this in Google Collab
@@ -15,14 +17,14 @@ action_dim  = 4 #2
 app                         = Flask(__name__)
 app.config['SECRET_KEY']    = 'vnkdjnfjknfl1232#'
 socketio                    = SocketIO(app)
-memory                      = OnMemoryImpala()
+connect()
+Observation.objects.delete()
 
 print('Agent has been initialized')
 ############################################# 
 
 @app.route('/trajectory', methods=['POST'])
 def save_trajectory():
-    global memory
     data = request.get_json()    
 
     states              = data['states']
@@ -33,9 +35,10 @@ def save_trajectory():
     worker_action_datas = data['worker_action_datas']
 
     for s, a, r, d, ns, wad in zip(states, actions, rewards, dones, next_states, worker_action_datas):            
-        memory.save_eps(s, a, r, d, ns, wad)
+        obs = Observation(states = s, actions = a, rewards = r, dones = d, next_states = ns, worker_action_datas = wad)
+        obs.save()
 
-    if len(memory) >= n_update:
+    if Observation.objects.count() >= n_update:
         socketio.emit('update_model')
 
     data = {
@@ -48,23 +51,11 @@ def save_trajectory():
 def send_trajectory():
     memory = OnMemoryImpala()
 
-    states              = []
-    actions             = []
-    rewards             = []
-    dones               = []
-    next_states         = []
-    worker_action_datas = []
-
-    for i in range(len(memory)):
-        state, action, reward, done, next_state, worker_action_data = memory.pop(0)
-
-        states.append(state)
-        actions.append(action)
-        rewards.append(reward)
-        dones.append(done)
-        next_states.append(next_state)
-        worker_action_datas.append(worker_action_data)
+    for obs in Observation.objects:
+        memory.save_eps(obs.states, obs.actions, obs.rewards, obs.dones, obs.next_states, obs.worker_action_datas)
+        obs.delete()
     
+    states, actions, rewards, dones, next_states, worker_action_datas = memory.get_all_items()
     data = {
         'states'                : states,
         'actions'               : actions,
@@ -74,6 +65,7 @@ def send_trajectory():
         'worker_action_datas'   : worker_action_datas
     }
 
+    memory.clearMemory()
     return jsonify(data)
 
 @app.route('/test')
