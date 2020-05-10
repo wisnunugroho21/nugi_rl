@@ -3,7 +3,6 @@ import tensorflow as tf
 from distribution.categorical_distribution import sample
 from ppo_loss.truly_ppo_discrete_impala import get_loss
 from ppo_agent.agent_impala import AgentImpala
-from utils.pytorch_utils import set_device, to_numpy
 
 class AgentDiscrete(AgentImpala):  
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim, 

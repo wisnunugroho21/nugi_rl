@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 from torch.utils.data import Dataset
 
-class OnMemory:
+class OnNumpyMemory:
     def __init__(self, datas = None):
         if datas is None :
             self.states         = np.array([], dtype = np.float32)

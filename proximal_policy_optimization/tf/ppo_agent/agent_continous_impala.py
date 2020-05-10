@@ -3,7 +3,6 @@ import tensorflow as tf
 from distribution.multivariate_normal_distribution import sample
 from ppo_loss.truly_ppo_continous_impala import get_loss
 from ppo_agent.agent_impala import AgentImpala
-from utils.pytorch_utils import set_device, to_numpy
 
 class AgentContinous(AgentImpala):
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim, 

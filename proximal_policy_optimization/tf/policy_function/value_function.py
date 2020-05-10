@@ -1,5 +1,4 @@
 import tensorflow as tf
-from utils.pytorch_utils import set_device
 
 def monte_carlo_discounted(reward, done, gamma = 0.99, lam = 0.95):
     returns = []        

@@ -2,7 +2,6 @@ import tensorflow as tf
 
 from agent import Agent
 from memory.on_policy_impala_memory import OnMemoryImpala
-from utils.pytorch_utils import set_device
 
 class AgentImpala(Agent):  
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim,

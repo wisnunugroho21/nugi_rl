@@ -1,5 +1,4 @@
 import tensorflow as tf
-from utils.pytorch_utils import set_device
 
 def generalized_advantage_estimation(rewards, values, next_values, dones, gamma = 0.99, lam = 0.95):
     gae     = 0

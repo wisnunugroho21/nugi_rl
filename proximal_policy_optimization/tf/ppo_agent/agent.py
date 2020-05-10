@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
 
 from memory.on_policy_memory import OnMemory
-from utils.pytorch_utils import set_device
 
 class Agent:  
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim,
@@ -31,7 +30,6 @@ class Agent:
         
         self.optimizer          = Adam(learning_rate = learning_rate)
         self.memory             = OnMemory()
-        self.device             = set_device(use_gpu)
         self.use_gpu            = use_gpu
 
     def set_params(self, params):
