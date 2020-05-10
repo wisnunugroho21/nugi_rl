@@ -79,10 +79,6 @@ def update_model():
         agent.save_weights()
         print('weights saved')
 
-@app.route('/test')
-def test():
-    return 'test'
-
 @sio.event
 def connect():
     print('connect')
