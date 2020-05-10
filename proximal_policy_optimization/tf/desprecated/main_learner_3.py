@@ -4,10 +4,8 @@ from model.BasicTanhNN import Actor_Model, Critic_Model
 from memory.on_policy_impala_memory import OnMemoryImpala
 from utils.mongodb_utils import Observation, Weight
 
-import socketio
 import requests
 import numpy as np
-from mongoengine import *
 
 ############## Hyperparameters ##############
 training_mode       = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it

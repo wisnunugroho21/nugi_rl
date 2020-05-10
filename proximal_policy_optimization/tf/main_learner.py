@@ -3,6 +3,7 @@ from ppo_agent.agent_continous_impala import AgentContinous
 from model.BasicTanhNN import Actor_Model, Critic_Model
 from memory.on_policy_impala_memory import OnMemoryImpala
 
+import socketio
 import requests
 import numpy as np
 
