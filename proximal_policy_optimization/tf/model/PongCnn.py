@@ -1,48 +1,62 @@
-import torch
-import torch.nn as nn
-from utils.pytorch_utils import set_device
+import tensorflow as tf
+
+from tensorflow.keras.layers import Dense, Flatten, Conv2D, ZeroPadding2D
+from tensorflow.keras import Model
       
-class Actor_Model(nn.Module):
-    def __init__(self, state_dim, action_dim, use_gpu = True):
+class Actor_Model(Model):
+    def __init__(self, state_dim, action_dim):
       super(Actor_Model, self).__init__()   
 
-      self.use_gpu = use_gpu
+      self.pad1   = ZeroPadding2D(padding = (2, 2))
+      self.conv1  = Conv2D(32, kernel_size = 8, strides = (4, 4), padding = "valid", activation='relu')
 
-      self.nn_layer = nn.Sequential(
-        nn.Conv2d(1, 8, kernel_size = 8, stride = 4, padding = 2),
-        nn.ReLU(),
-        nn.Conv2d(8, 8, kernel_size = 4, stride = 2, padding = 1),
-        nn.ReLU(),
-        nn.Conv2d(8, 8, kernel_size = 4, stride = 2, padding = 1),
-        nn.ReLU(),
-        nn.Flatten(),        
-        nn.Linear(800, 400),
-        nn.ReLU(),
-        nn.Linear(400, action_dim),
-        nn.Softmax(-1)     
-      ).float().to(set_device(use_gpu))      
+      self.pad2   = ZeroPadding2D(padding = (1, 1))
+      self.conv2  = Conv2D(32, kernel_size = 4, strides = (2, 2), padding = "valid", activation='relu')
+
+      self.pad3   = ZeroPadding2D(padding = (1, 1))
+      self.conv3  = Conv2D(32, kernel_size = 4, strides = (2, 2), padding = "valid", activation='relu')
+
+      self.flat   = Flatten()
+
+      self.d1     = Dense(400, activation = 'relu')
+      self.out    = Dense(action_dim, activation = 'softmax')     
         
-    def forward(self, states):
-        return self.nn_layer(states)
+    def call(self, states):
+      x = self.pad1(states)
+      x = self.conv1(x)
+      x = self.pad2(x)
+      x = self.conv2(x)
+      x = self.pad3(x)
+      x = self.conv3(x)
+      x = self.flat(x)
+      x = self.d1(x)
+      return self.out(x)
 
-class Critic_Model(nn.Module):
-    def __init__(self, state_dim, action_dim, use_gpu = True):
+class Critic_Model(Model):
+    def __init__(self, state_dim, action_dim):
       super(Critic_Model, self).__init__()
 
-      self.use_gpu = use_gpu
+      self.pad1   = ZeroPadding2D(padding = (2, 2))
+      self.conv1  = Conv2D(32, kernel_size = 8, strides = (4, 4), padding = "valid", activation='relu')
 
-      self.nn_layer = nn.Sequential(
-        nn.Conv2d(1, 8, kernel_size = 8, stride = 4, padding = 2),
-        nn.ReLU(),
-        nn.Conv2d(8, 8, kernel_size = 4, stride = 2, padding = 1),
-        nn.ReLU(),
-        nn.Conv2d(8, 8, kernel_size = 4, stride = 2, padding = 1),
-        nn.ReLU(),
-        nn.Flatten(),        
-        nn.Linear(800, 400),
-        nn.ReLU(),
-        nn.Linear(400, 1)       
-      ).float().to(set_device(use_gpu))
+      self.pad2   = ZeroPadding2D(padding = (1, 1))
+      self.conv2  = Conv2D(32, kernel_size = 4, strides = (2, 2), padding = "valid", activation='relu')
+
+      self.pad3   = ZeroPadding2D(padding = (1, 1))
+      self.conv3  = Conv2D(32, kernel_size = 4, strides = (2, 2), padding = "valid", activation='relu')
+
+      self.flat   = Flatten()
+
+      self.d1     = Dense(400, activation = 'relu')
+      self.out    = Dense(1, activation = 'linear')
         
-    def forward(self, states):
-        return self.nn_layer(states)
+    def call(self, states):
+      x = self.pad1(states)
+      x = self.conv1(x)
+      x = self.pad2(x)
+      x = self.conv2(x)
+      x = self.pad3(x)
+      x = self.conv3(x)
+      x = self.flat(x)
+      x = self.d1(x)
+      return self.out(x)

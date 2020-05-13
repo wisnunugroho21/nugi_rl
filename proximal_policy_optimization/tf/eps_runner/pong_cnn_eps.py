@@ -20,7 +20,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
     next_state  = np.zeros((1, 160, 160))
     ############################################
     obs     = env.reset()
-    obs     = np.array(prepo_full(obs)).reshape(1, 160, 160)
+    obs     = np.array(prepo_full(obs)).reshape(160, 160, 1)
     state   = obs
 
     done            = False
@@ -34,7 +34,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
         action_gym = action + 1 if action != 0 else 0
 
         next_obs, reward, done, _   = env.step(action_gym)
-        next_obs                    = np.array(prepo_full(next_obs)).reshape(1, 160, 160)
+        next_obs                    = np.array(prepo_full(next_obs)).reshape(160, 160, 1)
         next_state                  = next_obs - obs         
 
         eps_time += 1 

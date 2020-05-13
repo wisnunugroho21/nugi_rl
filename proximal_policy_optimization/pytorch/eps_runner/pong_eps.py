@@ -40,7 +40,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
         total_reward += reward
           
         if training_mode:
-            agent.save_eps(state.tolist(), action, reward, float(done), next_state.tolist()) 
+            agent.memory.save_eps(state.tolist(), action, reward, float(done), next_state.tolist()) 
             
         state = next_state   
         obs = next_obs
@@ -62,7 +62,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
 
     return total_reward, eps_time, t_updates, params
 
-def run(agent, env, n_episode, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 128, n_saved = 10,
+def run_discrete(agent, env, n_episode, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 128, n_saved = 10,
         params_max = 1.0, params_min = 0.2, params_subtract = 0.00001, params_dynamic = True):
   
     params = params_max

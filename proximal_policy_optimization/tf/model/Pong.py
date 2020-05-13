@@ -1,34 +1,33 @@
-import torch
-import torch.nn as nn
-from utils.pytorch_utils import set_device
+import tensorflow as tf
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Model
 
-class Actor_Model(nn.Module):
-    def __init__(self, state_dim, action_dim, use_gpu = True):
-        super(Actor_Model, self).__init__()  
+class Actor_Model(Model):
+    def __init__(self, state_dim, action_dim):
+        super(Actor_Model, self).__init__() 
 
-        self.nn_layer = nn.Sequential(
-                nn.Linear(state_dim, 640),
-                nn.ReLU(),
-                nn.Linear(640, 640),
-                nn.ReLU(),
-                nn.Linear(640, action_dim),
-                nn.Softmax(-1)
-              ).float().to(set_device(use_gpu))
+        self.d1     = Dense(640, activation = "relu")
+        self.d2     = Dense(640, activation = "relu")
+        #self.d3     = Dense(640, activation = "relu")
+        self.out    = Dense(action_dim, activation = "softmax")
         
-    def forward(self, states):
-        return self.nn_layer(states)
+    def call(self, states):
+        x   = self.d1(states)
+        x   = self.d2(x)
+        #x   = self.d3(x)
+        return self.out(x)
 
-class Critic_Model(nn.Module):
-    def __init__(self, state_dim, action_dim, use_gpu = True):
+class Critic_Model(Model):
+    def __init__(self, state_dim, action_dim):
         super(Critic_Model, self).__init__() 
 
-        self.nn_layer = nn.Sequential(
-                nn.Linear(state_dim, 640),
-                nn.ReLU(),
-                nn.Linear(640, 640),
-                nn.ReLU(),
-                nn.Linear(640, 1)
-              ).float().to(set_device(use_gpu))
+        self.d1     = Dense(640, activation = "relu")
+        self.d2     = Dense(640, activation = "relu")
+        #self.d3     = Dense(640, activation = "relu")
+        self.out    = Dense(1, activation = "linear")
         
-    def forward(self, states):
-        return self.nn_layer(states)
+    def call(self, states):
+        x   = self.d1(states)
+        x   = self.d2(x)
+        #x   = self.d3(x)
+        return self.out(x)

@@ -22,11 +22,11 @@ class Agent:
         self.learning_rate      = learning_rate   
         self.folder             = folder                
 
-        self.actor              = Actor_Model(state_dim, action_dim, use_gpu)
-        self.actor_old          = Actor_Model(state_dim, action_dim, use_gpu)
+        self.actor              = Actor_Model(state_dim, action_dim)
+        self.actor_old          = Actor_Model(state_dim, action_dim)
 
-        self.critic             = Critic_Model(state_dim, action_dim, use_gpu)
-        self.critic_old         = Critic_Model(state_dim, action_dim, use_gpu)
+        self.critic             = Critic_Model(state_dim, action_dim)
+        self.critic_old         = Critic_Model(state_dim, action_dim)
         
         self.optimizer          = Adam(learning_rate = learning_rate)
         self.memory             = OnMemory()
