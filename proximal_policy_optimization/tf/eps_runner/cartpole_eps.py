@@ -21,7 +21,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
     total_reward = 0
     eps_time = 0
     ############################################ 
-    for i in range(200): 
+    for i in range(500): 
         agent.set_params(params) 
 
         action = int(agent.act(state))       
@@ -30,7 +30,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
         eps_time += 1 
         t_updates += 1
         total_reward += reward
-        reward = -5 if i < 200 and done else reward
+        reward = -5 if i < 495 and done else reward
           
         if training_mode: 
             agent.memory.save_eps(state.tolist(), action, reward, float(done), next_state.tolist()) 
