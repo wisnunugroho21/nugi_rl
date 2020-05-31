@@ -7,12 +7,14 @@ class Actor_Model(Model):
         super(Actor_Model, self).__init__()
 
         self.d1 = Dense(64, activation = 'relu')
-        self.d2 = Dense(64, activation = 'relu')      
+        self.d2 = Dense(64, activation = 'relu')
+        self.d3 = Dense(64, activation = 'relu')      
         self.out = Dense(action_dim, activation='softmax')
         
     def call(self, states):
         x = self.d1(states)
         x = self.d2(x)
+        x = self.d3(x)
         return self.out(x)
 
 class Critic_Model(Model):
@@ -21,9 +23,11 @@ class Critic_Model(Model):
 
         self.d1 = Dense(64, activation = 'relu')
         self.d2 = Dense(64, activation = 'relu')
+        self.d3 = Dense(64, activation = 'relu')
         self.out = Dense(1, activation='linear')
         
     def call(self, states):
         x = self.d1(states)
         x = self.d2(x)
+        x = self.d3(x)
         return self.out(x)

@@ -1,7 +1,10 @@
 import gym
 
-from eps_runner.pong_cnn_eps import run_discrete
-from eps_runner.standard_continuous_eps import run_continous
+from eps_runner.pong_cnn_eps import run_discrete_episode
+from eps_runner.standard_continuous_eps import run_continous_episode
+from executor.discrete_eps import run_discrete
+from executor.continous_eps import run_continous
+
 from ppo_agent.agent_discrete import AgentDiscrete
 from ppo_agent.agent_continuous import AgentContinous
 from model.PongCnn import Actor_Model, Critic_Model
@@ -76,7 +79,7 @@ if type(env.action_space) is gym.spaces.Box:
         agent.load_weights()
         print('Weight Loaded')
 
-    run_continous(agent, env, n_episode, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_saved,
+    run_continous(agent, env, n_episode, run_continous_episode, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_saved,
        params_max, params_min, params_subtract, params_dynamic, max_action)
 
 else:
@@ -92,5 +95,5 @@ else:
         agent.load_weights()
         print('Weight Loaded')
 
-    run_discrete(agent, env, n_episode, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_saved,
+    run_discrete(agent, env, n_episode, run_discrete_episode, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_saved,
         params_max, params_min, params_subtract, params_dynamic)
