@@ -2,8 +2,8 @@ import gym
 
 from eps_runner.pong_cnn_eps import run_discrete_episode
 from eps_runner.standard_continuous_eps import run_continous_episode
-from executor.discrete_eps import run_discrete
-from executor.continous_eps import run_continous
+from executor.discrete_executor import run_discrete
+from executor.continous_executor import run_continous
 
 from ppo_agent.agent_discrete import AgentDiscrete
 from ppo_agent.agent_continuous import AgentContinous

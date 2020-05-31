@@ -29,7 +29,7 @@ def run_continous(agent, env, n_episode, eps_runner, reward_threshold, save_weig
     t_updates = 0
 
     for i_episode in range(1, n_episode + 1):
-        total_reward, time, t_updates, params = run_an_episode(env, agent, render, training_mode, t_updates, n_update, params, params_max, params_min, params_subtract, params_dynamic, max_action)
+        total_reward, time, t_updates, params = eps_runner(env, agent, render, training_mode, t_updates, n_update, params, params_max, params_min, params_subtract, params_dynamic, max_action)
         print('Episode {} \t t_reward: {} \t time: {} \t '.format(i_episode, int(total_reward), time))
         batch_rewards.append(int(total_reward))
         batch_times.append(time)        
