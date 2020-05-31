@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.math_function import prepro_half, prepo_full
+from utils.math_function import prepro_half
 
 def plot(datas):
     print('----------')
@@ -16,11 +16,11 @@ def plot(datas):
     print('Avg :', np.mean(datas))
 
 def run_an_episode(env, agent, render, training_mode, t_updates, n_update, params, params_max, params_min, params_subtract, params_dynamic):
-    state       = np.zeros((1, 80, 80))
-    next_state  = np.zeros((1, 80, 80))
+    state       = np.zeros((1, 84, 84))
+    next_state  = np.zeros((1, 84, 84))
     ############################################
     obs     = env.reset()
-    obs     = np.array(prepro_half(obs)).reshape(1, 80, 80)
+    obs     = np.array(prepro_half(obs)).reshape(1, 84, 84)
     state   = obs
 
     done            = False
@@ -34,7 +34,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
         action_gym = action + 1 if action != 0 else 0
 
         next_obs, reward, done, _   = env.step(action_gym)
-        next_obs                    = np.array(prepro_half(next_obs)).reshape(1, 80, 80)
+        next_obs                    = np.array(prepro_half(next_obs)).reshape(1, 84, 84)
         next_state                  = next_obs - obs         
 
         eps_time += 1 

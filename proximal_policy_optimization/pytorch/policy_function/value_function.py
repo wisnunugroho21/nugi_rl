@@ -15,6 +15,7 @@ def temporal_difference(reward, next_value, done, gamma = 0.99, lam = 0.95):
     q_values = reward + (1.0 - done) * gamma * next_value           
     return q_values
 
+# Not Working
 def vtrace(rewards, values, next_values, dones, worker_logprobs, learner_logprobs, gamma = 0.99, lam = 0.95):
     running_add = 0
     v_traces    = []

@@ -8,8 +8,8 @@ from model.PongCnn import Actor_Model, Critic_Model
 
 ############## Hyperparameters ##############
 
-load_weights        = False # If you want to load the agent, set this to True
-save_weights        = False # If you want to save the agent, set this to True
+load_weights        = True # If you want to load the agent, set this to True
+save_weights        = True # If you want to save the agent, set this to True
 training_mode       = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu             = True
 reward_threshold    = 20 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -40,7 +40,7 @@ params_dynamic      = False
 
 env_name            = 'PongDeterministic-v4'
 max_action          = 1.0
-folder              = 'weights/pong_cnn'
+folder              = 'weights/pong_cnn_2'
 
 ############################################# 
 
