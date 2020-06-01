@@ -108,3 +108,10 @@ class Agent:
             self.actor.eval()
             self.critic.eval()
             print('Model is evaluating...')
+
+    def get_weights(self):
+        return self.actor.state_dict(), self.critic.state_dict()
+
+    def set_weights(self, actor_weights, critic_weights):
+        self.actor.load_state_dict(actor_weights)
+        self.critic.load_state_dict(critic_weights)

@@ -29,7 +29,7 @@ def run_discrete_episode(env, agent, render, training_mode, t_updates, n_update,
         total_reward += reward
           
         if training_mode:  
-            agent.save_eps(state.tolist(), action, reward, float(done), next_state.tolist()) 
+            agent.memory.save_eps(state.tolist(), action, reward, float(done), next_state.tolist()) 
             
         state   = next_state
         obs     = next_obs
