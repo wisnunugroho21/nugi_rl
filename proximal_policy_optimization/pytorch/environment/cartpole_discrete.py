@@ -11,7 +11,7 @@ from gym.utils import seeding
 import numpy as np
 
 
-class ContinuousCartPoleEnv(gym.Env):
+class CartPoleEnv(gym.Env):
     """
     Description:
         A pole is attached by an un-actuated joint to a cart, which moves along
@@ -97,7 +97,7 @@ class ContinuousCartPoleEnv(gym.Env):
         assert self.action_space.contains(action), err_msg
 
         x, x_dot, theta, theta_dot = self.state
-        force = self.force_mag * float(action)
+        force = self.force_mag if action == 1 else -self.force_mag
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
