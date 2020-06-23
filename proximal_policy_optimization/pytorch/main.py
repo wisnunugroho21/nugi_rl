@@ -1,13 +1,13 @@
 import gym
 
-from eps_runner.pong_cnn_eps import run_discrete_episode
+from eps_runner.pong_lstm_collective_eps import run_discrete_episode
 from eps_runner.standard_continuous_eps import run_continous_episode
 from executor.discrete_executor import run_discrete
 from executor.continous_executor import run_continous
 
 from ppo_agent.agent_discrete import AgentDiscrete
-from ppo_agent.agent_continuous import AgentContinous
-from model.PongCnn import Actor_Model, Critic_Model
+from ppo_agent.agent_continous_std import AgentContinous
+from model.PongLSTM import Actor_Model, Critic_Model
 
 ############## Hyperparameters ##############
 
@@ -23,13 +23,13 @@ n_saved             = 10
 n_plot_batch        = 100000 # How many episode you want to plot the result
 n_episode           = 100000 # How many episode you want to run
 
-n_update            = 256 # How many episode before you update the Policy
+n_update            = 128 # How many episode before you update the Policy
 policy_kl_range     = 0.0008
 policy_params       = 20.0
 value_clip          = 4.0
 entropy_coef        = 0.05
 vf_loss_coef        = 1.0
-minibatch           = 8 
+batch_size          = 32 
 PPO_epochs          = 4
 action_std          = 1.0
 gamma               = 0.99
@@ -41,9 +41,9 @@ params_min          = 0.25
 params_subtract     = 0.001
 params_dynamic      = False
 
-env_name            = 'PongDeterministic-v4'
+env_name            = 'PongNoFrameskip-v4'
 max_action          = 1.0
-folder              = 'weights/pong_cnn_2'
+folder              = 'weights/pong_lstm1'
 
 ############################################# 
 
@@ -73,7 +73,7 @@ if type(env.action_space) is gym.spaces.Box:
     print(action_dim)
 
     agent = AgentContinous(Actor_Model, Critic_Model, state_dim, action_dim, training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef,
-            minibatch, PPO_epochs, gamma, lam, learning_rate, action_std, folder, use_gpu)
+            batch_size, PPO_epochs, gamma, lam, learning_rate, action_std, folder, use_gpu)
 
     if load_weights:
         agent.load_weights()
@@ -89,7 +89,7 @@ else:
     print(action_dim)
 
     agent = AgentDiscrete(Actor_Model, Critic_Model, state_dim, action_dim, training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef,
-           minibatch, PPO_epochs, gamma, lam, learning_rate, folder, use_gpu)
+           batch_size, PPO_epochs, gamma, lam, learning_rate, folder, use_gpu)
 
     if load_weights:
         agent.load_weights()

@@ -9,7 +9,7 @@ class Agent:
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim,
                 is_training_mode = True, policy_kl_range = 0.0008, policy_params = 20, 
                 value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
-                minibatch = 4, PPO_epochs = 4, gamma = 0.99, 
+                batch_size = 32, PPO_epochs = 4, gamma = 0.99, 
                 lam = 0.95, learning_rate = 2.5e-4, folder = 'model', use_gpu = True):   
 
         self.policy_kl_range    = policy_kl_range 
@@ -17,7 +17,7 @@ class Agent:
         self.value_clip         = value_clip    
         self.entropy_coef       = entropy_coef
         self.vf_loss_coef       = vf_loss_coef
-        self.minibatch          = minibatch       
+        self.batch_size          = batch_size       
         self.PPO_epochs         = PPO_epochs
         self.is_training_mode   = is_training_mode
         self.action_dim         = action_dim 
@@ -63,8 +63,7 @@ class Agent:
         if memory is None:
             memory = self.memory 
 
-        batch_size = 1 if int(len(memory) / self.minibatch) == 0 else int(len(memory) / self.minibatch)
-        dataloader = DataLoader(memory, batch_size, shuffle = False)
+        dataloader = DataLoader(memory, self.batch_size, shuffle = False)
 
         # Optimize policy for K epochs:
         for _ in range(self.PPO_epochs):       

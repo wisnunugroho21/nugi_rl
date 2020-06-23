@@ -9,8 +9,10 @@ def run_continous_episode(env, agent, render, training_mode, t_updates, n_update
     ############################################ 
     for _ in range(1, 5000): 
         agent.set_params(params)
-        action = agent.act(state)          
-        next_state, reward, done, _ = env.step(action)
+        action = agent.act(state) 
+
+        action_gym = np.clip(action, -1.0, 1.0)
+        next_state, reward, done, _ = env.step(action_gym)
 
         eps_time += 1 
         t_updates += 1
@@ -24,16 +26,22 @@ def run_continous_episode(env, agent, render, training_mode, t_updates, n_update
         if render:
             env.render()     
         
-        if training_mode:
-            if t_updates == n_update:
-                agent.update_ppo()
-                t_updates = 0
+        if training_mode and n_update is not None and t_updates == n_update:
+            agent.update_ppo()
+            t_updates = 0
 
-                if params_dynamic:
-                    params = params - params_subtract
-                    params = params_min if params < params_min else params
+            if params_dynamic:
+                params = params - params_subtract
+                params = params if params > params_min else params_min
         
         if done: 
             break                
+    
+    if training_mode and n_update is None:
+        agent.update_ppo()
 
+        if params_dynamic:
+            params = params - params_subtract
+            params = params if params > params_min else params_min
+                
     return total_reward, eps_time, t_updates, params

@@ -1,12 +1,12 @@
 import numpy as np
-from utils.math_function import prepo_full
+from utils.math_function import prepro_half
 
 def run_discrete_episode(env, agent, render, training_mode, t_updates, n_update, params, params_max, params_min, params_subtract, params_dynamic):
-    state       = np.zeros((2, 1, 160, 160))
-    next_state  = np.zeros((2, 1, 160, 160))
+    state       = np.zeros((2, 1, 80, 80))
+    next_state  = np.zeros((2, 1, 80, 80))
     ############################################
     obs         = env.reset()
-    obs         = np.expand_dims(np.array(prepo_full(obs)), 0)
+    obs         = np.expand_dims(np.array(prepro_half(obs)), 0)
     state[1]    = obs
 
     done            = False
@@ -20,7 +20,7 @@ def run_discrete_episode(env, agent, render, training_mode, t_updates, n_update,
         action_gym = action + 1 if action != 0 else 0
 
         next_obs, reward, done, _   = env.step(action_gym)
-        next_obs                    = np.expand_dims(np.array(prepo_full(next_obs)), 0)   
+        next_obs                    = np.expand_dims(np.array(prepro_half(next_obs)), 0)   
         next_state[0]               = obs
         next_state[1]               = next_obs        
 

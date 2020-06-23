@@ -1,14 +1,14 @@
 import numpy as np
-from utils.math_function import prepo_full
+from utils.math_function import prepro_half
 
 def run_discrete_episode(env, agent, render, training_mode, t_updates, n_update, params, params_max, params_min, params_subtract, params_dynamic):
     frame = 4
     ############################################
-    state       = np.zeros((frame, 1, 160, 160))
-    next_state  = np.zeros((frame, 1, 160, 160))
+    state       = np.zeros((frame, 1, 80, 80))
+    next_state  = np.zeros((frame, 1, 80, 80))
     ############################################
     obs                 = env.reset()
-    obs                 = prepo_full(obs).reshape(1, 160, 160)
+    obs                 = prepro_half(obs).reshape(1, 80, 80)
     state[frame - 1]    = obs
 
     done            = False
@@ -26,15 +26,15 @@ def run_discrete_episode(env, agent, render, training_mode, t_updates, n_update,
             #next_obs, reward, done, _        = env.step(action_gym) if i == 0 else env.step(0)
             
             next_obs, reward_temp, done, _  = env.step(action_gym)
-            next_obs                        = prepo_full(next_obs).reshape(1, 1, 160, 160)
+            next_obs                        = prepro_half(next_obs).reshape(1, 1, 80, 80)
 
             reward      += reward_temp
             next_state  = next_obs if i == 0 else np.concatenate((next_state, next_obs), axis = 0)
 
             if done:
                 if len(next_state) < frame:
-                  next_obs_temp = np.zeros((frame - len(next_state), 1, 160, 160))
-                  next_state    = np.concatenate((next_state, next_obs_temp), axis = 0)  
+                  next_obs      = np.zeros((frame - len(next_state), 1, 80, 80))
+                  next_state    = np.concatenate((next_state, next_obs), axis = 0)  
                 break        
 
         eps_time        += 1 
