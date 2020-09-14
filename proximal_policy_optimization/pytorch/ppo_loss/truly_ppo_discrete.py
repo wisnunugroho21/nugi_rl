@@ -9,25 +9,25 @@ def get_loss(action_probs, old_action_probs, values, old_values, next_values, ac
             policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, use_gpu = True):
 
         # Don't use old value in backpropagation
-        Old_values  = old_values.detach()
-
-        # Finding the ratio (pi_theta / pi_theta__old): 
-        logprobs      = logprob(action_probs, actions)
-        Old_logprobs  = logprob(old_action_probs, actions).detach()       
+        Old_values      = old_values.detach()               
 
         # Getting general advantages estimator and returns
         Advantages      = generalized_advantage_estimation(rewards, values, next_values, dones)
         Returns         = (Advantages + values).detach()
         Advantages      = ((Advantages - Advantages.mean()) / (Advantages.std() + 1e-6)).detach()
 
+        # Finding the ratio (pi_theta / pi_theta__old): 
+        logprobs        = logprob(action_probs, actions)
+        Old_logprobs    = logprob(old_action_probs, actions).detach()
+
         # Finding Surrogate Loss
-        ratios      = (logprobs - Old_logprobs).exp() # ratios = old_logprobs / logprobs        
-        Kl          = kldivergence(old_action_probs, action_probs)
+        ratios          = (logprobs - Old_logprobs).exp() # ratios = old_logprobs / logprobs        
+        Kl              = kldivergence(old_action_probs, action_probs)
 
         pg_targets  = torch.where(
                 (Kl >= policy_kl_range) & (ratios >= 1),
                 ratios * Advantages - policy_params * Kl,
-                ratios * Advantages
+                ratios * Advantages - policy_kl_range
         )
         pg_loss     = pg_targets.mean()
 

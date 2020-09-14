@@ -17,7 +17,7 @@ class Agent:
         self.value_clip         = value_clip    
         self.entropy_coef       = entropy_coef
         self.vf_loss_coef       = vf_loss_coef
-        self.batch_size          = batch_size       
+        self.batch_size         = batch_size       
         self.PPO_epochs         = PPO_epochs
         self.is_training_mode   = is_training_mode
         self.action_dim         = action_dim 
