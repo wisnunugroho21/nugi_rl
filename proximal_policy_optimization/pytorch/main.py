@@ -1,12 +1,11 @@
 import gym
 
 from eps_runner.pong_lstm_collective_eps import run_discrete_episode
-from eps_runner.standard_continuous_eps import run_continous_episode
-from executor.discrete_executor import run_discrete
-from executor.continous_executor import run_continous
+from eps_runner.standard import run_continous_episode
 
-from ppo_agent.agent_discrete import AgentDiscrete
-from ppo_agent.agent_continous_std import AgentContinous
+from executor.standard import run_discrete, run_continous
+
+from ppo_agent.agent_standard import AgentDiscrete, AgentContinous
 from model.PongLSTM import Actor_Model, Critic_Model
 
 ############## Hyperparameters ##############

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-class OnMemory(Dataset):
+class Memory(Dataset):
     def __init__(self, datas = None):
         if datas is None :
             self.states         = []

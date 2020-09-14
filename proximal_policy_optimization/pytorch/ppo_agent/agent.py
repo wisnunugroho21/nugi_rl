@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
 
-from memory.on_policy_memory import OnMemory
+from memory.on_policy_memory import Memory
 from utils.pytorch_utils import set_device
 
 class Agent:  

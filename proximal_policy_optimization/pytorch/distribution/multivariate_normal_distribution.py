@@ -2,7 +2,6 @@ from torch.distributions import MultivariateNormal
 from torch.distributions.kl import kl_divergence
 import torch
 import torchvision
-
 from utils.pytorch_utils import set_device
 
 def sample(mean, std):
