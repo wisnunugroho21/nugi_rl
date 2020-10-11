@@ -25,7 +25,7 @@ def get_loss(action_mean, old_action_mean, values, old_values, next_values, acti
         Kl              = kldivergence(old_action_mean, old_action_std, action_mean, action_std)
 
         pg_targets  = torch.where(
-                (Kl >= policy_kl_range) & (ratios * Advantages >= 1 * Advantages),
+                (Kl >= policy_kl_range) & (ratios > 1),
                 ratios * Advantages - policy_params * Kl,
                 ratios * Advantages
         )
