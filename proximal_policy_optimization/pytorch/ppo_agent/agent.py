@@ -32,7 +32,7 @@ class Agent:
         self.critic_old         = Critic_Model(state_dim, action_dim, use_gpu)
         self.critic_optimizer   = Adam(self.critic.parameters(), lr = learning_rate)
 
-        self.memory             = OnMemory()
+        self.memory             = Memory()
         self.device             = set_device(use_gpu)
         self.use_gpu            = use_gpu
 
