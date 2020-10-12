@@ -1,20 +1,18 @@
 import gym
 
-from eps_runner.pong_lstm_collective_eps import run_discrete_episode
-from eps_runner.standard import run_continous_episode
-
+from eps_runner.standard import run_discrete_episode, run_continous_episode
 from executor.standard import run_discrete, run_continous
 
 from ppo_agent.agent_standard import AgentDiscrete, AgentContinous
-from model.PongLSTM import Actor_Model, Critic_Model
+from model.BasicSoftmaxNN import Actor_Model, Critic_Model
 
 ############## Hyperparameters ##############
 
-load_weights        = True # If you want to load the agent, set this to True
-save_weights        = True # If you want to save the agent, set this to True
+load_weights        = False # If you want to load the agent, set this to True
+save_weights        = False # If you want to save the agent, set this to True
 training_mode       = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu             = True
-reward_threshold    = 20 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
+reward_threshold    = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
 render              = True # If you want to display the image. Turn this off if you run this in Google Collab
 n_saved             = 10
@@ -40,7 +38,7 @@ params_min          = 0.25
 params_subtract     = 0.001
 params_dynamic      = False
 
-env_name            = 'PongNoFrameskip-v4'
+env_name            = 'CartPole-v1'
 max_action          = 1.0
 folder              = 'weights/pong_lstm1'
 
@@ -63,13 +61,13 @@ else:
     state_dim = env.observation_space.n
 
 #print(env.unwrapped.get_action_meanings())
-state_dim = 80 * 80
-print(state_dim)
+#state_dim = 80 * 80
+print('state_dim: ', state_dim)
 
 if type(env.action_space) is gym.spaces.Box:
     action_dim = env.action_space.shape[0]    
 
-    print(action_dim)
+    print('action_dim: ', action_dim)
 
     agent = AgentContinous(Actor_Model, Critic_Model, state_dim, action_dim, training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef,
             batch_size, PPO_epochs, gamma, lam, learning_rate, action_std, folder, use_gpu)
@@ -83,9 +81,9 @@ if type(env.action_space) is gym.spaces.Box:
 
 else:
     action_dim = env.action_space.n
-    action_dim = 3
+    #action_dim = 3
 
-    print(action_dim)
+    print('action_dim: ', action_dim)
 
     agent = AgentDiscrete(Actor_Model, Critic_Model, state_dim, action_dim, training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef,
            batch_size, PPO_epochs, gamma, lam, learning_rate, folder, use_gpu)
