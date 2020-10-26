@@ -61,8 +61,8 @@ class Agent:
     def get_eps(self):
         return self.memory.get_all_items()
 
-    def clearMemory(self):
-        return self.memory.clearMemory()
+    def clear_memory(self):
+        return self.memory.clear_memory()
 
     def convert_next_states_to_next_next_states(self):
         self.memory.convert_next_states_to_next_next_states()
@@ -119,7 +119,7 @@ class Agent:
                     next_next_states.float().to(self.device))
 
         # Clear the memory
-        self.memory.clearMemory()
+        self.memory.clear_memory()
 
         # Copy new weights into old policy:
         self.actor_old.load_state_dict(self.actor.state_dict())

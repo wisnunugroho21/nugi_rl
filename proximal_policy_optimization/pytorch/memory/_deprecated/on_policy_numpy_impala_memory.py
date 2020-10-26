@@ -58,7 +58,7 @@ class OnMemory(Dataset):
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states, self.logprobs, self.next_next_states
 
-    def clearMemory(self):
+    def clear_memory(self):
         self.states             = np.delete(self.states, np.s_[:])
         self.actions            = np.delete(self.actions, np.s_[:])
         self.rewards            = np.delete(self.rewards, np.s_[:])

@@ -96,7 +96,7 @@ def send_trajectory():
         'next_next_states'  : next_next_states
     }
 
-    memory.clearMemory()
+    memory.clear_memory()
     return jsonify(data)
 
 def update(message):
@@ -118,7 +118,7 @@ def update(message):
     r = requests.post(url = 'http://localhost:8010/update', json = data)
     data = r.json()
 
-    memory.clearMemory()
+    memory.clear_memory()
     print('finish updating at ', datetime.now().strftime("%H:%M:%S"))
 
     return data

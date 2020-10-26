@@ -72,7 +72,7 @@ class Agent:
                     rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
         # Clear the memory
-        self.memory.clearMemory()
+        self.memory.clear_memory()
 
         # Copy new weights into old policy:
         self.actor_old.load_state_dict(self.actor.state_dict())

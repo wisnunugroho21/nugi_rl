@@ -36,7 +36,7 @@ class Memory(Dataset):
     def get_all_items(self):         
         return self.states, self.rewards, self.actions, self.dones, self.next_states, self.available_actions
 
-    def clearMemory(self):
+    def clear_memory(self):
         del self.actions[:]
         del self.states[:]
         del self.rewards[:]

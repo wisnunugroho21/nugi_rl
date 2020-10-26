@@ -81,7 +81,7 @@ def run_an_episode(env, agent, render, training_mode, t_updates, n_update, param
                     obs.save()                
 
                 set_actor_weights(agent)
-                agent.clearMemory()
+                agent.clear_memory()
 
                 t_updates = 0
                 if params_dynamic:

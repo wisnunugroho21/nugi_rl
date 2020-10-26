@@ -45,7 +45,7 @@ class OnMemoryImpala(Dataset):
         self.next_states            = next_states
         self.worker_action_datas    = worker_action_datas
     
-    def clearMemory(self, idx = -100):
+    def clear_memory(self, idx = -100):
         if idx == -100:
             del self.states[:]
             del self.actions[:]

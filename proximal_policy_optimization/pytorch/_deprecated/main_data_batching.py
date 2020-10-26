@@ -65,7 +65,7 @@ def send_trajectory():
         'worker_action_datas'   : worker_action_datas
     }
 
-    memory.clearMemory()
+    memory.clear_memory()
     return jsonify(data)
 
 @app.route('/test')

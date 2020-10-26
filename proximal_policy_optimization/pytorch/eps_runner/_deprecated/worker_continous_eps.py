@@ -70,7 +70,7 @@ def run_an_episode(memory, env, render, training_mode, max_action):
         
         if done: 
             send_trajectory(*memory.get_all_items())
-            memory.clearMemory()
+            memory.clear_memory()
 
             break                
 
