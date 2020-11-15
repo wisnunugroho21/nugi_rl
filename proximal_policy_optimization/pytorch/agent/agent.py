@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
 
-from memory.memory import Memory
+from memory.list_memory import ListMemory
 from utils.pytorch_utils import set_device
 
 class Agent:  
@@ -32,7 +32,7 @@ class Agent:
         self.critic_old         = Critic_Model(state_dim, action_dim, use_gpu)
         self.critic_optimizer   = Adam(self.critic.parameters(), lr = learning_rate)
 
-        self.memory             = Memory()
+        self.memory             = ListMemory()
         self.device             = set_device(use_gpu)
         self.use_gpu            = use_gpu
 

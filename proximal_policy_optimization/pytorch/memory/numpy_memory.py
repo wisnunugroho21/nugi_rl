@@ -2,9 +2,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-from memory.memory import Memory
+from memory.policy_memory import PolicyMemory
 
-class NumpyMemory(Memory):
+class NumpyMemory(PolicyMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.states         = np.array([], dtype = np.float32)

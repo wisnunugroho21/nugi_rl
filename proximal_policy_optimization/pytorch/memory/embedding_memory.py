@@ -2,9 +2,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-from memory.memory import Memory
+from memory.policy_memory import PolicyMemory
 
-class EmbeddingMemory(Memory):
+class EmbeddingMemory(PolicyMemory):
     def __init__(self, datas):
         if datas is None :
             self.available_actions = []

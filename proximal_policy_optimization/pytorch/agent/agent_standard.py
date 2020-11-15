@@ -8,12 +8,12 @@ from utils.pytorch_utils import set_device, to_numpy
 class AgentDiscrete(Agent):  
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim, 
                 is_training_mode = True, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, 
-                entropy_coef = 0.0, vf_loss_coef = 1.0, minibatch = 4, PPO_epochs = 4, 
+                entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32, PPO_epochs = 4, 
                 gamma = 0.99, lam = 0.95, learning_rate = 2.5e-4, folder = 'model', use_gpu = True):
                         
         super(AgentDiscrete, self).__init__(Actor_Model, Critic_Model, state_dim, action_dim, 
                 is_training_mode, policy_kl_range, policy_params, value_clip, 
-                entropy_coef, vf_loss_coef, minibatch, PPO_epochs, 
+                entropy_coef, vf_loss_coef, batch_size, PPO_epochs, 
                 gamma, lam, learning_rate, folder, use_gpu)
 
         self.distribution   = BasicDiscrete(self.device)
@@ -53,12 +53,12 @@ class AgentContinous(Agent):
     def __init__(self, Actor_Model, Critic_Model, state_dim, action_dim, 
                 is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, 
                 value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0,
-                minibatch = 32, PPO_epochs = 10, gamma = 0.99, lam = 0.95, 
+                batch_size = 32, PPO_epochs = 10, gamma = 0.99, lam = 0.95, 
                 learning_rate = 3e-4, action_std = 1.0, folder = 'model', use_gpu = True): 
         
         super(AgentContinous, self).__init__(Actor_Model, Critic_Model, state_dim, action_dim, 
                 is_training_mode, policy_kl_range, policy_params, value_clip, 
-                entropy_coef, vf_loss_coef, minibatch, PPO_epochs, 
+                entropy_coef, vf_loss_coef, batch_size, PPO_epochs, 
                 gamma, lam, learning_rate, folder, use_gpu)
         
         self.action_std     = action_std

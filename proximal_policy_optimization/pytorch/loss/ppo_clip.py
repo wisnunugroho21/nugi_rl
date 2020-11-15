@@ -6,13 +6,13 @@ from policy_function.value_function import temporal_difference
 
 from loss.ppo import PPO
 
-class TrulyPPO(PPO):
-    def __init__(self, device, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01):
-        self.policy_kl_range    = policy_kl_range
-        self.policy_params      = policy_params
-        self.value_clip         = value_clip
-        self.vf_loss_coef       = vf_loss_coef
-        self.entropy_coef       = entropy_coef
+class PPOClip(PPO):
+    def __init__(self, device, policy_clip = 0.2, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, action_std = 1.0):
+        self.policy_clip    = policy_clip
+        self.value_clip     = value_clip
+        self.vf_loss_coef   = vf_loss_coef
+        self.entropy_coef   = entropy_coef
+        self.action_std     = action_std
 
         self.discrete    = BasicDiscrete(device)
         self.continous   = BasicContinous(device)
@@ -21,7 +21,7 @@ class TrulyPPO(PPO):
     def get_discrete_loss(self, action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones):
         # Don't use old value in backpropagation
         Old_values          = old_values.detach()
-        Old_action_probs    = old_action_probs.detach()     
+        Old_action_probs    = old_action_probs.detach()               
 
         # Getting general advantages estimator and returns
         Advantages      = generalized_advantage_estimation(rewards, values, next_values, dones)
@@ -33,15 +33,10 @@ class TrulyPPO(PPO):
         Old_logprobs    = self.discrete.logprob(Old_action_probs, actions).detach()
 
         # Finding Surrogate Loss
-        ratios          = (logprobs - Old_logprobs).exp() # ratios = old_logprobs / logprobs        
-        Kl              = self.discrete.kldivergence(old_action_probs, action_probs)
-
-        pg_targets  = torch.where(
-            (Kl >= self.policy_kl_range) & (ratios > 1),
-            ratios * Advantages - self.policy_params * Kl,
-            ratios * Advantages
-        )
-        pg_loss     = pg_targets.mean()
+        ratios          = torch.exp(logprobs - Old_logprobs) # ratios = old_logprobs / logprobs
+        surr1           = ratios * Advantages
+        surr2           = torch.clamp(ratios, 1 - self.policy_clip, 1 + self.policy_clip) * Advantages
+        pg_loss         = torch.min(surr1, surr2).mean()
 
         # Getting Entropy from the action probability 
         dist_entropy    = self.discrete.entropy(action_probs).mean()
@@ -64,6 +59,7 @@ class TrulyPPO(PPO):
         # Don't use old value in backpropagation
         Old_values          = old_values.detach()
         Old_action_mean     = old_action_mean.detach()
+        Old_action_std      = old_action_std.detach()          
 
         # Getting general advantages estimator and returns
         Advantages      = generalized_advantage_estimation(rewards, values, next_values, dones)
@@ -72,30 +68,25 @@ class TrulyPPO(PPO):
 
         # Finding the ratio (pi_theta / pi_theta__old):      
         logprobs        = self.continous.logprob(action_mean, action_std, actions)
-        Old_logprobs    = self.continous.logprob(Old_action_mean, old_action_std, actions).detach() 
+        Old_logprobs    = self.continous.logprob(Old_action_mean, Old_action_std, actions).detach() 
 
         # Finding Surrogate Loss
-        ratios          = (logprobs - Old_logprobs).exp() # ratios = old_logprobs / logprobs        
-        Kl              = self.continous.kldivergence(Old_action_mean, old_action_std, action_mean, action_std)
-
-        pg_targets  = torch.where(
-            (Kl >= self.policy_kl_range) & (ratios > 1),
-            ratios * Advantages - self.policy_params * Kl,
-            ratios * Advantages
-        )
-        pg_loss     = pg_targets.mean()
+        ratios          = torch.exp(logprobs - Old_logprobs) # ratios = old_logprobs / logprobs
+        surr1           = ratios * Advantages
+        surr2           = torch.clamp(ratios, 1 - self.policy_clip, 1 + self.policy_clip) * Advantages
+        pg_loss         = torch.min(surr1, surr2).mean()
 
         # Getting entropy from the action probability 
         dist_entropy    = self.continous.entropy(action_mean, action_std).mean()
 
         # Getting Critic loss by using Clipped critic value
         if self.value_clip is None:
-            critic_loss   = ((Returns - values).pow(2) * 0.5).mean()
+                critic_loss   = ((Returns - values).pow(2) * 0.5).mean()
         else:
-            vpredclipped  = old_values + torch.clamp(values - Old_values, -self.value_clip, self.value_clip) # Minimize the difference between old value and new value
-            vf_losses1    = (Returns - values).pow(2) * 0.5 # Mean Squared Error
-            vf_losses2    = (Returns - vpredclipped).pow(2) * 0.5 # Mean Squared Error        
-            critic_loss   = torch.max(vf_losses1, vf_losses2).mean()                
+                vpredclipped  = old_values + torch.clamp(values - Old_values, -self.value_clip, self.value_clip) # Minimize the difference between old value and new value
+                vf_losses1    = (Returns - values).pow(2) * 0.5 # Mean Squared Error
+                vf_losses2    = (Returns - vpredclipped).pow(2) * 0.5 # Mean Squared Error        
+                critic_loss   = torch.max(vf_losses1, vf_losses2).mean()                
 
         # We need to maximaze Policy Loss to make agent always find Better Rewards
         # and minimize Critic Loss 

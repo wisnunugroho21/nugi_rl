@@ -2,7 +2,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-class Memory(Dataset):
+from memory.policy_memory import PolicyMemory
+
+class ListMemory(PolicyMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.states         = []
