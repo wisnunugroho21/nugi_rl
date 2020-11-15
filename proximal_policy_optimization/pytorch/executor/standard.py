@@ -14,7 +14,7 @@ def plot(datas):
     print('Min :', np.min(datas))
     print('Avg :', np.mean(datas))
 
-def run_discrete(agent, env, n_episode, eps_runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 128, n_saved = 10,
+def execute_discrete(agent, env, n_episode, eps_runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 128, n_saved = 10,
         params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True):
         
     params = params_max
@@ -83,7 +83,7 @@ def run_discrete(agent, env, n_episode, eps_runner, reward_threshold, save_weigh
     plot(rewards)
     plot(times)
 
-def run_continous(agent, env, n_episode, eps_runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, n_saved = 10,
+def execute_continous(agent, env, n_episode, eps_runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, n_saved = 10,
         params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True, max_action = 1.0):
 
     params = params_max   
