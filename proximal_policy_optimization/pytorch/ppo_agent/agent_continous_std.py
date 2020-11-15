@@ -1,7 +1,7 @@
 import torch
 
-from distribution.normal_distribution import sample
-from ppo_loss.truly_ppo_continuous_std import get_loss
+from distribution.basic import BasicContinous
+from ppo_loss.truly_ppo import TrulyPPO
 from ppo_agent.agent import Agent
 from utils.pytorch_utils import set_device, to_numpy
 
@@ -16,6 +16,9 @@ class AgentContinous(Agent):
                 is_training_mode, policy_kl_range, policy_params, value_clip, 
                 entropy_coef, vf_loss_coef, minibatch, PPO_epochs, 
                 gamma, lam, learning_rate, folder, use_gpu)
+
+        self.distribution   = BasicContinous(self.device)
+        self.trulyPPO       = TrulyPPO(self.device, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef) 
         
     def act(self, state):
         state                   = torch.FloatTensor(state).unsqueeze(0).to(self.device).detach()
@@ -25,7 +28,7 @@ class AgentContinous(Agent):
         # only sampling the action in Training Mode in order to exploring the actions
         if self.is_training_mode:
             # Sample the action
-            action      = sample(action_mean, action_std)
+            action      = self.distribution.sample(action_mean, action_std)
         else:
             action = action_mean  
               
@@ -39,8 +42,7 @@ class AgentContinous(Agent):
         old_values                      = self.critic_old(states)
         next_values                     = self.critic(next_states)
 
-        loss = get_loss(action_mean, old_action_mean, values, old_values, next_values, actions, rewards, dones,
-                action_std, old_action_std, self.policy_kl_range, self.policy_params, self.value_clip, self.vf_loss_coef, self.entropy_coef)
+        loss = self.trulyPPO.get_continous_loss(action_mean, action_std, old_action_mean, old_action_std, values, old_values, next_values, actions, rewards, dones)
 
         self.actor_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()

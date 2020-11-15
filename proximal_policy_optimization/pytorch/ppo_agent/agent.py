@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
 
-from memory.on_policy_memory import Memory
+from memory.memory import Memory
 from utils.pytorch_utils import set_device
 
 class Agent:  
@@ -17,12 +17,12 @@ class Agent:
         self.value_clip         = value_clip    
         self.entropy_coef       = entropy_coef
         self.vf_loss_coef       = vf_loss_coef
-        self.batch_size         = batch_size       
+        self.batch_size         = batch_size  
         self.PPO_epochs         = PPO_epochs
         self.is_training_mode   = is_training_mode
-        self.action_dim         = action_dim 
-        self.learning_rate      = learning_rate   
-        self.folder             = folder                
+        self.action_dim         = action_dim
+        self.learning_rate      = learning_rate
+        self.folder             = folder
 
         self.actor              = Actor_Model(state_dim, action_dim, use_gpu)
         self.actor_old          = Actor_Model(state_dim, action_dim, use_gpu)

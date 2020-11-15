@@ -2,7 +2,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-class Memory(Dataset):
+from memory.memory import Memory
+
+class NumpyMemory(Memory):
     def __init__(self, datas = None):
         if datas is None :
             self.states         = np.array([], dtype = np.float32)
@@ -40,6 +42,13 @@ class Memory(Dataset):
         self.rewards        = np.array(rewards)
         self.dones          = np.array(dones)
         self.next_states    = np.array(next_states)
+
+    def save_all(self, states, actions, rewards, dones, next_states):
+        self.states         = np.concatenate(np.array(states))
+        self.actions        = np.concatenate(np.array(actions))
+        self.rewards        = np.concatenate(np.array(rewards))
+        self.dones          = np.concatenate(np.array(dones))
+        self.next_states    = np.concatenate(np.array(next_states))
 
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states

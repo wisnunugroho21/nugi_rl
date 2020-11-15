@@ -36,12 +36,11 @@ class Memory(Dataset):
         self.next_states    = next_states
 
     def save_all(self, states, actions, rewards, dones, next_states):
-        for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
-            self.states.append(state)
-            self.actions.append(action)
-            self.rewards.append(reward)
-            self.dones.append(done)
-            self.next_states.append(next_state)
+        self.states         += states
+        self.actions        += actions
+        self.rewards        += rewards
+        self.dones          += dones
+        self.next_states    += next_states
 
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states 
