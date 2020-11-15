@@ -1,8 +1,8 @@
 import torch
 
 from distribution.basic import BasicDiscrete, BasicContinous
-from ppo_agent.agent import Agent
-from ppo_loss.truly_ppo import TrulyPPO
+from agent.agent import Agent
+from loss.truly_ppo import TrulyPPO
 from utils.pytorch_utils import set_device, to_numpy
 
 class AgentDiscrete(Agent):  

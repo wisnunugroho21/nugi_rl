@@ -1,8 +1,8 @@
 import torch
 
 from distribution.basic import BasicContinous
-from ppo_loss.truly_ppo import TrulyPPO
-from ppo_agent.agent import Agent
+from agent.agent import Agent
+from loss.truly_ppo import TrulyPPO
 from utils.pytorch_utils import set_device, to_numpy
 
 class AgentContinous(Agent):
