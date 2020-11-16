@@ -1,152 +1,153 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot(datas):
-    print('----------')
+from utils.math_function import plot
 
-    plt.plot(datas)
-    plt.plot()
-    plt.xlabel('Episode')
-    plt.ylabel('Datas')
-    plt.show()
+class StandardExecutor():
+    def __init__(self, agent, env, n_episode, Runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, 
+        n_saved = 10, params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True, max_action = 1.0):
 
-    print('Max :', np.max(datas))
-    print('Min :', np.min(datas))
-    print('Avg :', np.mean(datas))
+        self.agent = agent        
+        self.runner = Runner(env, self.agent, render, training_mode, n_update, params_max, params_min, params_subtract, params_dynamic, max_action)
 
-def execute_discrete(agent, env, n_episode, eps_runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 128, n_saved = 10,
-        params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True):
+        self.params_max = params_max
+        self.n_episode = n_episode
+        self.save_weights = save_weights
+        self.n_saved = n_saved
+        self.reward_threshold = reward_threshold
+        self.n_plot_batch = n_plot_batch
+        self.max_action = max_action
         
-    params = params_max
-    
-    rewards = []   
-    batch_rewards = []
-    batch_solved_reward = []
+    def execute_discrete(self):        
+        rewards = []   
+        batch_rewards = []
+        batch_solved_reward = []
 
-    times = []
-    batch_times = []
+        times = []
+        batch_times = []
 
-    t_updates = 0
-    print('Running the training!!')
+        t_updates = 0
+        params = self.params_max
+        print('Running the training!!')
 
-    for i_episode in range(1, n_episode + 1):
-        total_reward, time, t_updates, params = eps_runner(env, agent, render, training_mode, t_updates, n_update, params, params_max, params_min, params_subtract, params_dynamic)
-        print('Episode {} \t avg reward: {} \t time: {} \t '.format(i_episode, round(total_reward, 2), time))
-        batch_rewards.append(int(total_reward))
-        batch_times.append(time)        
+        for i_episode in range(1, self.n_episode + 1):
+            total_reward, time, t_updates, params = self.runner.run_discrete_episode(t_updates, params)
 
-        if save_weights:
-            if i_episode % n_saved == 0:
-                agent.save_weights() 
-                print('weights saved')
+            print('Episode {} \t avg reward: {} \t time: {} \t '.format(i_episode, round(total_reward, 2), time))
+            batch_rewards.append(int(total_reward))
+            batch_times.append(time)        
 
-        if reward_threshold:
-            if len(batch_solved_reward) == 100:            
-                if np.mean(batch_solved_reward) >= reward_threshold :              
-                    for reward in batch_rewards:
-                        rewards.append(reward)
+            if self.save_weights:
+                if i_episode % self.n_saved == 0:
+                    self.agent.save_weights() 
+                    print('weights saved')
 
-                    for time in batch_times:
-                        times.append(time)                    
+            if self.reward_threshold:
+                if len(batch_solved_reward) == 100:            
+                    if np.mean(batch_solved_reward) >= self.reward_threshold :              
+                        for reward in batch_rewards:
+                            rewards.append(reward)
 
-                    print('You solved task after {} episode'.format(len(rewards)))
-                    break
+                        for time in batch_times:
+                            times.append(time)                    
 
-                else:
-                    del batch_solved_reward[0]
-                    batch_solved_reward.append(total_reward)
+                        print('You solved task after {} episode'.format(len(rewards)))
+                        break
 
-            else:
-                batch_solved_reward.append(total_reward)
-
-        if i_episode % n_plot_batch == 0 and i_episode != 0:
-            # Plot the reward, times for every n_plot_batch
-            plot(batch_rewards)
-            plot(batch_times)
-
-            for reward in batch_rewards:
-                rewards.append(reward)
-
-            for time in batch_times:
-                times.append(time)
-
-            batch_rewards = []
-            batch_times = []
-
-            print('========== Cummulative ==========')
-            # Plot the reward, times for every episode
-            plot(rewards)
-            plot(times)
-
-    print('========== Final ==========')
-     # Plot the reward, times for every episode
-    plot(rewards)
-    plot(times)
-
-def execute_continous(agent, env, n_episode, eps_runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, n_saved = 10,
-        params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True, max_action = 1.0):
-
-    params = params_max   
-
-    rewards = []   
-    batch_rewards = []
-    batch_solved_reward = []
-
-    times = []
-    batch_times = []
-
-    t_updates = 0
-
-    for i_episode in range(1, n_episode + 1):
-        total_reward, time, t_updates, params = eps_runner(env, agent, render, training_mode, t_updates, n_update, params, params_max, params_min, params_subtract, params_dynamic, max_action)
-        print('Episode {} \t t_reward: {} \t time: {} \t '.format(i_episode, int(total_reward), time))
-        batch_rewards.append(int(total_reward))
-        batch_times.append(time)        
-
-        if save_weights:
-            if i_episode % n_saved == 0:
-                agent.save_weights() 
-                print('weights saved')
-
-        if reward_threshold:
-            if len(batch_solved_reward) == 100:            
-                if np.mean(batch_solved_reward) >= reward_threshold :              
-                    for reward in batch_rewards:
-                        rewards.append(reward)
-
-                    for time in batch_times:
-                        times.append(time)                    
-
-                    print('You solved task after {} episode'.format(len(rewards)))
-                    break
+                    else:
+                        del batch_solved_reward[0]
+                        batch_solved_reward.append(total_reward)
 
                 else:
-                    del batch_solved_reward[0]
                     batch_solved_reward.append(total_reward)
 
-            else:
-                batch_solved_reward.append(total_reward)
+            if i_episode % self.n_plot_batch == 0 and i_episode != 0:
+                # Plot the reward, times for every n_plot_batch
+                plot(batch_rewards)
+                plot(batch_times)
 
-        if i_episode % n_plot_batch == 0 and i_episode != 0:
-            # Plot the reward, times for every n_plot_batch
-            plot(batch_rewards)
-            plot(batch_times)
+                for reward in batch_rewards:
+                    rewards.append(reward)
 
-            for reward in batch_rewards:
-                rewards.append(reward)
+                for time in batch_times:
+                    times.append(time)
 
-            for time in batch_times:
-                times.append(time)
+                batch_rewards = []
+                batch_times = []
 
-            batch_rewards = []
-            batch_times = []
+                print('========== Cummulative ==========')
+                # Plot the reward, times for every episode
+                plot(rewards)
+                plot(times)
 
-            print('========== Cummulative ==========')
-            # Plot the reward, times for every episode
-            plot(rewards)
-            plot(times)
+        print('========== Final ==========')
+        # Plot the reward, times for every episode
+        plot(rewards)
+        plot(times)
 
-    print('========== Final ==========')
-     # Plot the reward, times for every episode
-    plot(rewards)
-    plot(times)
+    def execute_continous(self):
+        rewards = []   
+        batch_rewards = []
+        batch_solved_reward = []
+
+        times = []
+        batch_times = []
+
+        t_updates = 0
+        t_aux_updates = 0
+        params = self.params_max 
+
+        for i_episode in range(1, self.n_episode + 1): 
+            total_reward, time, t_updates, params = self.runner.run_continous_episode(t_updates, t_aux_updates, params, self.max_action)
+
+            print('Episode {} \t t_reward: {} \t time: {} \t '.format(i_episode, int(total_reward), time))
+            batch_rewards.append(int(total_reward))
+            batch_times.append(time)        
+
+            if self.save_weights:
+                if i_episode % self.n_saved == 0:
+                    self.agent.save_weights() 
+                    print('weights saved')
+
+            if self.reward_threshold:
+                if len(batch_solved_reward) == 100:            
+                    if np.mean(batch_solved_reward) >= self.reward_threshold :              
+                        for reward in batch_rewards:
+                            rewards.append(reward)
+
+                        for time in batch_times:
+                            times.append(time)                    
+
+                        print('You solved task after {} episode'.format(len(rewards)))
+                        break
+
+                    else:
+                        del batch_solved_reward[0]
+                        batch_solved_reward.append(total_reward)
+
+                else:
+                    batch_solved_reward.append(total_reward)
+
+            if i_episode % self.n_plot_batch == 0 and i_episode != 0:
+                # Plot the reward, times for every n_plot_batch
+                plot(batch_rewards)
+                plot(batch_times)
+
+                for reward in batch_rewards:
+                    rewards.append(reward)
+
+                for time in batch_times:
+                    times.append(time)
+
+                batch_rewards = []
+                batch_times = []
+
+                print('========== Cummulative ==========')
+                # Plot the reward, times for every episode
+                plot(rewards)
+                plot(times)
+
+        print('========== Final ==========')
+        # Plot the reward, times for every episode
+        plot(rewards)
+        plot(times)

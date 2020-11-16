@@ -1,7 +1,7 @@
 import gym
 
-from eps_runner.ppg.standard import run_discrete_episode, run_continous_episode
-from executor.ppg.standard import execute_discrete, execute_continous
+from eps_runner.ppg.standard import StandardRunner
+from executor.ppg.standard import StandardExecutor
 
 from agent.ppg.agent_standard import AgentDiscrete, AgentContinous
 from model.ppg.PPGTanhNN import Policy_Model, Value_Model
@@ -35,7 +35,7 @@ Aux_epochs              = 10
 action_std              = 1.0
 gamma                   = 0.99
 lam                     = 0.95
-learning_rate           = 5e-4
+learning_rate           = 3e-4
 
 params_max              = 1.0
 params_min              = 0.25
@@ -50,6 +50,9 @@ use_ppg                 = True
 
 Policy_or_Actor_Model   = Policy_Model
 Value_or_Critic_Model   = Value_Model
+Runner                  = StandardRunner
+Executor                = StandardExecutor
+
 state_dim               = None
 action_dim              = None
 
@@ -57,7 +60,7 @@ env                     = gym.make(env_name)
 
 #############################################  
 
-run(run_discrete_episode, run_continous_episode, execute_discrete, execute_continous, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, Value_or_Critic_Model, env, state_dim, action_dim,
+run(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, Value_or_Critic_Model, env, state_dim, action_dim,
     load_weights, save_weights, training_mode, use_gpu, reward_threshold, render, n_saved, n_plot_batch, n_episode, n_update, n_aux_update,
     policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, action_std, gamma, lam, learning_rate,
     params_max, params_min, params_subtract, params_dynamic, max_action, folder, use_ppg)

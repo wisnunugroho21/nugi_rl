@@ -34,3 +34,16 @@ def prepro_half_one_dim(I):
     I = prepro_half(I)
     I = I.astype(np.float32).ravel()
     return I
+
+def plot(datas):
+    print('----------')
+
+    plt.plot(datas)
+    plt.plot()
+    plt.xlabel('Episode')
+    plt.ylabel('Datas')
+    plt.show()
+
+    print('Max :', np.max(datas))
+    print('Min :', np.min(datas))
+    print('Avg :', np.mean(datas))
