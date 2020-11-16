@@ -1,22 +1,19 @@
 import numpy as np
 
-from eps_runner.ppg.runner import Runner
-
-class StandardRunner(Runner):
-    def __init__(self, env, agent, render, training_mode, n_update, n_aux_update, params_max, params_min, params_subtract, params_dynamic, max_action):
+class Runner():
+    def __init__(self, env, agent, render, training_mode, n_update, params_max, params_min, params_subtract, params_dynamic, max_action):
         self.env = env
         self.agent = agent
         self.render = render
         self.training_mode = training_mode
         self.n_update = n_update
-        self.n_aux_update = n_aux_update
         self.params_max = params_max
         self.params_min = params_min
         self.params_subtract = params_subtract
         self.params_dynamic = params_dynamic
         self.max_action = max_action
 
-    def run_discrete_episode(self, t_updates, t_aux_updates, params):
+    def run_discrete_episode(self, t_updates, params):
         ############################################
         state = self.env.reset()    
         done = False
@@ -41,37 +38,30 @@ class StandardRunner(Runner):
             if self.render:
                 self.env.render()     
             
-            if self.training_mode and self.n_update is not None and t_updates == self.n_update:
-                self.agent.update_ppo()
-                t_updates = 0
-                t_aux_updates += 1
+            if self.training_mode:
+                if self.n_update is not None and t_updates == self.n_update:
+                    self.agent.update_ppo()
+                    t_updates = 0
 
-                if self.params_dynamic:
-                    params = params - self.params_subtract
-                    params = params if params > self.params_min else self.params_min
-
-                if t_aux_updates == self.n_aux_update:
-                    self.agent.update_aux()
-                    t_aux_updates = 0
+                    if self.params_dynamic:
+                        params = params - self.params_subtract
+                        params = params if params > self.params_min else self.params_min
             
             if done: 
                 break                
         
-        if self.training_mode and self.n_update is None:
-            self.agent.update_ppo()
-            t_aux_updates += 1
+        if self.training_mode:
+            if self.n_update is None:
+                self.agent.update_ppo()
+                t_updates = 0
 
-            if self.params_dynamic:
-                params = params - self.params_subtract
-                params = params if params > self.params_min else self.params_min
-
-            if t_aux_updates == self.n_aux_update:
-                self.agent.update_aux()
-                t_aux_updates = 0
+                if self.params_dynamic:
+                    params = params - self.params_subtract
+                    params = params if params > self.params_min else self.params_min
                     
         return total_reward, eps_time, t_updates, params
 
-    def run_continous_episode(self, t_updates, t_aux_updates, params, max_action):
+    def run_continous_episode(self, t_updates, params, max_action):
         ############################################
         state = self.env.reset()    
         done = False
@@ -100,29 +90,19 @@ class StandardRunner(Runner):
             if self.training_mode and self.n_update is not None and t_updates == self.n_update:
                 self.agent.update_ppo()
                 t_updates = 0
-                t_aux_updates += 1
 
                 if self.params_dynamic:
                     params = params - self.params_subtract
                     params = params if params > self.params_min else self.params_min
-
-                if t_aux_updates == self.n_aux_update:
-                    self.agent.update_aux()
-                    t_aux_updates = 0
             
             if done: 
                 break                
         
         if self.training_mode and self.n_update is None:
             self.agent.update_ppo()
-            t_aux_updates += 1
 
             if self.params_dynamic:
                 params = params - self.params_subtract
                 params = params if params > self.params_min else self.params_min
-
-            if t_aux_updates == self.n_aux_update:
-                self.agent.update_aux()
-                t_aux_updates = 0
                     
         return total_reward, eps_time, t_updates, params
