@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
 def normalize(data):
     data_normalized = (data - data.mean()) / (data.std() + 1e-6)

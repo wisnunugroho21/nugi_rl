@@ -44,7 +44,7 @@ class AgentDiscrete(Agent):
         old_values          = self.value_old(states)
         next_values         = self.value(next_states)
     
-        loss                = self.trulyPPO.get_discrete_loss(action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones)
+        loss                = self.trulyPPO.compute_discrete_loss(action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones)
 
         self.policy_optimizer.zero_grad()
         self.value_optimizer.zero_grad()
@@ -60,7 +60,7 @@ class AgentDiscrete(Agent):
         action_probs, values            = self.policy(states)
         old_action_probs, _             = self.policy_old(states)
 
-        joint_loss                      = self.auxLoss.get_discrete_loss(action_probs, old_action_probs, values, Returns)
+        joint_loss                      = self.auxLoss.compute_discrete_loss(action_probs, old_action_probs, values, Returns)
 
         self.policy_optimizer.zero_grad()
         joint_loss.backward()
@@ -109,7 +109,7 @@ class AgentContinous(Agent):
         old_values          = self.value_old(states)
         next_values         = self.value(next_states)
 
-        loss                = self.trulyPPO.get_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, old_values, next_values, actions, rewards, dones)
+        loss                = self.trulyPPO.compute_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, old_values, next_values, actions, rewards, dones)
 
         self.policy_optimizer.zero_grad()
         self.value_optimizer.zero_grad()
@@ -125,7 +125,7 @@ class AgentContinous(Agent):
         action_mean, values             = self.policy(states)
         old_action_mean, _              = self.policy_old(states)
 
-        joint_loss                      = self.auxLoss.get_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, Returns)
+        joint_loss                      = self.auxLoss.compute_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, Returns)
 
         self.policy_optimizer.zero_grad()
         joint_loss.backward()

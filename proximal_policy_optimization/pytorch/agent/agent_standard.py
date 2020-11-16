@@ -39,7 +39,7 @@ class AgentDiscrete(Agent):
         old_action_probs, old_values  = self.actor_old(states), self.critic_old(states)
         next_values                   = self.critic(next_states)
         
-        loss = self.trulyPPO.get_discrete_loss(action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones)                
+        loss = self.trulyPPO.compute_discrete_loss(action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones)                
 
         self.actor_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
@@ -89,7 +89,7 @@ class AgentContinous(Agent):
         old_action_mean, old_values     = self.actor_old(states), self.critic_old(states)
         next_values                     = self.critic(next_states)
 
-        loss = self.trulyPPO.get_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, old_values, next_values, actions, rewards, dones)
+        loss = self.trulyPPO.compute_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, old_values, next_values, actions, rewards, dones)
 
         self.actor_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()

@@ -18,7 +18,7 @@ class PPOClip(PPO):
         self.continous   = BasicContinous(device)
 
     # Loss for PPO  
-    def get_discrete_loss(self, action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones):
+    def compute_discrete_loss(self, action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones):
         # Don't use old value in backpropagation
         Old_values          = old_values.detach()
         Old_action_probs    = old_action_probs.detach()               
@@ -55,7 +55,7 @@ class PPOClip(PPO):
         loss = (critic_loss * self.vf_loss_coef) - (dist_entropy * self.entropy_coef) - pg_loss
         return loss
 
-    def get_continous_loss(self, action_mean, action_std, old_action_mean, old_action_std, values, old_values, next_values, actions, rewards, dones):    
+    def compute_continous_loss(self, action_mean, action_std, old_action_mean, old_action_std, values, old_values, next_values, actions, rewards, dones):    
         # Don't use old value in backpropagation
         Old_values          = old_values.detach()
         Old_action_mean     = old_action_mean.detach()

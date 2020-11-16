@@ -7,7 +7,7 @@ class JointAux():
         self.discrete    = BasicDiscrete(device)
         self.continous   = BasicContinous(device)
 
-    def get_discrete_loss(self, action_probs, old_action_probs, values, Returns):
+    def compute_discrete_loss(self, action_probs, old_action_probs, values, Returns):
         # Don't use old value in backpropagation
         Old_action_probs    = old_action_probs.detach()
 
@@ -17,7 +17,7 @@ class JointAux():
 
         return aux_loss + Kl
 
-    def get_continous_loss(self, action_mean, action_std, old_action_mean, old_action_std, values, Returns):
+    def compute_continous_loss(self, action_mean, action_std, old_action_mean, old_action_std, values, Returns):
         # Don't use old value in backpropagation
         Old_action_mean     = old_action_mean.detach()
 

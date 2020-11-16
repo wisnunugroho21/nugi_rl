@@ -42,7 +42,7 @@ class AgentContinous(Agent):
         old_values                      = self.critic_old(states)
         next_values                     = self.critic(next_states)
 
-        loss = self.trulyPPO.get_continous_loss(action_mean, action_std, old_action_mean, old_action_std, values, old_values, next_values, actions, rewards, dones)
+        loss = self.trulyPPO.compute_continous_loss(action_mean, action_std, old_action_mean, old_action_std, values, old_values, next_values, actions, rewards, dones)
 
         self.actor_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
