@@ -1,16 +1,20 @@
 import torch
 from utils.pytorch_utils import set_device
 
-def monte_carlo_discounted(reward, done, gamma = 0.99, lam = 0.95):
-    returns = []        
-    running_add = 0
-    
-    for i in reversed(range(len(reward))):
-        running_add = reward[i] + (1.0 - done) * gamma * running_add  
-        returns.insert(0, running_add)
+class ValueFunction():
+    def __init__(self, gamma = 0.99):
+        self.gamma = 0.99
+
+    def monte_carlo_discounted(self, reward, done):
+        returns = []        
+        running_add = 0
         
-    return torch.stack(returns)
-    
-def temporal_difference(reward, next_value, done, gamma = 0.99, lam = 0.95):
-    q_values = reward + (1.0 - done) * gamma * next_value           
-    return q_values
+        for i in reversed(range(len(reward))):
+            running_add = reward[i] + (1.0 - done) * self.gamma * running_add  
+            returns.insert(0, running_add)
+            
+        return torch.stack(returns)
+        
+    def temporal_difference(self, reward, next_value, done):
+        q_values = reward + (1.0 - done) * self.gamma * next_value           
+        return q_values

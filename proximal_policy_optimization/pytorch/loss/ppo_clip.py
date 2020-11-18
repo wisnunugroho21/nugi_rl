@@ -1,8 +1,7 @@
 import torch
 
 from distribution.basic import BasicDiscrete, BasicContinous
-from policy_function.advantage_function import generalized_advantage_estimation
-from policy_function.value_function import temporal_difference
+from policy_function.advantage_function import AdvantageFunction
 
 from loss.ppo import PPO
 
@@ -14,6 +13,8 @@ class PPOClip(PPO):
         self.entropy_coef   = entropy_coef
         self.action_std     = action_std
 
+        self.advantagefunction  = AdvantageFunction()
+
         self.discrete    = BasicDiscrete(device)
         self.continous   = BasicContinous(device)
 
@@ -24,11 +25,11 @@ class PPOClip(PPO):
         Old_action_probs    = old_action_probs.detach()               
 
         # Getting general advantages estimator and returns
-        Advantages      = generalized_advantage_estimation(rewards, values, next_values, dones)
+        Advantages      = self.advantagefunction.generalized_advantage_estimation(rewards, values, next_values, dones)
         Returns         = (Advantages + values).detach()
         Advantages      = ((Advantages - Advantages.mean()) / (Advantages.std() + 1e-6)).detach()
 
-        # Finding the ratio (pi_theta / pi_theta__old): 
+        # Finding the ratio (pi_theta / pi_theta__old):
         logprobs        = self.discrete.logprob(action_probs, actions)
         Old_logprobs    = self.discrete.logprob(Old_action_probs, actions).detach()
 
@@ -38,7 +39,7 @@ class PPOClip(PPO):
         surr2           = torch.clamp(ratios, 1 - self.policy_clip, 1 + self.policy_clip) * Advantages
         pg_loss         = torch.min(surr1, surr2).mean()
 
-        # Getting Entropy from the action probability 
+        # Getting Entropy from the action probability
         dist_entropy    = self.discrete.entropy(action_probs).mean()
 
         # Getting Critic loss by using Clipped critic value
@@ -62,11 +63,11 @@ class PPOClip(PPO):
         Old_action_std      = old_action_std.detach()          
 
         # Getting general advantages estimator and returns
-        Advantages      = generalized_advantage_estimation(rewards, values, next_values, dones)
+        Advantages      = self.advantagefunction.generalized_advantage_estimation(rewards, values, next_values, dones)
         Returns         = (Advantages + values).detach()
         Advantages      = ((Advantages - Advantages.mean()) / (Advantages.std() + 1e-6)).detach() 
 
-        # Finding the ratio (pi_theta / pi_theta__old):      
+        # Finding the ratio (pi_theta / pi_theta__old):
         logprobs        = self.continous.logprob(action_mean, action_std, actions)
         Old_logprobs    = self.continous.logprob(Old_action_mean, Old_action_std, actions).detach() 
 

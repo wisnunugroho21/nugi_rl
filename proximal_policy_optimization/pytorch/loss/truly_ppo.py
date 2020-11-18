@@ -1,8 +1,7 @@
 import torch
 
 from distribution.basic import BasicDiscrete, BasicContinous
-from policy_function.advantage_function import generalized_advantage_estimation
-from policy_function.value_function import temporal_difference
+from policy_function.advantage_function import AdvantageFunction
 
 from loss.ppo import PPO
 
@@ -14,8 +13,10 @@ class TrulyPPO(PPO):
         self.vf_loss_coef       = vf_loss_coef
         self.entropy_coef       = entropy_coef
 
+        self.advantagefunction  = AdvantageFunction()
+
         self.discrete    = BasicDiscrete(device)
-        self.continous   = BasicContinous(device)
+        self.continous   = BasicContinous(device)        
 
     # Loss for PPO  
     def compute_discrete_loss(self, action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones):
@@ -24,7 +25,7 @@ class TrulyPPO(PPO):
         Old_action_probs    = old_action_probs.detach()     
 
         # Getting general advantages estimator and returns
-        Advantages      = generalized_advantage_estimation(rewards, values, next_values, dones)
+        Advantages      = self.advantagefunction.generalized_advantage_estimation(rewards, values, next_values, dones)
         Returns         = (Advantages + values).detach()
         Advantages      = ((Advantages - Advantages.mean()) / (Advantages.std() + 1e-6)).detach()
 
@@ -33,7 +34,7 @@ class TrulyPPO(PPO):
         Old_logprobs    = self.discrete.logprob(Old_action_probs, actions).detach()
 
         # Finding Surrogate Loss
-        ratios          = (logprobs - Old_logprobs).exp() # ratios = old_logprobs / logprobs        
+        ratios          = (logprobs - Old_logprobs).exp() # ratios = probs / old_probs        
         Kl              = self.discrete.kldivergence(old_action_probs, action_probs)
 
         pg_targets  = torch.where(
@@ -66,7 +67,7 @@ class TrulyPPO(PPO):
         Old_action_mean     = old_action_mean.detach()
 
         # Getting general advantages estimator and returns
-        Advantages      = generalized_advantage_estimation(rewards, values, next_values, dones)
+        Advantages      = self.advantagefunction.generalized_advantage_estimation(rewards, values, next_values, dones)
         Returns         = (Advantages + values).detach()
         Advantages      = ((Advantages - Advantages.mean()) / (Advantages.std() + 1e-6)).detach() 
 
