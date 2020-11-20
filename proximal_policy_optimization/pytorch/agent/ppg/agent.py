@@ -53,6 +53,9 @@ class Agent():
         self.policy_kl_range    = self.policy_kl_range * params
         self.policy_params      = self.policy_params * params
 
+    def save_eps(self, state, action, reward, done, next_state):
+        self.policy_memory.save_eps(state, action, reward, done, next_state)
+
     def act(self, state):
         pass
 

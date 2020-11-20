@@ -33,7 +33,7 @@ class StandardRunner(Runner):
             total_reward += reward
             
             if self.training_mode: 
-                 self.agent.memory.save_eps(state.tolist(), action, reward, float(done), next_state.tolist()) 
+                self.agent.save_eps(state.tolist(), action, reward, float(done), next_state.tolist()) 
                 
             state = next_state
                     
@@ -82,7 +82,7 @@ class StandardRunner(Runner):
             total_reward += reward
             
             if self.training_mode:
-                self.agent.memory.save_eps(state.tolist(), action.tolist(), reward, float(done), next_state.tolist()) 
+                self.agent.save_eps(state.tolist(), action.tolist(), reward, float(done), next_state.tolist()) 
                 
             state = next_state
                     
