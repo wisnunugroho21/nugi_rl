@@ -23,17 +23,13 @@ class AgentDiscrete(Agent):
         state         = torch.FloatTensor(state).unsqueeze(0).to(self.device).detach()
         action_probs  = self.actor(state)
         
-        # We don't need sample the action in Test Mode
-        # only sampling the action in Training Mode in order to exploring the actions
         if self.is_training_mode:
-            # Sample the action
             action = self.distribution.sample(action_probs)
         else:            
             action = torch.argmax(action_probs, 1)
               
         return action
 
-    # Get loss and Do backpropagation
     def training_ppo(self, states, actions, rewards, dones, next_states): 
         action_probs, values          = self.actor(states), self.critic(states)
         old_action_probs, old_values  = self.actor_old(states), self.critic_old(states)
@@ -73,17 +69,13 @@ class AgentContinous(Agent):
         state           = torch.FloatTensor(state).unsqueeze(0).to(self.device).detach()
         action_mean     = self.actor(state)
         
-        # We don't need sample the action in Test Mode
-        # only sampling the action in Training Mode in order to exploring the actions
         if self.is_training_mode:
-            # Sample the action
             action = self.distribution.sample(action_mean, self.action_std)
         else:
             action = action_mean  
               
         return to_numpy(action.squeeze(0), self.use_gpu)
 
-    # Get loss and Do backpropagation
     def training_ppo(self, states, actions, rewards, dones, next_states): 
         action_mean, values             = self.actor(states), self.critic(states)
         old_action_mean, old_values     = self.actor_old(states), self.critic_old(states)

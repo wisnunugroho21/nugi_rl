@@ -24,6 +24,7 @@ def run(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, 
         if action_dim is None:
             action_dim = env.action_space.shape[0]
         print('action_dim: ', action_dim)
+        print('continous')        
 
         if use_ppg:
             agent = AgentContinous(Policy_or_Actor_Model, Value_or_Critic_Model, state_dim, action_dim, training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef,
@@ -46,6 +47,7 @@ def run(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, 
         if action_dim is None:
             action_dim = env.action_space.n
         print('action_dim: ', action_dim)
+        print('discrete')        
 
         if use_ppg:
             agent = AgentDiscrete(Policy_or_Actor_Model, Value_or_Critic_Model, state_dim, action_dim, training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef,

@@ -67,11 +67,14 @@ class Agent():
         pass
 
     # Update the model
-    def update_ppo(self, memory = None):        
-        if memory is None:
-            memory = self.policy_memory 
+    def update_ppo(self, policy_memory = None, aux_memory = None):        
+        if policy_memory is None:
+            policy_memory = self.policy_memory
 
-        dataloader = DataLoader(memory, self.batch_size, shuffle = False)
+        if aux_memory is None:
+            aux_memory = self.aux_memory
+
+        dataloader = DataLoader(policy_memory, self.batch_size, shuffle = False)
 
         # Optimize policy for K epochs:
         for _ in range(self.PPO_epochs):       
@@ -80,19 +83,21 @@ class Agent():
                     rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
         # Clear the memory
-        states, _, _, _, _ = self.policy_memory.get_all_items()
-        self.aux_memory.save_all(states)
-        self.policy_memory.clear_memory()
+        states, _, _, _, _ = policy_memory.get_all_items()
+        aux_memory.save_all(states)
+        policy_memory.clear_memory()
 
         # Copy new weights into old policy:
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
-    def update_aux(self, memory = None):        
-        if memory is None:
-            memory = self.aux_memory
+        return policy_memory, aux_memory
 
-        dataloader  = DataLoader(memory, self.batch_size, shuffle = False)
+    def update_aux(self, aux_memory = None):        
+        if aux_memory is None:
+            aux_memory = self.aux_memory
+
+        dataloader  = DataLoader(aux_memory, self.batch_size, shuffle = False)
 
         # Optimize policy for K epochs:
         for _ in range(self.Aux_epochs):       
@@ -100,10 +105,12 @@ class Agent():
                 self.training_aux(states.float().to(self.device))
 
         # Clear the memory
-        self.aux_memory.clear_memory()
+        aux_memory.clear_memory()
 
         # Copy new weights into old policy:
         self.policy_old.load_state_dict(self.policy.state_dict())
+
+        return aux_memory
 
     def save_weights(self):
         torch.save({
