@@ -8,7 +8,7 @@ class StandardExecutor():
         n_saved = 10, params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True, max_action = 1.0):
 
         self.agent = agent        
-        self.runner = Runner(env, self.agent, render, training_mode, n_update, n_aux_update, params_max, params_min, params_subtract, params_dynamic)
+        self.runner = Runner(env, self.agent, render, training_mode, n_update, n_aux_update, params_max, params_min, params_subtract, params_dynamic, max_action)
 
         self.params_max = params_max
         self.n_episode = n_episode

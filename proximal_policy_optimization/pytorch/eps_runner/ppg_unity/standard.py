@@ -26,13 +26,19 @@ class StandardRunner(Runner):
         self.tracked_agents     = self.env.tracked_agents
 
         self.policy_memories    = {}
-        self.aux_memories    = {}
+        self.aux_memories       = {}
         for agent_id in self.tracked_agents:
-            self.policy_memories[agent_id] = ListMemory()
-            self.aux_memories[agent_id] = AuxMemory()     
+            self.policy_memories[agent_id]  = ListMemory()
+            self.aux_memories[agent_id]     = AuxMemory()
 
     def run_discrete_episode(self):
         self.env.reset()
+        decisionSteps, _    = self.env.get_steps(self.behavior_name)
+        agent_ids           = decisionSteps.agent_id
+
+        states = {}
+        for agent_id in agent_ids:
+            states[agent_id] = decisionSteps[agent_id].obs
         ############################################
         total_reward    = 0
         eps_time        = 0
@@ -40,13 +46,8 @@ class StandardRunner(Runner):
         self.agent.set_params(self.params)
         ############################################ 
         for _ in range(500):
-            decisionSteps, _    = self.env.get_steps(self.behavior_name)
-            agent_ids           = decisionSteps.agent_id
-
-            states = {}
             actions = {}
-            for agent_id in agent_ids: 
-                states[agent_id] = decisionSteps[agent_id].obs
+            for agent_id in agent_ids:
                 actions[agent_id] = int(self.agent.act(states[agent_id]))
 
             if len(actions) > 0:
@@ -56,16 +57,18 @@ class StandardRunner(Runner):
 
             rewards = {}
             dones = {}
-            next_states = {} 
+            next_states = {}
+            terminated_states = {}
+
             for agent_id in decisionSteps.agent_id:
-                rewards[agent_id] = decisionSteps[agent_id].reward
-                dones[agent_id] = False
-                next_states[agent_id] = decisionSteps[agent_id].obs                
+                rewards[agent_id]       = decisionSteps[agent_id].reward
+                dones[agent_id]         = False
+                next_states[agent_id]   = decisionSteps[agent_id].obs                
             
             for agent_id in terminalSteps.agent_id:
-                rewards[agent_id] = terminalSteps[agent_id].reward
-                dones[agent_id] = True
-                next_states[agent_id] = terminalSteps[agent_id].obs
+                rewards[agent_id]           = terminalSteps[agent_id].reward
+                dones[agent_id]             = True
+                terminated_states[agent_id] = terminalSteps[agent_id].obs
 
             eps_time        += 1
             self.t_updates  += 1
@@ -73,8 +76,14 @@ class StandardRunner(Runner):
             
             if self.training_mode:
                 for track_agent in self.tracked_agents:
-                    if track_agent in states and (track_agent in decisionSteps or track_agent in terminalSteps):
+                    if track_agent in states and track_agent in decisionSteps:
                         self.policy_memories[track_agent].save_eps(states[track_agent], actions[track_agent], rewards[track_agent], dones[track_agent], next_states[track_agent])
+
+                    if track_agent in states and track_agent in terminalSteps:
+                        self.policy_memories[track_agent].save_eps(states[track_agent], actions[track_agent], rewards[track_agent], dones[track_agent], terminated_states[track_agent])
+
+            states      = next_states
+            agent_ids   = decisionSteps.agent_id
                                                 
             if self.training_mode and self.n_update is not None and self.t_updates == self.n_update:
                 self.t_updates = 0
@@ -101,41 +110,45 @@ class StandardRunner(Runner):
 
     def run_continous_episode(self):
         self.env.reset()
+        decisionSteps, _    = self.env.get_steps(self.behavior_name)
+        agent_ids           = decisionSteps.agent_id
+
+        states = {}
+        for agent_id in agent_ids:
+            states[agent_id] = decisionSteps[agent_id].obs
         ############################################
         total_reward    = 0
         eps_time        = 0
         ############################################        
         self.agent.set_params(self.params)
         ############################################ 
-        for _ in range(500):
-            decisionSteps, _    = self.env.get_steps(self.behavior_name)
-            agent_ids           = decisionSteps.agent_id
-
-            states = {}
+        for _ in range(512):
             actions = {}
-            action_gym = []
-            for agent_id in agent_ids: 
-                states[agent_id] = decisionSteps[agent_id].obs
-                actions[agent_id] = np.squeeze(self.agent.act(states[agent_id]))
-                action_gym.append(actions[agent_id])
+            for agent_id in agent_ids:
+                actions[agent_id]   = np.squeeze(self.agent.act(states[agent_id]))
 
             if len(actions) > 0:
-                self.env.set_actions(self.behavior_name, np.stack(action_gym))
+                action_gym = np.stack([value for key, value in actions.items()]) * self.max_action
+                action_gym = np.clip(action_gym, -self.max_action, self.max_action)
+                self.env.set_actions(self.behavior_name, action_gym)
+                
             self.env.step()
             decisionSteps, terminalSteps = self.env.get_steps(self.behavior_name)
 
             rewards = {}
             dones = {}
-            next_states = {} 
+            next_states = {}
+            terminated_states = {}
+
             for agent_id in decisionSteps.agent_id:
-                rewards[agent_id] = decisionSteps[agent_id].reward
-                dones[agent_id] = False
-                next_states[agent_id] = decisionSteps[agent_id].obs                
+                rewards[agent_id]       = decisionSteps[agent_id].reward
+                dones[agent_id]         = False
+                next_states[agent_id]   = decisionSteps[agent_id].obs                
             
             for agent_id in terminalSteps.agent_id:
-                rewards[agent_id] = terminalSteps[agent_id].reward
-                dones[agent_id] = True
-                next_states[agent_id] = terminalSteps[agent_id].obs
+                rewards[agent_id]           = terminalSteps[agent_id].reward
+                dones[agent_id]             = True
+                terminated_states[agent_id] = terminalSteps[agent_id].obs
 
             eps_time        += 1
             self.t_updates  += 1
@@ -143,8 +156,14 @@ class StandardRunner(Runner):
             
             if self.training_mode:
                 for track_agent in self.tracked_agents:
-                    if track_agent in states and (track_agent in decisionSteps or track_agent in terminalSteps):
+                    if track_agent in states and track_agent in decisionSteps:
                         self.policy_memories[track_agent].save_eps(states[track_agent], actions[track_agent], rewards[track_agent], dones[track_agent], next_states[track_agent])
+
+                    if track_agent in states and track_agent in terminalSteps:
+                        self.policy_memories[track_agent].save_eps(states[track_agent], actions[track_agent], rewards[track_agent], dones[track_agent], terminated_states[track_agent])
+
+            states      = next_states
+            agent_ids   = decisionSteps.agent_id
                                                 
             if self.training_mode and self.n_update is not None and self.t_updates == self.n_update:
                 self.t_updates = 0

@@ -1,16 +1,5 @@
 import gym
 
-""" from eps_runner.ppg_unity.standard import StandardRunner
-from executor.ppg.standard import StandardExecutor
-
-#from agent.ppg.multi.agent_multi_standard import AgentMultiDiscrete, AgentMultiContinous
-from agent.ppg.agent_standard import AgentDiscrete, AgentContinous
-from model.ppg.PPGTanhNN import Policy_Model, Value_Model
-
-from run import run
-from mlagents_envs.registry import default_registry
-from environment.UnityGymWrapper import UnityWrapper """
-
 from eps_runner.ppg.standard import StandardRunner
 from executor.ppg.standard import StandardExecutor
 
@@ -53,9 +42,8 @@ params_min              = 0.25
 params_subtract         = 0.001
 params_dynamic          = False
 
-env_name                = 'MountainCarContinuous-v0'
-#env_id                  = '3DBall'
-max_action              = 1.0
+env_name                = 'Pendulum-v0'
+max_action              = 90
 folder                  = 'weights/pong'
 
 use_ppg                 = True
@@ -72,7 +60,6 @@ state_dim               = None
 action_dim              = None
 
 env                     = gym.make(env_name)
-#env                     = UnityWrapper(default_registry[env_id].make())
 
 #############################################  
 
