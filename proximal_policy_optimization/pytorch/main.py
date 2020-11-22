@@ -1,48 +1,60 @@
 import gym
 
-from eps_runner.ppg.pong_eps import PongRunner
+""" from eps_runner.ppg_unity.standard import StandardRunner
+from executor.ppg.standard import StandardExecutor
+
+#from agent.ppg.multi.agent_multi_standard import AgentMultiDiscrete, AgentMultiContinous
+from agent.ppg.agent_standard import AgentDiscrete, AgentContinous
+from model.ppg.PPGTanhNN import Policy_Model, Value_Model
+
+from run import run
+from mlagents_envs.registry import default_registry
+from environment.UnityGymWrapper import UnityWrapper """
+
+from eps_runner.ppg.standard import StandardRunner
 from executor.ppg.standard import StandardExecutor
 
 from agent.ppg.agent_standard import AgentDiscrete, AgentContinous
-from model.ppg.Pong import Policy_Model, Value_Model
+from model.ppg.PPGTanhNN import Policy_Model, Value_Model
 
 from run import run
 
 ############## Hyperparameters ##############
 
-load_weights            = True # If you want to load the agent, set this to True
-save_weights            = True # If you want to save the agent, set this to True
+load_weights            = False # If you want to load the agent, set this to True
+save_weights            = False # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
-reward_threshold        = 20 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
+reward_threshold        = 200 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 n_saved                 = 10
 
 n_plot_batch            = 100000 # How many episode you want to plot the result
 n_episode               = 100000 # How many episode you want to run
-n_update                = 256 # How many episode before you update the Policy
+n_update                = 1024 # How many episode before you update the Policy
 n_aux_update            = 10
 
-policy_kl_range         = 0.0008
-policy_params           = 20
-value_clip              = 2.0
-entropy_coef            = 0.01
+policy_kl_range         = 0.03
+policy_params           = 5
+value_clip              = 5.0
+entropy_coef            = 0.00
 vf_loss_coef            = 1.0
 batch_size              = 32
-PPO_epochs              = 4
-Aux_epochs              = 4
+PPO_epochs              = 10
+Aux_epochs              = 10
 action_std              = 1.0
 gamma                   = 0.99
 lam                     = 0.95
-learning_rate           = 2.5e-4
+learning_rate           = 3e-4
 
 params_max              = 1.0
 params_min              = 0.25
 params_subtract         = 0.001
 params_dynamic          = False
 
-env_name                = 'Pong-v4'
+env_name                = 'MountainCarContinuous-v0'
+#env_id                  = '3DBall'
 max_action              = 1.0
 folder                  = 'weights/pong'
 
@@ -50,13 +62,17 @@ use_ppg                 = True
 
 Policy_or_Actor_Model   = Policy_Model
 Value_or_Critic_Model   = Value_Model
-Runner                  = PongRunner
+Runner                  = StandardRunner
 Executor                = StandardExecutor
 
-state_dim               = 80 * 80
-action_dim              = 3
+AgentDiscrete           = AgentDiscrete
+AgentContinous          = AgentContinous
+
+state_dim               = None
+action_dim              = None
 
 env                     = gym.make(env_name)
+#env                     = UnityWrapper(default_registry[env_id].make())
 
 #############################################  
 

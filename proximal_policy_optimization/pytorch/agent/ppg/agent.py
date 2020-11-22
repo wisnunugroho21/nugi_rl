@@ -24,6 +24,7 @@ class Agent():
         self.Aux_epochs         = Aux_epochs
         self.is_training_mode   = is_training_mode
         self.action_dim         = action_dim
+        self.state_dim          = state_dim
         self.learning_rate      = learning_rate
         self.folder             = folder
 
