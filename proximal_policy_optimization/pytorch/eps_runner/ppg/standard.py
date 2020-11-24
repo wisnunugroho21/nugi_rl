@@ -81,12 +81,14 @@ class StandardRunner(Runner):
         done = False
         total_reward = 0
         eps_time = 0
-        ############################################ 
+        ############################################           
+        self.agent.set_params(self.params) 
+        ############################################
         for _ in range(1, 5000): 
             self.agent.set_params(self.params)
             action = self.agent.act(state) 
 
-            action_gym = np.clip(action, -1.0, 1.0) * self.max_action
+            action_gym = np.clip(action * self.max_action, -self.max_action, self.max_action)
             next_state, reward, done, _ = self.env.step(action_gym)
 
             eps_time += 1 

@@ -6,7 +6,7 @@ class AdvantageFunction():
         self.gamma = 0.99
         self.lam = 0.95
 
-    def generalized_advantage_estimation(self, rewards, values, next_values, dones, ):
+    def generalized_advantage_estimation(self, rewards, values, next_values, dones):
         gae     = 0
         adv     = []     
 
