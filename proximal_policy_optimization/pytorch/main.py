@@ -1,10 +1,22 @@
 import gym
 
-from eps_runner.ppg.standard import StandardRunner
+from eps_runner.ppg_unity.standard import StandardRunner
 from executor.ppg.standard import StandardExecutor
 
 from agent.ppg.agent_standard import AgentDiscrete, AgentContinous
 from model.ppg.PPGTanhNN import Policy_Model, Value_Model
+
+from run import run
+from mlagents_envs.registry import default_registry
+from environment.UnityGymWrapper import UnityWrapper
+from mlagents_envs.environment import UnityEnvironment
+
+
+""" from eps_runner.ppg_unity.standard import StandardRunner
+from executor.ppg.standard import StandardExecutor
+
+from agent.ppg.agent_standard import AgentDiscrete, AgentContinous
+from model.ppg.PPGTanhNN import Policy_Model, Value_Model """
 
 from run import run
 
@@ -22,17 +34,17 @@ n_saved                 = 10
 n_plot_batch            = 100000 # How many episode you want to plot the result
 n_episode               = 100000 # How many episode you want to run
 n_update                = 1024 # How many episode before you update the Policy
-n_aux_update            = 10
+n_aux_update            = 5
 
 policy_kl_range         = 0.03
 policy_params           = 5
 value_clip              = 5.0
-entropy_coef            = 0.00
+entropy_coef            = 0.0
 vf_loss_coef            = 1.0
 batch_size              = 32
 PPO_epochs              = 10
 Aux_epochs              = 10
-action_std              = 1.0
+action_std              = 0.5
 gamma                   = 0.99
 lam                     = 0.95
 learning_rate           = 3e-4
@@ -43,7 +55,7 @@ params_subtract         = 0.001
 params_dynamic          = False
 
 env_name                = 'Pendulum-v0'
-max_action              = 90
+max_action              = 1.0
 folder                  = 'weights/pong'
 
 use_ppg                 = True
@@ -59,7 +71,9 @@ AgentContinous          = AgentContinous
 state_dim               = None
 action_dim              = None
 
-env                     = gym.make(env_name)
+#env                     = gym.make(env_name)
+env_id                  = '3DBall'
+env                     = UnityEnvironment(file_name=None, seed=1)
 
 #############################################  
 

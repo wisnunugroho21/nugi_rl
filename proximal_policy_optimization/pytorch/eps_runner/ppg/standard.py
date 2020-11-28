@@ -48,30 +48,30 @@ class StandardRunner(Runner):
             if self.training_mode and self.n_update is not None and self.t_updates == self.n_update:
                 self.agent.update_ppo()
                 self.t_updates = 0
-                self.t_aux_updates += 1
-
-                if self.params_dynamic:
-                    self.params = self.params - self.params_subtract
-                    self.params = self.params if self.params > self.params_min else self.params_min
+                self.t_aux_updates += 1                
 
                 if self.t_aux_updates == self.n_aux_update:
                     self.agent.update_aux()
                     self.t_aux_updates = 0
+
+                if self.params_dynamic:
+                    self.params = self.params - self.params_subtract
+                    self.params = self.params if self.params > self.params_min else self.params_min
             
             if done: 
                 break                
         
         if self.training_mode and self.n_update is None:
             self.agent.update_ppo()
-            self.t_aux_updates += 1
-
-            if self.params_dynamic:
-                self.params = self.params - self.params_subtract
-                self.params = self.params if self.params > self.params_min else self.params_min
+            self.t_aux_updates += 1            
 
             if self.t_aux_updates == self.n_aux_update:
                 self.agent.update_aux()
                 self.t_aux_updates = 0
+
+            if self.params_dynamic:
+                self.params = self.params - self.params_subtract
+                self.params = self.params if self.params > self.params_min else self.params_min
                     
         return total_reward, eps_time
 
@@ -106,29 +106,29 @@ class StandardRunner(Runner):
             if self.training_mode and self.n_update is not None and self.t_updates == self.n_update:
                 self.agent.update_ppo()
                 self.t_updates = 0
-                self.t_aux_updates += 1
-
-                if self.params_dynamic:
-                    self.params = self.params - self.params_subtract
-                    self.params = self.params if self.params > self.params_min else self.params_min
+                self.t_aux_updates += 1                
 
                 if self.t_aux_updates == self.n_aux_update:
                     self.agent.update_aux()
                     self.t_aux_updates = 0
+
+                if self.params_dynamic:
+                    self.params = self.params - self.params_subtract
+                    self.params = self.params if self.params > self.params_min else self.params_min
 
             if done: 
                 break                
         
         if self.training_mode and self.n_update is None:
             self.agent.update_ppo()
-            self.t_aux_updates += 1
-
-            if self.params_dynamic:
-                self.params = self.params - self.params_subtract
-                self.params = self.params if self.params > self.params_min else self.params_min
+            self.t_aux_updates += 1           
 
             if self.t_aux_updates == self.n_aux_update:
                 self.agent.update_aux()
                 self.t_aux_updates = 0
+
+             if self.params_dynamic:
+                self.params = self.params - self.params_subtract
+                self.params = self.params if self.params > self.params_min else self.params_min
                     
         return total_reward, eps_time

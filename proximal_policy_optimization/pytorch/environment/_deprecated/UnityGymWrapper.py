@@ -29,7 +29,7 @@ class UnityWrapper():
         self.env.reset()
 
     def step(self):
-        return self.env.step()
+        self.env.step()
 
     def get_steps(self, behavior_name):
         return self.env.get_steps(behavior_name)
