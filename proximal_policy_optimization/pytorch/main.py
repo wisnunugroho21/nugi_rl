@@ -8,7 +8,6 @@ from model.ppg.PPGTanhNN import Policy_Model, Value_Model
 
 from run import run
 from mlagents_envs.registry import default_registry
-from environment.UnityGymWrapper import UnityWrapper
 from mlagents_envs.environment import UnityEnvironment
 
 
@@ -72,7 +71,6 @@ state_dim               = None
 action_dim              = None
 
 #env                     = gym.make(env_name)
-env_id                  = '3DBall'
 env                     = UnityEnvironment(file_name=None, seed=1)
 
 #############################################  

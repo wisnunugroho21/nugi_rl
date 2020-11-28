@@ -147,8 +147,8 @@ class StandardRunner(Runner):
                 actions[id]   = self.agent.act(state)
 
             if len(actions) > 0:
-                action_gym = np.stack([value for key, value in actions.items()])
-                self.env.set_actions(self.behavior_name, action_gym)
+                action_gym = np.stack([value * self.max_action for key, value in actions.items()])
+                self.env.set_actions(self.behavior_name, np.clip(action_gym, -self.max_action, self.max_action))
                 
             self.env.step()
             decisionSteps, terminalSteps = self.env.get_steps(self.behavior_name)
