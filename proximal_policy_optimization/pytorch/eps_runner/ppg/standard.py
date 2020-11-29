@@ -127,7 +127,7 @@ class StandardRunner(Runner):
                 self.agent.update_aux()
                 self.t_aux_updates = 0
 
-             if self.params_dynamic:
+            if self.params_dynamic:
                 self.params = self.params - self.params_subtract
                 self.params = self.params if self.params > self.params_min else self.params_min
                     

@@ -3,7 +3,7 @@ from torch.distributions.kl import kl_divergence
 import torch
 import torchvision
 
-from distribution.basic_continous import BasicContinous
+from distribution.basic import BasicContinous
 
 class MultivariateContinous(BasicContinous):
     def sample(self, mean, std):

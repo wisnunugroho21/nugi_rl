@@ -1,6 +1,8 @@
 import torch
 
-from distribution.basic import BasicDiscrete, BasicContinous
+from distribution.basic import BasicDiscrete
+from distribution.multivariate_continous import MultivariateContinous
+
 from agent.ppg.agent import Agent
 from loss.truly_ppo import TrulyPPO
 from loss.joint_aux import JointAux
@@ -78,8 +80,9 @@ class AgentContinous(Agent):
                 entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs,
                 gamma, lam, learning_rate, folder, use_gpu)
         
-        self.action_std     = action_std
-        self.distribution   = BasicContinous(self.device)
+        self.action_std     = torch.eye(action_dim).to(self.device) * action_std
+        self.distribution   = MultivariateContinous(self.device)
+        
         self.trulyPPO       = TrulyPPO(self.device, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)
         self.auxLoss        = JointAux(self.device)
 

@@ -1,6 +1,8 @@
 import torch
 
-from distribution.basic import BasicDiscrete, BasicContinous
+from distribution.basic import BasicDiscrete
+from distribution.multivariate_continous import MultivariateContinous
+
 from policy_function.advantage_function import AdvantageFunction
 
 from loss.ppo import PPO
@@ -16,7 +18,7 @@ class TrulyPPO(PPO):
         self.advantagefunction  = AdvantageFunction()
 
         self.discrete    = BasicDiscrete(device)
-        self.continous   = BasicContinous(device)        
+        self.continous   = MultivariateContinous(device)        
 
     # Loss for PPO  
     def compute_discrete_loss(self, action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones):
