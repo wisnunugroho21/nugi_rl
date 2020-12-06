@@ -36,10 +36,10 @@ class AgentDiscrete(Agent):
         else:            
             action = torch.argmax(action_probs, 1)
               
-        return action
+        return action.cpu().int()
 
     # Get loss and Do backpropagation
-    def training_ppo(self, states, actions, rewards, dones, next_states): 
+    def training_ppo(self, states, actions, rewards, dones, next_states):
         action_probs, _     = self.policy(states)
         values              = self.value(states)
         old_action_probs, _ = self.policy_old(states)
@@ -56,9 +56,8 @@ class AgentDiscrete(Agent):
         self.policy_optimizer.step()
         self.value_optimizer.step()
 
-    def training_aux(self, states):        
+    def training_aux(self, states):
         Returns                         = self.value(states).detach()
-
         action_probs, values            = self.policy(states)
         old_action_probs, _             = self.policy_old(states)
 

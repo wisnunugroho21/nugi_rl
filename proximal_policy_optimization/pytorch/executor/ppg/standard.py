@@ -27,7 +27,7 @@ class StandardExecutor():
         for i_episode in range(1, self.n_episode + 1):
             total_reward, time = self.runner.run_discrete_episode()
 
-            print('Episode {} \t avg reward: {} \t time: {} \t '.format(i_episode, round(total_reward, 2), time))            
+            print('Episode {} \t avg reward: {} \t time: {} \t '.format(i_episode, round(total_reward, 3), time))            
 
             if self.save_weights:
                 if i_episode % self.n_saved == 0:
@@ -44,7 +44,7 @@ class StandardExecutor():
         for i_episode in range(1, self.n_episode + 1): 
             total_reward, time = self.runner.run_continous_episode()
 
-            print('Episode {} \t t_reward: {} \t time: {} \t '.format(i_episode, int(total_reward), time))
+            print('Episode {} \t t_reward: {} \t time: {} \t '.format(i_episode, round(total_reward, 3), time))
 
             if self.save_weights:
                 if i_episode % self.n_saved == 0:
