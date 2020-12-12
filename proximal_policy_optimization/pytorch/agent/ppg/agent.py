@@ -57,6 +57,9 @@ class Agent():
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)
 
+    def save_all(self, states, actions, rewards, dones, next_states):
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states)
+
     def act(self, state):
         pass
 
@@ -68,14 +71,8 @@ class Agent():
         pass
 
     # Update the model
-    def update_ppo(self, policy_memory = None, aux_memory = None):        
-        if policy_memory is None:
-            policy_memory = self.policy_memory
-
-        if aux_memory is None:
-            aux_memory = self.aux_memory
-
-        dataloader = DataLoader(policy_memory, self.batch_size, shuffle = False)
+    def update_ppo(self):
+        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
 
         # Optimize policy for K epochs:
         for _ in range(self.PPO_epochs):       
@@ -84,21 +81,16 @@ class Agent():
                     rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
         # Clear the memory
-        states, _, _, _, _ = policy_memory.get_all_items()
-        aux_memory.save_all(states)
-        policy_memory.clear_memory()
+        states, _, _, _, _ = self.policy_memory.get_all_items()
+        self.aux_memory.save_all(states)
+        self.policy_memory.clear_memory()
 
         # Copy new weights into old policy:
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
-        return policy_memory, aux_memory
-
-    def update_aux(self, aux_memory = None):        
-        if aux_memory is None:
-            aux_memory = self.aux_memory
-
-        dataloader  = DataLoader(aux_memory, self.batch_size, shuffle = False)
+    def update_aux(self):
+        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False)
 
         # Optimize policy for K epochs:
         for _ in range(self.Aux_epochs):       
@@ -106,12 +98,17 @@ class Agent():
                 self.training_aux(states.float().to(self.device))
 
         # Clear the memory
-        aux_memory.clear_memory()
+        self.aux_memory.clear_memory()
 
-        # Copy new weights into old policy:
+        # Copy new weights into old policy
         self.policy_old.load_state_dict(self.policy.state_dict())
 
-        return aux_memory
+    def update_model_ppo(self):
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.value_old.load_state_dict(self.value.state_dict())
+
+    def update_model_aux(self):
+        self.policy_old.load_state_dict(self.policy.state_dict())
 
     def save_weights(self):
         torch.save({

@@ -54,6 +54,9 @@ class Agent:
     def save_eps(self, state, action, reward, done, next_state):
         self.memory.save_eps(state, action, reward, done, next_state)
 
+    def save_all(self, states, actions, rewards, dones, next_states):
+        self.memory.save_all(states, actions, rewards, dones, next_states)
+
     def act(self, state):
         pass
 
@@ -62,11 +65,8 @@ class Agent:
         pass
 
     # Update the model
-    def update_ppo(self, memory = None):        
-        if memory is None:
-            memory = self.memory 
-
-        dataloader = DataLoader(memory, self.batch_size, shuffle = False)
+    def update_ppo(self):
+        dataloader = DataLoader(self.memory, self.batch_size, shuffle = False)
 
         # Optimize policy for K epochs:
         for _ in range(self.PPO_epochs):       
@@ -75,13 +75,15 @@ class Agent:
                     rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
         # Clear the memory
-        memory.clear_memory()
+        self.memory.clear_memory()
 
         # Copy new weights into old policy:
         self.actor_old.load_state_dict(self.actor.state_dict())
         self.critic_old.load_state_dict(self.critic.state_dict())
 
-        return memory
+    def update_model_ppo(self):
+        self.actor_old.load_state_dict(self.actor.state_dict())
+        self.critic_old.load_state_dict(self.critic.state_dict())
 
     def save_weights(self):
         torch.save({

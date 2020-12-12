@@ -84,7 +84,7 @@ class StandardRunner(Runner):
         ############################################           
         self.agent.set_params(self.params) 
         ############################################
-        for _ in range(1, 5000): 
+        for _ in range(1, 10000): 
             self.agent.set_params(self.params)
             action = self.agent.act(state) 
 
