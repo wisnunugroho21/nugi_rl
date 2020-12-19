@@ -28,11 +28,10 @@ class StandardRunner(Runner):
         self.tracked_agents     = decision_steps.agent_id
 
         self.policy_memories    = {}
-        self.aux_memories       = {}
         for agent_id in self.tracked_agents:
             self.policy_memories[agent_id]  = ListMemory()
-            self.aux_memories[agent_id]     = AuxMemory()
-
+            
+    """
     def run_discrete_episode(self):
         self.env.reset()
         decisionSteps, _    = self.env.get_steps(self.behavior_name)
@@ -126,7 +125,7 @@ class StandardRunner(Runner):
                 self.params = self.params - self.params_subtract
                 self.params = self.params if self.params > self.params_min else self.params_min
                     
-        return total_reward, eps_time
+        return total_reward, eps_time """
 
     def run_continous_episode(self):
         self.env.reset()
@@ -181,7 +180,6 @@ class StandardRunner(Runner):
                         self.policy_memories[track_agent].save_eps(states[track_agent], actions[track_agent], rewards[track_agent], float(dones[track_agent]), terminated_states[track_agent])
 
             if self.training_mode and self.n_update is not None and self.t_updates == self.n_update:
-                self.t_aux_updates += 1
                 self.t_updates = 0
 
                 """ tempMemory = ListMemory()
@@ -196,24 +194,8 @@ class StandardRunner(Runner):
                 tempMemory.clear_memory() """
 
                 for track_agent in self.tracked_agents: 
-                    self.policy_memories[track_agent], self.aux_memories[track_agent] = self.agent.update_ppo(self.policy_memories[track_agent], self.aux_memories[track_agent], False)
+                    self.policy_memories[track_agent] = self.agent.update_ppo(self.policy_memories[track_agent], False)
                 self.agent.update_model_ppo()
-                
-                if self.t_aux_updates == self.n_aux_update:
-                    self.t_aux_updates = 0
-
-                    """ tempAuxMemory = AuxMemory()
-                    for track_agent in self.tracked_agents:
-                        tempstates = self.aux_memories[track_agent].get_all_items()
-                        tempAuxMemory.save_all(tempstates)
-                        self.aux_memories[track_agent].clear_memory()
-
-                    self.agent.update_aux(tempAuxMemory)
-                    tempAuxMemory.clear_memory() """
-
-                    for track_agent in self.tracked_agents: 
-                        self.aux_memories[track_agent] = self.agent.update_aux(self.aux_memories[track_agent], False)
-                    self.agent.update_model_aux()
 
                 if self.params_dynamic:
                     self.params = self.params - self.params_subtract
@@ -222,38 +204,9 @@ class StandardRunner(Runner):
             states      = next_states
         
         if self.training_mode and self.n_update is None:
-            self.t_aux_updates += 1
-
-            """ tempMemory = ListMemory()
-                
             for track_agent in self.tracked_agents: 
-                tempstates, tempactions, temprewards, tempdones, tempnext_states = self.policy_memories[track_agent].get_all_items()
-                self.aux_memories[track_agent].save_all(tempstates)
-                tempMemory.save_all(tempstates, tempactions, temprewards, tempdones, tempnext_states)
-                self.policy_memories[track_agent].clear_memory()
-
-            self.agent.update_ppo(tempMemory)
-            tempMemory.clear_memory() """
-
-            for track_agent in self.tracked_agents: 
-                self.policy_memories[track_agent], self.aux_memories[track_agent] = self.agent.update_ppo(self.policy_memories[track_agent], self.aux_memories[track_agent], False)
+                self.policy_memories[track_agent] = self.agent.update_ppo(self.policy_memories[track_agent], False)
             self.agent.update_model_ppo()
-        
-            if self.t_aux_updates == self.n_aux_update:
-                self.t_aux_updates = 0
-                
-                """ tempAuxMemory = AuxMemory()
-                for track_agent in self.tracked_agents:
-                    tempstates = self.aux_memories[track_agent].get_all_items()
-                    tempAuxMemory.save_all(tempstates)
-                    self.aux_memories[track_agent].clear_memory()
-
-                self.agent.update_aux(tempAuxMemory)
-                tempAuxMemory.clear_memory() """
-
-                for track_agent in self.tracked_agents: 
-                    self.aux_memories[track_agent] = self.agent.update_aux(self.aux_memories[track_agent], False)
-                self.agent.update_model_aux()
 
             if self.params_dynamic:
                 self.params = self.params - self.params_subtract

@@ -1,12 +1,15 @@
 import gym
 
-from eps_runner.ppg.standard import StandardRunner
-from executor.ppg.standard import StandardExecutor
+from eps_runner.ppo_unity.standard import StandardRunner
+from executor.ppo.standard import StandardExecutor
 
-from agent.ppg.agent_standard import AgentDiscrete, AgentContinous
-from model.ppg.PPGTanhNN import Policy_Model, Value_Model
+from agent.ppo.agent_standard import AgentDiscrete, AgentContinous
+from model.ppo.BasicTanhNN import Actor_Model, Critic_Model
 
 from run import run
+from mlagents_envs.registry import default_registry
+from mlagents_envs.environment import UnityEnvironment
+#from gym_unity.envs import UnityToGymWrapper
 
 ############## Hyperparameters ##############
 
@@ -14,7 +17,7 @@ load_weights            = False # If you want to load the agent, set this to Tru
 save_weights            = False # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
-reward_threshold        = 200 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
+reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 n_saved                 = 10
@@ -26,10 +29,10 @@ n_aux_update            = 5
 
 policy_kl_range         = 0.03
 policy_params           = 5
-value_clip              = 5.0
+value_clip              = 2.0
 entropy_coef            = 0.0
 vf_loss_coef            = 1.0
-batch_size              = 64
+batch_size              = 32
 PPO_epochs              = 10
 Aux_epochs              = 10
 action_std              = 1.0
@@ -44,12 +47,12 @@ params_dynamic          = False
 
 env_name                = 'MountainCarContinuous-v0'
 max_action              = 1.0
-folder                  = 'weights/walker'
+folder                  = 'weights/tennis'
 
-use_ppg                 = True
+use_ppg                 = False
 
-Policy_or_Actor_Model   = Policy_Model
-Value_or_Critic_Model   = Value_Model
+Policy_or_Actor_Model   = Actor_Model
+Value_or_Critic_Model   = Critic_Model
 Runner                  = StandardRunner
 Executor                = StandardExecutor
 
@@ -61,6 +64,7 @@ action_dim              = None
 
 env                     = gym.make(env_name)
 #env                     = UnityEnvironment(file_name=None, seed=1)
+#env                     = UnityToGymWrapper(env)
 
 #############################################  
 
