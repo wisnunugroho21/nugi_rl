@@ -103,13 +103,6 @@ class Agent():
         # Copy new weights into old policy
         self.policy_old.load_state_dict(self.policy.state_dict())
 
-    def update_model_ppo(self):
-        self.policy_old.load_state_dict(self.policy.state_dict())
-        self.value_old.load_state_dict(self.value.state_dict())
-
-    def update_model_aux(self):
-        self.policy_old.load_state_dict(self.policy.state_dict())
-
     def save_weights(self):
         torch.save({
             'model_state_dict': self.policy.state_dict(),

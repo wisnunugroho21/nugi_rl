@@ -7,9 +7,9 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-                nn.Linear(state_dim, 128),
+                nn.Linear(state_dim, 256),
                 nn.ReLU(),
-                nn.Linear(128, 128),
+                nn.Linear(256, 128),
                 nn.ReLU(),
               ).float().to(set_device(use_gpu))
 
@@ -31,9 +31,9 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-                 nn.Linear(state_dim, 64),
+                 nn.Linear(state_dim, 128),
                 nn.ReLU(),
-                nn.Linear(64, 64),
+                nn.Linear(128, 64),
                 nn.ReLU(),
                 nn.Linear(64, 1)
               ).float().to(set_device(use_gpu))

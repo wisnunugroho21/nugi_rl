@@ -1,12 +1,11 @@
 import torch
 
-from distribution.basic import BasicDiscrete
-from distribution.multivariate_continous import MultivariateContinous
+from distribution.basic import BasicDiscrete, BasicContinous
 
 class JointAux():
     def __init__(self, device):
         self.discrete    = BasicDiscrete(device)
-        self.continous   = MultivariateContinous(device)
+        self.continous   = BasicContinous(device)
 
     def compute_discrete_loss(self, action_probs, old_action_probs, values, Returns):
         # Don't use old value in backpropagation
