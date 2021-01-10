@@ -1,7 +1,7 @@
 import gym
 
-from eps_runner.vectorized_eps import VectorizedRunner
-from executor.sync import VectorizedExecutor
+from eps_runner.standard import StandardRunner
+from executor.standard import StandardExecutor
 
 from agent.agent_standard import AgentDiscrete, AgentContinous
 from model.PPGTanhNN import Policy_Model, Value_Model
@@ -45,14 +45,14 @@ params_min              = 0.25
 params_subtract         = 0.001
 params_dynamic          = False
 
-env_name                = 'BipedalWalker-v3'
+env_name                = 'gym_longicontrol:DeterministicTrack-v0'
 max_action              = 1.0
 folder                  = 'weights/tennis'
 
 Policy_or_Actor_Model   = Policy_Model
 Value_or_Critic_Model   = Value_Model
-Runner                  = VectorizedRunner
-Executor                = VectorizedExecutor
+Runner                  = StandardRunner
+Executor                = StandardExecutor
 
 AgentDiscrete           = AgentDiscrete
 AgentContinous          = AgentContinous
@@ -60,7 +60,7 @@ AgentContinous          = AgentContinous
 state_dim               = None
 action_dim              = None
 
-env                     = [gym.make(env_name) for _ in range(2)]
+env                     = gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 #env                     = UnityEnvironment(file_name=None, seed=1)
 #env                     = UnityToGymWrapper(env)
 
