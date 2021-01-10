@@ -21,7 +21,7 @@ class AgentDiscrete(Agent):
 
         self.distribution   = BasicDiscrete(self.device)
         self.trulyPPO       = TrulyPPO(self.device, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)      
-        self.auxLoss        = JointAux(self.device)
+        self.auxLoss        = JointAux(self.device, value_clip)
 
     def act(self, state):
         state           = torch.FloatTensor(state).to(self.device)
@@ -56,12 +56,13 @@ class AgentDiscrete(Agent):
         self.policy_optimizer.step()
         self.value_optimizer.step()
 
-    def training_aux(self, states):
-        Returns                         = self.value(states).detach()
-        action_probs, values            = self.policy(states)
-        old_action_probs, _             = self.policy_old(states)
+    def training_aux(self, states, rewards, dones, next_states):
+        returns                 = self.value(states)
 
-        joint_loss                      = self.auxLoss.compute_discrete_loss(action_probs, old_action_probs, values, Returns)
+        action_probs, values    = self.policy(states)
+        old_action_probs, _     = self.policy_old(states)
+
+        joint_loss              = self.auxLoss.compute_discrete_loss(action_probs, old_action_probs, values, returns)
 
         self.policy_optimizer.zero_grad()
         joint_loss.backward()
@@ -83,7 +84,7 @@ class AgentContinous(Agent):
         self.distribution   = BasicContinous(self.device)
         
         self.trulyPPO       = TrulyPPO(self.device, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)
-        self.auxLoss        = JointAux(self.device)
+        self.auxLoss        = JointAux(self.device, value_clip)
 
     def set_params(self, params):
         super().set_params(params)
@@ -123,12 +124,12 @@ class AgentContinous(Agent):
         self.value_optimizer.step()
 
     def training_aux(self, states):
-        Returns                         = self.value(states).detach()
+        returns             = self.value(states)
 
-        action_mean, values             = self.policy(states)
-        old_action_mean, _              = self.policy_old(states)
+        action_mean, values = self.policy(states)
+        old_action_mean, _  = self.policy_old(states)
 
-        joint_loss                      = self.auxLoss.compute_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, Returns)
+        joint_loss          = self.auxLoss.compute_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, returns)
 
         self.policy_optimizer.zero_grad()
         joint_loss.backward()

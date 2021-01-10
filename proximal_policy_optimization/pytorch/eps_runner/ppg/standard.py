@@ -1,6 +1,6 @@
 import numpy as np
 
-from eps_runner.ppg.runner import Runner
+from eps_runner.runner import Runner
 
 class StandardRunner(Runner):
     def __init__(self, env, agent, render, training_mode, n_update, n_aux_update, params_max, params_min, params_subtract, params_dynamic, max_action = 1):

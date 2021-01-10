@@ -1,6 +1,6 @@
 import torch
 
-from agent.ppg.agent_standard import AgentContinous, AgentDiscrete
+from agent.agent_standard import AgentContinous, AgentDiscrete
 from memory.list_memory import ListMemory
 from memory.aux_memory import AuxMemory
 

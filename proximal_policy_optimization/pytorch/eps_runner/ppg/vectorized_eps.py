@@ -1,5 +1,5 @@
 import numpy as np
-from eps_runner.ppg.standard import StandardRunner
+from eps_runner.standard import StandardRunner
 
 from memory.list_memory import ListMemory
 from environment.vectorized_env import VectorEnv

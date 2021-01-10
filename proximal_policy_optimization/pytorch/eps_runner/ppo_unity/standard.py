@@ -1,6 +1,6 @@
 import numpy as np
 
-from eps_runner.ppg.runner import Runner
+from eps_runner.runner import Runner
 from memory.list_memory import ListMemory
 from memory.aux_memory import AuxMemory
 

@@ -1,6 +1,6 @@
 import numpy as np
 from utils.math_function import prepro_half_one_dim
-from eps_runner.ppg.standard import StandardRunner
+from eps_runner.standard import StandardRunner
 
 class PongRunner(StandardRunner):
     def run_discrete_episode(self):

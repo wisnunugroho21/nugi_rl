@@ -1,6 +1,6 @@
 import numpy as np
 
-from eps_runner.ppg.standard import StandardRunner
+from eps_runner.standard import StandardRunner
 
 class SlimeVolleyRunner(StandardRunner):
     def run_discrete_episode(self):

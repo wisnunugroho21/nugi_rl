@@ -1,6 +1,6 @@
 import torch
 
-from agent.ppg.agent import Agent
+from agent.agent import Agent
 from memory.list_memory import ListMemory
 from memory.aux_memory import AuxMemory
 

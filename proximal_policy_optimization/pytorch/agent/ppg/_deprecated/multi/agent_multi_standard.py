@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 from distribution.basic import BasicDiscrete, BasicContinous
-from agent.ppg.multi.agent_multi import AgentMulti
+from agent.multi.agent_multi import AgentMulti
 from loss.truly_ppo import TrulyPPO
 from loss.joint_aux import JointAux
 from utils.pytorch_utils import set_device, to_numpy
