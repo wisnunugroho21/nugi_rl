@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from utils.math_function import plot
 from torch.utils.tensorboard import SummaryWriter
