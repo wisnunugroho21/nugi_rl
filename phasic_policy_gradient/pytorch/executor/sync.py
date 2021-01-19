@@ -2,7 +2,6 @@ import numpy as np
 
 from utils.math_function import plot
 from torch.utils.tensorboard import SummaryWriter
-from eps_runner.vectorized_eps import VectorizedRunner
 from memory.list_memory import ListMemory
 
 import time
@@ -10,10 +9,10 @@ import datetime
 
 class VectorizedExecutor():
     def __init__(self, agent, env, n_iteration, Runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, n_aux_update = 10, 
-        n_saved = 10, params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True, max_action = 1.0):
+        n_saved = 10, max_action = 1.0, reward_target = 300):
 
         self.agent              = agent
-        self.runner             = VectorizedRunner(env, render, training_mode, n_update, max_action = max_action, writer = SummaryWriter(), n_plot_batch = n_plot_batch)
+        self.runner             = Runner(env, render, training_mode, n_update, max_action = max_action, writer = SummaryWriter(), n_plot_batch = n_plot_batch)
         self.memories           = [ListMemory() for _ in range(len(env))]
 
         self.n_iteration        = n_iteration
@@ -23,11 +22,7 @@ class VectorizedExecutor():
         self.n_plot_batch       = n_plot_batch
         self.max_action         = max_action
         self.n_aux_update       = n_aux_update
-
-        self.params_min         = params_min
-        self.params_subtract    = params_subtract
-        self.params_dynamic     = params_dynamic
-        self.params             = params_max 
+        self.reward_target      = reward_target
 
         self.t_updates          = 0
         self.t_aux_updates      = 0

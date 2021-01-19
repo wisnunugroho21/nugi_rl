@@ -1,7 +1,6 @@
 import numpy as np
 
 from eps_runner.runner import Runner
-from utils.math_function import new_std_from_rewards
 
 class StandardRunner(Runner):
     def __init__(self, env, render, training_mode, n_update, agent = None, max_action = 1, writer = None, n_plot_batch = 0):
@@ -21,10 +20,6 @@ class StandardRunner(Runner):
         self.eps_time           = 0
 
         self.states             = self.env.reset()
-
-        self.rewards            = []
-        self.reward_target      = 300
-        self.std                = 1.0
 
     def run_discrete_iteration(self, agent = None):
         if agent is None:
@@ -60,8 +55,9 @@ class StandardRunner(Runner):
 
     def run_continous_iteration(self, agent = None):
         if agent is None:
-            agent = self.agent
-        
+            agent = self.agent        
+
+        eps_rewards = []
         for _ in range(self.n_update):
             action = agent.act(self.states) 
 
@@ -80,7 +76,7 @@ class StandardRunner(Runner):
 
             if done:                
                 self.i_episode  += 1
-                self.rewards.append(self.total_reward)
+                eps_rewards.append(self.total_reward)
 
                 print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
 
@@ -90,10 +86,6 @@ class StandardRunner(Runner):
 
                 self.states         = self.env.reset()
                 self.total_reward   = 0
-                self.eps_time       = 0
+                self.eps_time       = 0        
 
-        if len(self.rewards) > 0:
-            self.std    = new_std_from_rewards(self.rewards, self.reward_target)
-            del self.rewards[:]
-
-        return agent
+        return agent, eps_rewards

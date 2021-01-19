@@ -4,7 +4,7 @@ from mlagents_envs.environment import UnityEnvironment
 def run_vectorized(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, Value_or_Critic_Model, env, state_dim, action_dim,
     load_weights, save_weights, training_mode, use_gpu, reward_threshold, render, n_saved, n_plot_batch, n_episode, n_update, n_aux_update,
     policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, action_std, gamma, lam, learning_rate,
-    params_max, params_min, params_subtract, params_dynamic, max_action, folder):
+    max_action, folder, reward_target):
 
     if state_dim is None:
         if type(env[0].observation_space) is gym.spaces.Box:
@@ -35,7 +35,7 @@ def run_vectorized(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Ac
             print('Weight Loaded')
 
         executor = Executor(agent, env, n_episode, Runner, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_aux_update, 
-            n_saved, params_max, params_min, params_subtract, params_dynamic, max_action)
+            n_saved, max_action, reward_target)
 
         executor.execute_continous()
 
@@ -53,20 +53,20 @@ def run_vectorized(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Ac
             print('Weight Loaded')
 
         executor = Executor(agent, env, n_episode, Runner, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_aux_update, 
-            n_saved, params_max, params_min, params_subtract, params_dynamic, max_action)
+            n_saved)
 
         executor.execute_discrete()
 
 def run(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, Value_or_Critic_Model, env, state_dim, action_dim,
     load_weights, save_weights, training_mode, use_gpu, reward_threshold, render, n_saved, n_plot_batch, n_episode, n_update, n_aux_update,
     policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, action_std, gamma, lam, learning_rate,
-    params_max, params_min, params_subtract, params_dynamic, max_action, folder):
+    max_action, folder, reward_target):
 
     if isinstance(env, list):
         run_vectorized(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, Value_or_Critic_Model, env, state_dim, action_dim,
             load_weights, save_weights, training_mode, use_gpu, reward_threshold, render, n_saved, n_plot_batch, n_episode, n_update, n_aux_update,
             policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, action_std, gamma, lam, learning_rate,
-            params_max, params_min, params_subtract, params_dynamic, max_action, folder)
+            max_action, folder, reward_target)
         return
 
     if state_dim is None:
@@ -98,7 +98,7 @@ def run(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, 
             print('Weight Loaded')
 
         executor = Executor(agent, env, n_episode, Runner, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_aux_update, 
-            n_saved, params_max, params_min, params_subtract, params_dynamic, max_action)
+            n_saved, max_action, reward_target)
 
         executor.execute_continous()
 
@@ -116,6 +116,6 @@ def run(Runner, Executor, AgentDiscrete, AgentContinous, Policy_or_Actor_Model, 
             print('Weight Loaded')
 
         executor = Executor(agent, env, n_episode, Runner, reward_threshold, save_weights, n_plot_batch, render, training_mode, n_update, n_aux_update, 
-            n_saved, params_max, params_min, params_subtract, params_dynamic, max_action)
+            n_saved)
 
         executor.execute_discrete()

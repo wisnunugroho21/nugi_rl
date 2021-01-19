@@ -74,6 +74,7 @@ class VectorizedRunner(StandardRunner):
         if memories is None:
             memories = self.memories
 
+        eps_rewards = []
         for _ in range(self.n_update):
             actions = agent.act(self.states)
 
@@ -99,6 +100,8 @@ class VectorizedRunner(StandardRunner):
 
             if done:                
                 self.i_episode  += 1
+                eps_rewards.append(self.total_reward)
+
                 print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
 
                 if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
@@ -109,4 +112,4 @@ class VectorizedRunner(StandardRunner):
                 self.total_reward   = 0
                 self.eps_time       = 0             
         
-        return agent, memories
+        return agent, memories, eps_rewards

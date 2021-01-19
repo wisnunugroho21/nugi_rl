@@ -1,18 +1,17 @@
 import numpy as np
-
-from utils.math_function import plot
 from torch.utils.tensorboard import SummaryWriter
-from eps_runner.standard import StandardRunner
 
 import time
 import datetime
 
+from utils.math_function import new_std_from_rewards
+
 class StandardExecutor():
     def __init__(self, agent, env, n_iteration, Runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, n_aux_update = 10, 
-        n_saved = 10, params_max = 1.0, params_min = 0.2, params_subtract = 0.0001, params_dynamic = True, max_action = 1.0):
+        n_saved = 10, max_action = 1.0, reward_target = 300):
 
         self.agent              = agent
-        self.runner             = StandardRunner(env, render, training_mode, n_update, max_action = max_action, writer = SummaryWriter(), n_plot_batch = n_plot_batch)
+        self.runner             = Runner(env, render, training_mode, n_update, max_action = max_action, writer = SummaryWriter(), n_plot_batch = n_plot_batch)
 
         self.n_iteration        = n_iteration
         self.save_weights       = save_weights
@@ -21,14 +20,10 @@ class StandardExecutor():
         self.n_plot_batch       = n_plot_batch
         self.max_action         = max_action
         self.n_aux_update       = n_aux_update
-
-        self.params_min         = params_min
-        self.params_subtract    = params_subtract
-        self.params_dynamic     = params_dynamic
-        self.params             = params_max 
+        self.reward_target      = reward_target 
 
         self.t_updates          = 0
-        self.t_aux_updates      = 0
+        self.t_aux_updates      = 0        
         
     def execute_discrete(self):
         start = time.time()
@@ -45,10 +40,6 @@ class StandardExecutor():
                     self.agent.update_aux()
                     self.t_aux_updates = 0
 
-                if self.params_dynamic:
-                    self.params = self.params - self.params_subtract
-                    self.params = self.params if self.params > self.params_min else self.params_min      
-
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
                         self.agent.save_weights() 
@@ -64,9 +55,10 @@ class StandardExecutor():
         print('Running the training!!')
 
         try:
-            for i_iteration in range(self.n_iteration):
-                self.agent.set_std(self.runner.std)
-                self.agent  = self.runner.run_continous_iteration(self.agent)
+            rewards = []
+            for i_iteration in range(self.n_iteration):                
+                self.agent, cur_rewards = self.runner.run_continous_iteration(self.agent)
+                rewards += cur_rewards
 
                 self.agent.update_ppo()
                 self.t_aux_updates += 1                
@@ -75,9 +67,9 @@ class StandardExecutor():
                     self.agent.update_aux()
                     self.t_aux_updates = 0
 
-                if self.params_dynamic:
-                    self.params = self.params - self.params_subtract
-                    self.params = self.params if self.params > self.params_min else self.params_min
+                    new_std = new_std_from_rewards(rewards, self.reward_target)
+                    self.agent.set_std(new_std)
+                    del rewards[:]
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
