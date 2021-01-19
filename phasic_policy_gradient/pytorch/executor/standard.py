@@ -64,7 +64,8 @@ class StandardExecutor():
         print('Running the training!!')
 
         try:
-            for i_iteration in range(self.n_iteration): 
+            for i_iteration in range(self.n_iteration):
+                self.agent.set_std(self.runner.std)
                 self.agent  = self.runner.run_continous_iteration(self.agent)
 
                 self.agent.update_ppo()

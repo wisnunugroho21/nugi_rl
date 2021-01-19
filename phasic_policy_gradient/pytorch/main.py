@@ -45,7 +45,7 @@ params_min              = 0.25
 params_subtract         = 0.001
 params_dynamic          = False
 
-env_name                = 'LunarLanderContinuous-v2'
+env_name                = 'BipedalWalker-v3'
 max_action              = 1.0
 folder                  = 'weights/tennis'
 

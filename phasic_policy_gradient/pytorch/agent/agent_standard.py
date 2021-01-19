@@ -80,15 +80,16 @@ class AgentContinous(Agent):
                 entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs,
                 gamma, lam, learning_rate, folder, use_gpu)
         
+        self.action_dim     = action_dim
+
         self.action_std     = torch.ones([1, action_dim]).float().to(self.device)
         self.distribution   = BasicContinous(self.device)
         
         self.trulyPPO       = TrulyPPO(self.device, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)
         self.auxLoss        = JointAux(self.device, value_clip)
 
-    def set_params(self, params):
-        super().set_params(params)
-        self.action_std     = self.action_std * params
+    def set_std(self, action_std):
+        self.action_std     = torch.ones([1, self.action_dim]).float().to(self.device) * action_std
 
     def act(self, state):
         state           = torch.FloatTensor(state).to(self.device)

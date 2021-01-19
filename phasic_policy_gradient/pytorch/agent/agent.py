@@ -52,9 +52,7 @@ class Agent():
           self.value.eval()
 
     def set_params(self, params):
-        self.value_clip         = self.value_clip * params if self.value_clip is not None else self.value_clip
-        self.policy_kl_range    = self.policy_kl_range * params
-        self.policy_params      = self.policy_params * params
+        pass
 
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)

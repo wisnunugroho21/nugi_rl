@@ -48,3 +48,15 @@ def plot(datas):
     print('Max :', np.max(datas))
     print('Min :', np.min(datas))
     print('Avg :', np.mean(datas))
+
+def new_std_from_rewards(rewards, reward_target):
+    rewards     = np.array(rewards)
+    mean_reward = np.mean(reward_target - rewards)
+    new_std     = mean_reward / reward_target
+
+    if new_std < 0.25:
+        new_std = 0.25
+    elif new_std > 1.0:
+        new_std = 1.0
+
+    return new_std
