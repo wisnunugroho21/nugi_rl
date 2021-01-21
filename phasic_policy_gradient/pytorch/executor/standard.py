@@ -23,7 +23,8 @@ class StandardExecutor():
         self.reward_target      = reward_target 
 
         self.t_updates          = 0
-        self.t_aux_updates      = 0        
+        self.t_aux_updates      = 0
+        self.t_new_std          = 0        
         
     def execute_discrete(self):
         start = time.time()
@@ -61,15 +62,19 @@ class StandardExecutor():
                 rewards += cur_rewards
 
                 self.agent.update_ppo()
-                self.t_aux_updates += 1                
+                self.t_aux_updates += 1
+                self.t_new_std += 1                
 
                 if self.t_aux_updates == self.n_aux_update:
                     self.agent.update_aux()
                     self.t_aux_updates = 0
 
+                if self.t_new_std == (self.n_aux_update * 5):
                     new_std = new_std_from_rewards(rewards, self.reward_target)
                     self.agent.set_std(new_std)
                     del rewards[:]
+
+                    self.t_new_std = 0
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
