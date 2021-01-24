@@ -30,12 +30,12 @@ class Agent():
         self.learning_rate      = learning_rate
         self.folder             = folder
 
-        self.policy             = Policy_Model(state_dim, action_dim)
-        self.policy_old         = Policy_Model(state_dim, action_dim)
+        self.policy             = Policy_Model(state_dim, action_dim, use_gpu)
+        self.policy_old         = Policy_Model(state_dim, action_dim, use_gpu)
         self.policy_optimizer   = Adam(self.policy.parameters(), lr = learning_rate)
 
-        self.value              = Value_Model(state_dim, action_dim)
-        self.value_old          = Value_Model(state_dim, action_dim)
+        self.value              = Value_Model(state_dim, action_dim, use_gpu)
+        self.value_old          = Value_Model(state_dim, action_dim, use_gpu)
         self.value_optimizer    = Adam(self.value.parameters(), lr = learning_rate)
 
         self.policy_memory      = ListMemory()
@@ -58,6 +58,10 @@ class Agent():
         self.policy_memory.save_eps(state, action, reward, done, next_state)
 
     def save_all(self, states, actions, rewards, dones, next_states):
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states)
+
+    def save_memory(self, memory):
+        states, actions, rewards, dones, next_states = memory.get_all_items()
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):

@@ -4,11 +4,11 @@ from torch.utils.tensorboard import SummaryWriter
 import time
 import datetime
 
-from utils.math_function import new_std_from_rewards
+from memory.list_memory import ListMemory
 
 class StandardExecutor():
     def __init__(self, agent, env, n_iteration, Runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, n_aux_update = 10, 
-        n_saved = 10, max_action = 1.0, reward_target = 300):
+        n_saved = 10, max_action = 1.0):
 
         self.agent              = agent
         self.runner             = Runner(env, render, training_mode, n_update, max_action = max_action, writer = SummaryWriter(), n_plot_batch = n_plot_batch)
@@ -20,11 +20,9 @@ class StandardExecutor():
         self.n_plot_batch       = n_plot_batch
         self.max_action         = max_action
         self.n_aux_update       = n_aux_update
-        self.reward_target      = reward_target 
 
         self.t_updates          = 0
-        self.t_aux_updates      = 0
-        self.t_new_std          = 0        
+        self.t_aux_updates      = 0  
         
     def execute_discrete(self):
         start = time.time()
@@ -32,7 +30,8 @@ class StandardExecutor():
 
         try:
             for i_iteration in range(self.n_iteration):
-                self.agent  = self.runner.run_discrete_iteration(self.agent)
+                memories  = self.runner.run_discrete_iteration(self.agent)
+                self.agent.save_memory(memories)
 
                 self.agent.update_ppo()
                 self.t_aux_updates += 1                
@@ -43,7 +42,7 @@ class StandardExecutor():
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
-                        self.agent.save_weights() 
+                        self.agent.save_weights()
                         print('weights saved')
 
         finally:
@@ -56,25 +55,16 @@ class StandardExecutor():
         print('Running the training!!')
 
         try:
-            rewards = []
             for i_iteration in range(self.n_iteration):                
-                self.agent, cur_rewards = self.runner.run_continous_iteration(self.agent)
-                rewards += cur_rewards
+                memories = self.runner.run_continous_iteration(self.agent)
+                self.agent.save_memory(memories)
 
                 self.agent.update_ppo()
                 self.t_aux_updates += 1
-                self.t_new_std += 1                
 
                 if self.t_aux_updates == self.n_aux_update:
                     self.agent.update_aux()
                     self.t_aux_updates = 0
-
-                if self.t_new_std == (self.n_aux_update * 5):
-                    new_std = new_std_from_rewards(rewards, self.reward_target)
-                    self.agent.set_std(new_std)
-                    del rewards[:]
-
-                    self.t_new_std = 0
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:

@@ -1,9 +1,10 @@
 import numpy as np
 
 from eps_runner.runner import Runner
+from memory.list_memory import ListMemory
 
 class StandardRunner(Runner):
-    def __init__(self, env, render, training_mode, n_update, agent = None, max_action = 1, writer = None, n_plot_batch = 0):
+    def __init__(self, env, render, training_mode, n_update, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.env                = env
         self.agent              = agent
         self.render             = render
@@ -20,17 +21,17 @@ class StandardRunner(Runner):
         self.eps_time           = 0
 
         self.states             = self.env.reset()
+        self.memories           = ListMemory()
 
-    def run_discrete_iteration(self, agent = None):
-        if agent is None:
-            agent = self.agent
+    def run_discrete_iteration(self, agent):
+        self.memories.clear_memory()
 
         for _ in range(self.n_update):
             action = agent.act(self.states)
-            next_state, reward, done, _ = self.env.step(action)            
+            next_state, reward, done, _ = self.env.step(action)
             
             if self.training_mode:
-                agent.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 
@@ -51,11 +52,10 @@ class StandardRunner(Runner):
                 self.total_reward   = 0
                 self.eps_time       = 0             
         
-        return agent
+        return self.memories
 
     def run_continous_iteration(self, agent = None):
-        if agent is None:
-            agent = self.agent        
+        self.memories.clear_memory()       
 
         eps_rewards = []
         for _ in range(self.n_update):
@@ -65,7 +65,7 @@ class StandardRunner(Runner):
             next_state, reward, done, _ = self.env.step(action_gym)
             
             if self.training_mode:
-                agent.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 
@@ -88,4 +88,4 @@ class StandardRunner(Runner):
                 self.total_reward   = 0
                 self.eps_time       = 0        
 
-        return agent, eps_rewards
+        return self.memories

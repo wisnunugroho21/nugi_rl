@@ -56,7 +56,7 @@ class AgentDiscrete(Agent):
         self.policy_optimizer.step()
         self.value_optimizer.step()
 
-    def training_aux(self, states, rewards, dones, next_states):
+    def training_aux(self, states):
         returns                 = self.value(states)
 
         action_probs, values    = self.policy(states)
@@ -82,7 +82,7 @@ class AgentContinous(Agent):
         
         self.action_dim     = action_dim
 
-        self.action_std     = torch.ones([1, action_dim]).float().to(self.device)
+        self.action_std     = torch.ones([1, action_dim]).float().to(self.device) * action_std
         self.distribution   = BasicContinous(self.device)
         
         self.trulyPPO       = TrulyPPO(self.device, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)
@@ -102,7 +102,7 @@ class AgentContinous(Agent):
             # Sample the action
             action = self.distribution.sample(action_mean, self.action_std)
         else:
-            action = action_mean  
+            action = action_mean.detach()  
               
         return to_numpy(action.squeeze(0), self.use_gpu)
 
