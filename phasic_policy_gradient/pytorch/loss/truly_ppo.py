@@ -35,7 +35,7 @@ class TrulyPPO(PPO):
 
         # Finding Surrogate Loss
         ratios          = (logprobs - Old_logprobs).exp() # ratios = probs / old_probs        
-        Kl              = self.discrete.kldivergence(old_action_probs, action_probs)
+        Kl              = self.discrete.kldivergence(Old_action_probs, action_probs)
 
         pg_targets  = torch.where(
             (Kl >= self.policy_kl_range) & (ratios > 1),
@@ -49,12 +49,10 @@ class TrulyPPO(PPO):
 
         # Getting Critic loss by using Clipped critic value
         if self.value_clip is None:
-            critic_loss   = ((Returns - values).pow(2) * 0.5).mean()
+            critic_loss     = ((Returns - values).pow(2) * 0.5).mean()
         else:
-            vpredclipped  = Old_values + torch.clamp(values - Old_values, -self.value_clip, self.value_clip) # Minimize the difference between old value and new value
-            vf_losses1    = (Returns - values).pow(2) * 0.5 # Mean Squared Error
-            vf_losses2    = (Returns - vpredclipped).pow(2) * 0.5 # Mean Squared Error        
-            critic_loss   = torch.max(vf_losses1, vf_losses2).mean() 
+            vpredclipped    = Old_values + torch.clamp(values - Old_values, -self.value_clip, self.value_clip) # Minimize the difference between old value and new value
+            critic_loss     = ((Returns - vpredclipped).pow(2) * 0.5).mean() # Mean Squared Error 
 
         # We need to maximaze Policy Loss to make agent always find Better Rewards
         # and minimize Critic Loss 
@@ -91,12 +89,10 @@ class TrulyPPO(PPO):
 
         # Getting Critic loss by using Clipped critic value
         if self.value_clip is None:
-            critic_loss   = ((Returns - values).pow(2) * 0.5).mean()
+            critic_loss     = ((Returns - values).pow(2) * 0.5).mean()
         else:
-            vpredclipped  = Old_values + torch.clamp(values - Old_values, -self.value_clip, self.value_clip) # Minimize the difference between old value and new value
-            vf_losses1    = (Returns - values).pow(2) * 0.5 # Mean Squared Error
-            vf_losses2    = (Returns - vpredclipped).pow(2) * 0.5 # Mean Squared Error        
-            critic_loss   = torch.max(vf_losses1, vf_losses2).mean()                
+            vpredclipped    = Old_values + torch.clamp(values - Old_values, -self.value_clip, self.value_clip) # Minimize the difference between old value and new value
+            critic_loss     = ((Returns - vpredclipped).pow(2) * 0.5).mean() # Mean Squared Error 
 
         # We need to maximaze Policy Loss to make agent always find Better Rewards
         # and minimize Critic Loss 

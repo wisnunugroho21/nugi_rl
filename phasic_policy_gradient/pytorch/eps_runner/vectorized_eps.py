@@ -34,7 +34,7 @@ class VectorizedRunner(StandardRunner):
 
         for _ in range(self.n_update):
             actions = agent.act(self.states)
-            datas   = self.env.step(action)    
+            datas   = self.env.step(actions)    
 
             rewards     = []
             next_states = []
@@ -48,7 +48,7 @@ class VectorizedRunner(StandardRunner):
                             
             self.states         = next_states
             self.eps_time       += 1 
-            total_reward        += np.mean(rewards)
+            self.total_reward   += np.mean(rewards)
                     
             if self.render:
                 self.env.render()

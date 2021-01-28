@@ -19,7 +19,7 @@ class SumoEnv:
         self.waktu_merah_bawah = 1
         self.waktu_merah_kiri = 1
         
-        self.__generate_routefile("env/sumo/test1.rou.xml") # first, generate the route file for this simulation
+        self.__generate_routefile("environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
 
         self.observation_space  = spaces.Box(-100, 100, (12, ))
         self.action_space       = spaces.Discrete(3)
@@ -82,8 +82,8 @@ class SumoEnv:
         if self.run:
             traci.close()  
             
-        traci.start([sumoBinary, "-c", "env/sumo/test1.sumocfg", 
-        "--tripinfo-output", "env/sumo/test1.xml",
+        traci.start([sumoBinary, "-c", "environment/sumo/test1.sumocfg", 
+        "--tripinfo-output", "environment/sumo/test1.xml",
         "--no-step-log",
         "--no-warnings",
         "--duration-log.disable"])

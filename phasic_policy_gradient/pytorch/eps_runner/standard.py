@@ -27,7 +27,7 @@ class StandardRunner(Runner):
         self.memories.clear_memory()
 
         for _ in range(self.n_update):
-            action = agent.act(self.states)
+            action = int(agent.act(self.states))
             next_state, reward, done, _ = self.env.step(action)
             
             if self.training_mode:

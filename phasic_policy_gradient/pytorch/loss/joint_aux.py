@@ -11,10 +11,10 @@ class JointAux():
 
         self.value_clip         = value_clip
 
-    def compute_discrete_loss(self, action_probs, old_action_probs, values, Returns):        
+    def compute_discrete_loss(self, action_probs, old_action_probs, values, returns):        
         # Don't use old value in backpropagation
         Old_action_probs    = old_action_probs.detach()
-        Returns             = Returns.detach()
+        Returns             = returns.detach()
 
         # Finding KL Divergence                
         Kl                  = self.discrete.kldivergence(Old_action_probs, action_probs).mean()
@@ -22,9 +22,10 @@ class JointAux():
 
         return aux_loss + Kl
 
-    def compute_continous_loss(self, action_mean, action_std, old_action_mean, old_action_std, values, Returns):
+    def compute_continous_loss(self, action_mean, action_std, old_action_mean, old_action_std, values, returns):
         # Don't use old value in backpropagation
         Old_action_mean = old_action_mean.detach()
+        Returns         = returns.detach()
 
         # Finding KL Divergence                
         Kl              = self.continous.kldivergence(Old_action_mean, old_action_std, action_mean, action_std).mean()
