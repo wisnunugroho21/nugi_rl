@@ -15,7 +15,6 @@ class StandardRunner(Runner):
         self.n_plot_batch       = n_plot_batch
 
         self.t_updates          = 0
-        self.t_aux_updates      = 0
         self.i_episode          = 0
         self.total_reward       = 0
         self.eps_time           = 0

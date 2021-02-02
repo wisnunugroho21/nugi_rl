@@ -13,7 +13,6 @@ class VectorizedExecutor():
 
         self.agent              = agent
         self.runner             = Runner(env, render, training_mode, n_update, max_action = max_action, writer = SummaryWriter(), n_plot_batch = n_plot_batch)
-        self.memories           = [ListMemory() for _ in range(len(env))]
 
         self.n_iteration        = n_iteration
         self.save_weights       = save_weights
@@ -33,23 +32,17 @@ class VectorizedExecutor():
 
         try:
             for i_iteration in range(self.n_iteration):
-                self.agent, self.memories  = self.runner.run_discrete_iteration(self.agent, self.memories)
+                memories  = self.runner.run_discrete_iteration(self.agent)
 
-                for memory in self.memories:
-                    temp_states, temp_actions, temp_rewards, temp_dones, temp_next_states = memory.get_all_items()
-                    self.agent.save_all(temp_states, temp_actions, temp_rewards, temp_dones, temp_next_states)
-                    memory.clear_memory()
+                for memory in memories:
+                    self.agent.save_memory(memory)
 
                 self.agent.update_ppo()
                 self.t_aux_updates += 1                
 
                 if self.t_aux_updates == self.n_aux_update:
                     self.agent.update_aux()
-                    self.t_aux_updates = 0
-
-                if self.params_dynamic:
-                    self.params = self.params - self.params_subtract
-                    self.params = self.params if self.params > self.params_min else self.params_min      
+                    self.t_aux_updates = 0   
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
@@ -67,12 +60,10 @@ class VectorizedExecutor():
 
         try:
             for i_iteration in range(self.n_iteration): 
-                self.agent, self.memories  = self.runner.run_continous_iteration(self.agent, self.memories)
+                memories  = self.runner.run_continous_iteration(self.agent)
 
-                for memory in self.memories:
-                    temp_states, temp_actions, temp_rewards, temp_dones, temp_next_states = memory.get_all_items()
-                    self.agent.save_all(temp_states, temp_actions, temp_rewards, temp_dones, temp_next_states)
-                    memory.clear_memory()
+                for memory in memories:
+                    self.agent.save_memory(memory)
 
                 self.agent.update_ppo()
                 self.t_aux_updates += 1                
@@ -80,10 +71,6 @@ class VectorizedExecutor():
                 if self.t_aux_updates == self.n_aux_update:
                     self.agent.update_aux()
                     self.t_aux_updates = 0
-
-                if self.params_dynamic:
-                    self.params = self.params - self.params_subtract
-                    self.params = self.params if self.params > self.params_min else self.params_min
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
