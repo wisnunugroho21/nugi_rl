@@ -4,7 +4,7 @@ from eps_runner.vectorized_eps import VectorizedRunner
 from executor.sync import VectorizedExecutor
 
 from agent.agent_standard import AgentDiscrete, AgentContinous
-from model.Pong import Policy_Model, Value_Model
+from model.PPGSoftmaxNN import Policy_Model, Value_Model
 
 from run import run
 from mlagents_envs.registry import default_registry
@@ -24,13 +24,13 @@ n_saved                 = 10
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_episode               = 1000000 # How many episode you want to run
-n_update                = 1024 # How many episode before you update the Policy
-n_aux_update            = 5
+n_update                = 128 # How many episode before you update the Policy
+n_aux_update            = 20
 
 policy_kl_range         = 0.0008
 policy_params           = 20
 value_clip              = 2.0
-entropy_coef            = 0.0
+entropy_coef            = 0.05
 vf_loss_coef            = 1.0
 batch_size              = 32
 PPO_epochs              = 4

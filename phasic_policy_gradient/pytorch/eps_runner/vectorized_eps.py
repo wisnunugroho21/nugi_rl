@@ -36,8 +36,7 @@ class VectorizedRunner(StandardRunner):
             actions = agent.act(self.states)
 
             for index, (env, memory, action) in enumerate(zip(self.envs, self.memories, actions)):
-                action = int(action)
-                next_state, reward, done, _ = env.step(action)
+                next_state, reward, done, _ = env.step(int(action))
 
                 if self.training_mode:
                     memory.save_eps(self.states[index].tolist(), action, reward, float(done), next_state.tolist())

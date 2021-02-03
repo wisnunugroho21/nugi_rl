@@ -23,9 +23,9 @@ class Policy_Model(nn.Module):
               ).float().to(set_device(use_gpu))
         
     def forward(self, states):
-        x = self.nn_layer(states)
-        return self.actor_layer(x), self.critic_layer(x)
-
+      x = self.nn_layer(states)
+      return self.actor_layer(x), self.critic_layer(x)
+      
 class Value_Model(nn.Module):
     def __init__(self, state_dim, action_dim, use_gpu = True):
         super(Value_Model, self).__init__()   
