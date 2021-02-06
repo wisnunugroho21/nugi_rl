@@ -10,13 +10,17 @@ import glob
 import os
 import sys
 
+# print(os.name)
+
 try:
-    sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.path.append(glob.glob("D:/Projects/Simulator/CARLA_0.9.11/WindowsNoEditor/PythonAPI/carla/dist/carla-*%d.%d-%s.egg" % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
 except IndexError:
     pass
+
+
 
 import carla
 
@@ -24,20 +28,27 @@ import random
 import time
 import numpy as np
 import cv2
+import math
 
-IM_HEIGHT = 640
-IM_WIDTH = 480
+from gym.spaces.box import Box
+
+IM_HEIGHT = 240
+IM_WIDTH = 240
+IM_PREVIEW = False
+
+SECONDS_PER_EPISODE = 60 * 5
 
 def process_image(image):
     i = np.array(image.raw_data)
+
     i2 = i.reshape((IM_HEIGHT, IM_WIDTH, 4))
     i3 = i2[:, :, :3]
     cv2.imshow('', i3)
-    cv2.waitKey(1)
+    # cv2.waitKey(1)
 
     return i3 / 255.0
 
-actor_list = []
+""" actor_list = []
 
 try:
     client = carla.Client('localhost', 2000)
@@ -71,7 +82,7 @@ try:
 finally:
     for actor in actor_list:
         actor.destroy()
-    print('All cleaned Up!')
+    print('All cleaned Up!') """
 
 class CarlaEnv():
     im_height   = IM_HEIGHT
@@ -79,7 +90,7 @@ class CarlaEnv():
     im_preview  = IM_PREVIEW
 
     def __init__(self):
-        self.client = carla.Client('localhost', 2000)
+        self.client = carla.Client('127.0.0.1', 2000)
         self.client.set_timeout(2.0)
 
         self.world              = self.client.get_world()
@@ -91,7 +102,19 @@ class CarlaEnv():
         self.actor_list         = []
         self.episode_start      = 0
 
+        self.observation_space  = Box(low = -1.0, high = 1.0, shape = (480, 480))
+        self.action_space       = Box(low = -1.0, high = 1.0, shape = (2, 1))
+
+    def __del__(self):
+        if len(self.actor_list) > 0:
+            for actor in self.actor_list:
+                actor.destroy()
+
+        self.__del__()
+
     def __process_image(self, image):
+        image.convert(carla.ColorConverter.CityScapesPalette)
+
         i = np.array(image.raw_data)
         i = i.reshape((IM_HEIGHT, IM_WIDTH, 4))
         i = i[:, :, :3]
@@ -106,8 +129,14 @@ class CarlaEnv():
         self.collision_hist.append(event)
 
     def reset(self):
-        self.collision_hist = []
-        self.actor_list     = []
+        if len(self.collision_hist) > 0:
+            del self.collision_hist[:]
+
+        if len(self.actor_list) > 0:
+            for actor in self.actor_list:
+                actor.destroy()
+
+            del self.actor_list[:]
 
         self.transform  = np.random.choice(self.world.get_map().get_spawn_points())
         self.vehicle    = self.world.spawn_actor(self.model_3, self.transform)
@@ -115,12 +144,12 @@ class CarlaEnv():
 
         sensor_trans = carla.Transform(carla.Location(x = 2.5, z = 0.7))
 
-        rgb_cam    = self.blueprint_library.find('sensor.camera.rgb')
+        rgb_cam    = self.blueprint_library.find('sensor.camera.semantic_segmentation')
         rgb_cam.set_attribute('image_size_x', f'{IM_HEIGHT}')
         rgb_cam.set_attribute('image_size_y', f'{IM_WIDTH}')
-        rgb_cam.set_attribute('fov', '110')
+        # rgb_cam.set_attribute('fov', '110')
         
-        self.cam_sensor = self.world.spawn_actor(rgb_cam, sensor_trans, attach_to = vehicle)
+        self.cam_sensor = self.world.spawn_actor(rgb_cam, sensor_trans, attach_to = self.vehicle)
         self.actor_list.append(self.cam_sensor)
         self.cam_sensor.listen(lambda image: self.__process_image(image))
 
@@ -128,7 +157,7 @@ class CarlaEnv():
         time.sleep(4)
 
         col_sensor      = self.blueprint_library.find('sensor.other.collision')
-        self.col_sensor = self.world.spawn_actor(col_sensor, sensor_trans, attach_to = vehicle)
+        self.col_sensor = self.world.spawn_actor(col_sensor, sensor_trans, attach_to = self.vehicle)
         self.actor_list.append(self.col_sensor)
         self.col_sensor.listen(lambda event: self.__process_collision(event))
 
@@ -136,17 +165,30 @@ class CarlaEnv():
             time.sleep(0.01)
 
         self.episode_start = time.time()
-        self.vehicle.apply_control(carla.VehicleControl(throttle = 0.0, steer = 0.0))
+        self.vehicle.apply_control(carla.VehicleControl(throttle = 0, steer = 0))
 
         return self.front_camera
 
     def step(self, action):
         if action[0] >= 0:
-            self.vehicle.apply_control(carla.VehicleControl(throttle = action[0], steer = action[1]))
+            self.vehicle.apply_control(carla.VehicleControl(throttle = float(action[0]), steer = float(action[1])))
         else:
-            self.vehicle.apply_control(carla.VehicleControl(brake = action[0] * -1, steer = action[1]))
+            self.vehicle.apply_control(carla.VehicleControl(brake = float(action[0] * -1), steer = float(action[1])))
         
-        rewards = 0
-        done = False
-        return self.front_camera, rewards, done, None
+        v = self.vehicle.get_velocity()
+        kmh = 3.6 * math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
 
+        if len(self.collision_hist) > 0:
+            done = True
+            reward = -100
+        elif kmh < 50:
+            done = False
+            reward = 0
+        else:
+            done = False
+            reward = 1
+
+        if self.episode_start + SECONDS_PER_EPISODE < time.time():
+            done = True            
+
+        return self.front_camera, reward, done, None

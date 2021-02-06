@@ -1,44 +1,45 @@
 import gym
 
-from eps_runner.vectorized_eps import VectorizedRunner
-from executor.sync import VectorizedExecutor
+from eps_runner.standard import StandardRunner
+from executor.standard import StandardExecutor
 
 from agent.agent_standard import AgentDiscrete, AgentContinous
-from model.PPGSoftmaxNN import Policy_Model, Value_Model
+from model.Cnn import Policy_Model, Value_Model
 
 from run import run
-from mlagents_envs.registry import default_registry
-from mlagents_envs.environment import UnityEnvironment
+from environment.carla_env import CarlaEnv
+""" from mlagents_envs.registry import default_registry
+from mlagents_envs.environment import UnityEnvironment """
 #from gym_unity.envs import UnityToGymWrapper
 
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = False # If you want to save the agent, set this to True
+save_weights            = True # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
-n_saved                 = 10
+render                  = False # If you want to display the image. Turn this off if you run this in Google Collab
+n_saved                 = 2
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_episode               = 1000000 # How many episode you want to run
 n_update                = 128 # How many episode before you update the Policy
-n_aux_update            = 20
+n_aux_update            = 2
 
-policy_kl_range         = 0.0008
-policy_params           = 20
-value_clip              = 2.0
-entropy_coef            = 0.05
+policy_kl_range         = 0.03
+policy_params           = 5
+value_clip              = 2.5
+entropy_coef            = 0.0
 vf_loss_coef            = 1.0
-batch_size              = 32
-PPO_epochs              = 4
-Aux_epochs              = 4
+batch_size              = 8
+PPO_epochs              = 5
+Aux_epochs              = 5
 action_std              = 1.0
 gamma                   = 0.99
 lam                     = 0.95
-learning_rate           = 2.5e-4
+learning_rate           = 3e-4
 
 params_max              = 1.0
 params_min              = 0.25
@@ -47,17 +48,17 @@ params_dynamic          = False
 
 env_name                = 'CartPole-v1'
 max_action              = 1.0
-folder                  = 'weights/bipedal'
+folder                  = 'weights/carla'
 
 Policy_or_Actor_Model   = Policy_Model
 Value_or_Critic_Model   = Value_Model
-Runner                  = VectorizedRunner
-Executor                = VectorizedExecutor
+Runner                  = StandardRunner
+Executor                = StandardExecutor
 
 state_dim               = None
 action_dim              = None
 
-env                     = [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
+env                     = CarlaEnv() # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 #env                     = UnityEnvironment(file_name=None, seed=1)
 #env                     = UnityToGymWrapper(env)
 
