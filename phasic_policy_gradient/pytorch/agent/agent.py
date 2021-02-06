@@ -44,6 +44,8 @@ class Agent():
         self.device             = set_device(use_gpu)
         self.use_gpu            = use_gpu
 
+        self.scaler             = torch.cuda.amp.GradScaler()
+
         if is_training_mode:
           self.policy.train()
           self.value.train()
