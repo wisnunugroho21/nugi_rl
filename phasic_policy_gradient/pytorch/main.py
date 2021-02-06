@@ -46,7 +46,7 @@ params_min              = 0.25
 params_subtract         = 0.001
 params_dynamic          = False
 
-env_name                = 'CartPole-v1'
+# env_name                = 'CartPole-v1'
 max_action              = 1.0
 folder                  = 'weights/carla'
 
@@ -58,7 +58,7 @@ Executor                = StandardExecutor
 state_dim               = None
 action_dim              = None
 
-env                     = CarlaEnv() # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
+env                     = CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 #env                     = UnityEnvironment(file_name=None, seed=1)
 #env                     = UnityToGymWrapper(env)
 

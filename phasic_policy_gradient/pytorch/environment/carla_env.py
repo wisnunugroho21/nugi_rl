@@ -10,8 +10,6 @@ import glob
 import os
 import sys
 
-# print(os.name)
-
 try:
     sys.path.append(glob.glob("D:/Projects/Simulator/CARLA_0.9.11/WindowsNoEditor/PythonAPI/carla/dist/carla-*%d.%d-%s.egg" % (
         sys.version_info.major,
@@ -19,8 +17,6 @@ try:
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
 except IndexError:
     pass
-
-
 
 import carla
 
@@ -31,65 +27,8 @@ import cv2
 import math
 
 from gym.spaces.box import Box
-
-IM_HEIGHT = 240
-IM_WIDTH = 240
-IM_PREVIEW = False
-
-SECONDS_PER_EPISODE = 60 * 5
-
-def process_image(image):
-    i = np.array(image.raw_data)
-
-    i2 = i.reshape((IM_HEIGHT, IM_WIDTH, 4))
-    i3 = i2[:, :, :3]
-    cv2.imshow('', i3)
-    # cv2.waitKey(1)
-
-    return i3 / 255.0
-
-""" actor_list = []
-
-try:
-    client = carla.Client('localhost', 2000)
-    client.set_timeout(2.0)
-    world = client.get_world()
-    blueprint_library = world.get_blueprint_library()
-
-    bp = blueprint_library.filter('model3')[0]
-    print(bp)
-
-    spawn_point = random.choice(world.get_map().get_spawn_points())
-
-    vehicle = world.spawn_actor(bp, spawn_point)
-    vehicle.apply_control(carla.VehicleControl(throttle = 1.0, steer = 0.0))
-
-    actor_list.append(vehicle)
-
-    cam_bp  = blueprint_library.find('sensor.camera.rgb')
-    cam_bp.set_attribute('image_size_x', f'{IM_HEIGHT}')
-    cam_bp.set_attribute('image_size_y', f'{IM_WIDTH}')
-    cam_bp.set_attribute('fov', '110')
-
-    spawn_point     = carla.Transform(carla.Location(x = 2.5, z = 0.7))
-
-    sensor          = world.spawn_actor(cam_bp, spawn_point, attach_to = vehicle)
-    actor_list.append(sensor)
-    sensor.listen(lambda data: process_image(data))
-
-    time.sleep(5)
-
-finally:
-    for actor in actor_list:
-        actor.destroy()
-    print('All cleaned Up!') """
-
 class CarlaEnv():
-    im_height   = IM_HEIGHT
-    im_width    = IM_WIDTH
-    im_preview  = IM_PREVIEW
-
-    def __init__(self):
+    def __init__(self, im_height = 480, im_width = 480, im_preview = False, seconds_per_episode = 1 * 60):
         self.client = carla.Client('127.0.0.1', 2000)
         self.client.set_timeout(2.0)
 
@@ -102,8 +41,13 @@ class CarlaEnv():
         self.actor_list         = []
         self.episode_start      = 0
 
-        self.observation_space  = Box(low = -1.0, high = 1.0, shape = (480, 480))
+        self.observation_space  = Box(low = -1.0, high = 1.0, shape = (im_height, im_width))
         self.action_space       = Box(low = -1.0, high = 1.0, shape = (2, 1))
+
+        self.im_height              = im_height
+        self.im_width               = im_width
+        self.im_preview             = im_preview
+        self.seconds_per_episode    = seconds_per_episode
 
     def __del__(self):
         if len(self.actor_list) > 0:
@@ -116,7 +60,7 @@ class CarlaEnv():
         image.convert(carla.ColorConverter.CityScapesPalette)
 
         i = np.array(image.raw_data)
-        i = i.reshape((IM_HEIGHT, IM_WIDTH, 4))
+        i = i.reshape((self.im_height, self.im_width, 4))
         i = i[:, :, :3]
 
         if self.im_preview:
@@ -145,8 +89,8 @@ class CarlaEnv():
         sensor_trans = carla.Transform(carla.Location(x = 2.5, z = 0.7))
 
         rgb_cam    = self.blueprint_library.find('sensor.camera.semantic_segmentation')
-        rgb_cam.set_attribute('image_size_x', f'{IM_HEIGHT}')
-        rgb_cam.set_attribute('image_size_y', f'{IM_WIDTH}')
+        rgb_cam.set_attribute('image_size_x', f'{self.im_height}')
+        rgb_cam.set_attribute('image_size_y', f'{self.im_width}')
         # rgb_cam.set_attribute('fov', '110')
         
         self.cam_sensor = self.world.spawn_actor(rgb_cam, sensor_trans, attach_to = self.vehicle)
@@ -188,7 +132,7 @@ class CarlaEnv():
             done = False
             reward = 1
 
-        if self.episode_start + SECONDS_PER_EPISODE < time.time():
+        if self.episode_start + self.seconds_per_episode < time.time():
             done = True            
 
         return self.front_camera, reward, done, None
