@@ -11,7 +11,7 @@ import os
 import sys
 
 try:
-    sys.path.append(glob.glob("D:/Projects/Simulator/CARLA_0.9.11/WindowsNoEditor/PythonAPI/carla/dist/carla-*%d.%d-%s.egg" % (
+    sys.path.append(glob.glob("/home/nugroho/Projects/Simulator/Carla/PythonAPI/carla/dist/carla-*%d.%d-%s.egg" % (
         sys.version_info.major,
         sys.version_info.minor,
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
@@ -114,22 +114,35 @@ class CarlaEnv():
         return self.front_camera
 
     def step(self, action):
+        v0 = self.vehicle.get_velocity()
+        kmh0 = 3.6 * math.sqrt(v0.x ** 2 + v0.y ** 2 + v0.z ** 2)
+
         if action[0] >= 0:
-            self.vehicle.apply_control(carla.VehicleControl(throttle = float(action[0]), steer = float(action[1])))
+            if kmh0 < 0:
+                self.vehicle.apply_control(carla.VehicleControl(brake = float(action[0] * 1), steer = float(action[1])))
+            else:    
+                self.vehicle.apply_control(carla.VehicleControl(throttle = float(action[0]), steer = float(action[1])))
         else:
-            self.vehicle.apply_control(carla.VehicleControl(brake = float(action[0] * -1), steer = float(action[1])))
+            if kmh0 > 0:
+                self.vehicle.apply_control(carla.VehicleControl(brake = float(action[0] * -1), steer = float(action[1])))
+            else:
+                self.vehicle.apply_control(carla.VehicleControl(throttle = float(action[0]), steer = float(action[1]), reverse = True))
         
         v = self.vehicle.get_velocity()
         kmh = 3.6 * math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
 
+        done = False
+        reward = 0
         if len(self.collision_hist) > 0:
             done = True
             reward = -100
-        elif kmh < 50:
-            done = False
-            reward = 0
-        else:
-            done = False
+        elif kmh >= 10 and kmh < 30:
+            reward = 1
+        elif kmh >= 30 and kmh < 50:
+            reward = 2
+        elif kmh >= 50 and kmh < 60:
+            reward = 3
+        elif kmh > 60:
             reward = 1
 
         if self.episode_start + self.seconds_per_episode < time.time():

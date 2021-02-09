@@ -32,14 +32,15 @@ class Agent():
 
         self.policy             = Policy_Model(state_dim, action_dim, use_gpu)
         self.policy_old         = Policy_Model(state_dim, action_dim, use_gpu)
-        self.policy_optimizer   = Adam(self.policy.parameters(), lr = learning_rate)
 
         self.value              = Value_Model(state_dim, action_dim, use_gpu)
-        self.value_old          = Value_Model(state_dim, action_dim, use_gpu)
-        self.value_optimizer    = Adam(self.value.parameters(), lr = learning_rate)
+        self.value_old          = Value_Model(state_dim, action_dim, use_gpu)        
 
         self.policy_memory      = ListMemory()
+        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate) # sps.Sps(list(self.policy.parameters()) + list(self.value.parameters()))
+
         self.aux_memory         = AuxMemory()
+        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate) # sps.Sps(self.policy.parameters())
 
         self.device             = set_device(use_gpu)
         self.use_gpu            = use_gpu
@@ -125,22 +126,22 @@ class Agent():
     def save_weights(self):
         torch.save({
             'model_state_dict': self.policy.state_dict(),
-            'optimizer_state_dict': self.policy_optimizer.state_dict()
+            'optimizer_state_dict': self.ppo_optimizer.state_dict()
             }, self.folder + '/policy.tar')
         
         torch.save({
             'model_state_dict': self.value.state_dict(),
-            'optimizer_state_dict': self.value_optimizer.state_dict()
+            'optimizer_state_dict': self.aux_optimizer.state_dict()
             }, self.folder + '/value.tar')
         
     def load_weights(self):
         policy_checkpoint = torch.load(self.folder + '/policy.tar')
         self.policy.load_state_dict(policy_checkpoint['model_state_dict'])
-        self.policy_optimizer.load_state_dict(policy_checkpoint['optimizer_state_dict'])
+        self.ppo_optimizer.load_state_dict(policy_checkpoint['optimizer_state_dict'])
 
         value_checkpoint = torch.load(self.folder + '/value.tar')
         self.value.load_state_dict(value_checkpoint['model_state_dict'])
-        self.value_optimizer.load_state_dict(value_checkpoint['optimizer_state_dict'])
+        self.aux_optimizer.load_state_dict(value_checkpoint['optimizer_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()

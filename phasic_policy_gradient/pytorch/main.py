@@ -15,7 +15,7 @@ from mlagents_envs.environment import UnityEnvironment """
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = True # If you want to save the agent, set this to True
+save_weights            = False # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -33,7 +33,7 @@ policy_params           = 5
 value_clip              = 2.5
 entropy_coef            = 0.0
 vf_loss_coef            = 1.0
-batch_size              = 8
+batch_size              = 16
 PPO_epochs              = 5
 Aux_epochs              = 5
 action_std              = 1.0
