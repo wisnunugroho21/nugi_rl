@@ -40,38 +40,33 @@ class AgentDiscrete(Agent):
 
     # Get loss and Do backpropagation
     def training_ppo(self, states, actions, rewards, dones, next_states):
+        self.ppo_optimizer.zero_grad()
+
         action_probs, _     = self.policy(states)
         values              = self.value(states)
         old_action_probs, _ = self.policy_old(states)
         old_values          = self.value_old(states)
         next_values         = self.value(next_states)
 
-        self.policy_optimizer.zero_grad()
-        self.value_optimizer.zero_grad()
-
         with torch.cuda.amp.autocast():
-            loss    = self.trulyPPO.compute_discrete_loss(action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones)
+            ppo_loss    = self.trulyPPO.compute_discrete_loss(action_probs, old_action_probs, values, old_values, next_values, actions, rewards, dones)
 
-        self.scaler.scale(loss).backward()
-
-        self.scaler.step(self.policy_optimizer)
-        self.scaler.step(self.value_optimizer)
-
+        self.scaler.scale(ppo_loss).backward()
+        self.scaler.step(self.ppo_optimizer)
         self.scaler.update()
 
     def training_aux(self, states):
-        returns                 = self.value(states)
+        self.aux_optimizer.zero_grad()
 
+        returns                 = self.value(states)
         action_probs, values    = self.policy(states)
         old_action_probs, _     = self.policy_old(states)
-        
-        self.policy_optimizer.zero_grad()
 
         with torch.cuda.amp.autocast():
             joint_loss  = self.auxLoss.compute_discrete_loss(action_probs, old_action_probs, values, returns)
 
         self.scaler.scale(joint_loss).backward()
-        self.scaler.step(self.policy_optimizer)
+        self.scaler.step(self.aux_optimizer)
         self.scaler.update()
 
 class AgentContinous(Agent):
@@ -113,14 +108,14 @@ class AgentContinous(Agent):
         return to_numpy(action.squeeze(0), self.use_gpu)
 
     # Get loss and Do backpropagation
-    def training_ppo(self, states, actions, rewards, dones, next_states): 
+    def training_ppo(self, states, actions, rewards, dones, next_states):
+        self.ppo_optimizer.zero_grad()
+
         action_mean, _      = self.policy(states)
         values              = self.value(states)
         old_action_mean, _  = self.policy_old(states)
         old_values          = self.value_old(states)
         next_values         = self.value(next_states)
-
-        self.ppo_optimizer.zero_grad()
 
         with torch.cuda.amp.autocast():
             ppo_loss    = self.trulyPPO.compute_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, old_values, next_values, actions, rewards, dones)
@@ -130,12 +125,11 @@ class AgentContinous(Agent):
         self.scaler.update()
 
     def training_aux(self, states):
-        returns             = self.value(states)
+        self.aux_optimizer.zero_grad()
 
+        returns             = self.value(states)
         action_mean, values = self.policy(states)
         old_action_mean, _  = self.policy_old(states)
-
-        self.aux_optimizer.zero_grad()
 
         with torch.cuda.amp.autocast():
             joint_loss  = self.auxLoss.compute_continous_loss(action_mean, self.action_std, old_action_mean, self.action_std, values, returns)

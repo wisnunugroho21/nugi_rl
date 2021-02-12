@@ -5,8 +5,8 @@ from eps_runner.standard import StandardRunner
 from memory.list_memory import ListMemory
 
 class PongRunner(StandardRunner):
-    def __init__(self, env, render, training_mode, n_update, max_action = 1, writer = None, n_plot_batch = 0):
-        super().__init__(env, render, training_mode, n_update, max_action, writer, n_plot_batch)
+    def __init__(self, env, render, training_mode, n_update, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+        super().__init__(env, render, training_mode, n_update, agent, max_action, writer, n_plot_batch)
 
         self.obs    = self.env.reset()  
         self.obs    = prepro_half_one_dim(self.obs)

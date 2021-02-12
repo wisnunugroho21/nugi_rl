@@ -29,12 +29,13 @@ class Agent():
         self.state_dim          = state_dim
         self.learning_rate      = learning_rate
         self.folder             = folder
+        self.use_gpu            = use_gpu
 
-        self.policy             = Policy_Model(state_dim, action_dim, use_gpu)
-        self.policy_old         = Policy_Model(state_dim, action_dim, use_gpu)
+        self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
+        self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu)
 
-        self.value              = Value_Model(state_dim, action_dim, use_gpu)
-        self.value_old          = Value_Model(state_dim, action_dim, use_gpu)        
+        self.value              = Value_Model(state_dim, action_dim, self.use_gpu)
+        self.value_old          = Value_Model(state_dim, action_dim, self.use_gpu)        
 
         self.policy_memory      = ListMemory()
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate) # sps.Sps(list(self.policy.parameters()) + list(self.value.parameters()))
@@ -42,9 +43,7 @@ class Agent():
         self.aux_memory         = AuxMemory()
         self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate) # sps.Sps(self.policy.parameters())
 
-        self.device             = set_device(use_gpu)
-        self.use_gpu            = use_gpu
-
+        self.device             = set_device(self.use_gpu)
         self.scaler             = torch.cuda.amp.GradScaler()
 
         if is_training_mode:
@@ -152,6 +151,17 @@ class Agent():
             self.policy.eval()
             self.value.eval()
             print('Model is evaluating...')
+
+    def save_temp_weights(self):
+        torch.save(self.policy.state_dict(), 'agent_policy.pth')
+        torch.save(self.value.state_dict(), 'agent_value.pth')
+
+    def load_temp_weights(self, device = None):
+        if device == None:
+            device = self.device
+
+        self.policy.load_state_dict(torch.load('agent_policy.pth', map_location = device))
+        self.value.load_state_dict(torch.load('agent_value.pth', map_location = device))
 
     def get_weights(self):
         return self.policy.state_dict(), self.value.state_dict()

@@ -1,13 +1,13 @@
 import gym
 
-from eps_runner.standard import StandardRunner
-from executor.standard import StandardExecutor
+from eps_runner.sync import SyncRunner
+from executor.sync import SyncExecutor
 
 from agent.agent_standard import AgentDiscrete, AgentContinous
-from model.Cnn import Policy_Model, Value_Model
+from model.PPGTanhNN import Policy_Model, Value_Model
 
 from run import run
-from environment.carla_env import CarlaEnv
+# from environment.carla_env import CarlaEnv
 """ from mlagents_envs.registry import default_registry
 from mlagents_envs.environment import UnityEnvironment """
 #from gym_unity.envs import UnityToGymWrapper
@@ -20,22 +20,22 @@ training_mode           = True # If you want to train the agent, set this to Tru
 use_gpu                 = True
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-render                  = False # If you want to display the image. Turn this off if you run this in Google Collab
+render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 n_saved                 = 2
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_episode               = 1000000 # How many episode you want to run
-n_update                = 128 # How many episode before you update the Policy
-n_aux_update            = 2
+n_update                = 1024 # How many episode before you update the Policy
+n_aux_update            = 5
 
 policy_kl_range         = 0.03
 policy_params           = 5
-value_clip              = 2.5
+value_clip              = 5.0
 entropy_coef            = 0.0
 vf_loss_coef            = 1.0
-batch_size              = 16
-PPO_epochs              = 5
-Aux_epochs              = 5
+batch_size              = 32
+PPO_epochs              = 10
+Aux_epochs              = 10
 action_std              = 1.0
 gamma                   = 0.99
 lam                     = 0.95
@@ -46,19 +46,19 @@ params_min              = 0.25
 params_subtract         = 0.001
 params_dynamic          = False
 
-# env_name                = 'CartPole-v1'
+env_name                = 'BipedalWalker-v3'
 max_action              = 1.0
 folder                  = 'weights/carla'
 
 Policy_or_Actor_Model   = Policy_Model
 Value_or_Critic_Model   = Value_Model
-Runner                  = StandardRunner
-Executor                = StandardExecutor
+Runner                  = SyncRunner
+Executor                = SyncExecutor
 
 state_dim               = None
 action_dim              = None
 
-env                     = CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
+env                     = [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 #env                     = UnityEnvironment(file_name=None, seed=1)
 #env                     = UnityToGymWrapper(env)
 
