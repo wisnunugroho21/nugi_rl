@@ -1,6 +1,32 @@
-class VectorEnv:
+import gym
+
+class VectorEnv():
     def __init__(self, envs):
         self.envs = envs
+
+    def is_discrete(self):
+        return type(self.env.observation_space) is gym.spaces.Box
+
+    def get_obs_dim(self):
+        if type(self.envs[0].observation_space) is gym.spaces.Box:
+            state_dim = 1
+
+            if len(self.envs[0].observation_space.shape) > 1:                
+                for i in range(len(self.envs[0].observation_space.shape)):
+                    state_dim *= self.envs[0].observation_space.shape[i]            
+            else:
+                state_dim = self.envs[0].observation_space.shape[0]
+
+            return state_dim
+                    
+        else:
+            return self.envs[0].observation_space.n
+            
+    def get_action_dim(self):
+        if self.isDiscrete():
+            return self.envs[0].action_space.n
+        else:
+            return self.envs[0].action_space.shape[0]
 
     # Call this only once at the beginning of training (optional):
     def seed(self, seeds):

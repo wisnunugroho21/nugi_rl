@@ -2,9 +2,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-from memory.policy_memory import PolicyMemory
+from memory.list_memory import ListMemory
 
-class EmbeddingMemory(PolicyMemory):
+class EmbeddingMemory(ListMemory):
     def __init__(self, datas):
         if datas is None :
             self.available_actions = []
@@ -23,11 +23,11 @@ class EmbeddingMemory(PolicyMemory):
         states, actions, rewards, dones, next_states = super().__getitem__(idx)
         return states, actions, rewards, dones, next_states, np.array(self.available_actions[idx], dtype = np.float32)      
 
-    def save_eps(self, state, reward, action, done, next_state, available_action):
+    def save_eps(self, state, action, reward, done, next_state, available_action):
         super().save_eps(state, reward, action, done, next_state)
         self.available_actions.append(available_action)
 
-    def save_replace_all(self, states, rewards, actions, dones, next_states, available_actions):
+    def save_replace_all(self, states, actions, rewards, dones, next_states, available_actions):
         super().save_all(states, rewards, actions, dones, next_states)
         self.available_actions = available_actions
 

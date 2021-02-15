@@ -34,6 +34,8 @@ class StandardExecutor():
                 memories  = self.runner.run_discrete_iteration(self.agent)
                 self.agent.save_memory(memories)
 
+                print('update agent')
+
                 self.agent.update_ppo()
                 self.t_aux_updates += 1                
 
@@ -49,7 +51,7 @@ class StandardExecutor():
         finally:
             finish = time.time()
             timedelta = finish - start
-            print('Timelength: {}'.format(str( datetime.timedelta(seconds = timedelta) )))
+            print('\nTimelength: {}'.format(str( datetime.timedelta(seconds = timedelta) )))
 
             del self.env
 
@@ -61,6 +63,8 @@ class StandardExecutor():
             for i_iteration in range(self.n_iteration):                
                 memories = self.runner.run_continous_iteration(self.agent)
                 self.agent.save_memory(memories)
+
+                print('update agent')
 
                 self.agent.update_ppo()
                 self.t_aux_updates += 1
@@ -77,7 +81,7 @@ class StandardExecutor():
         finally:
             finish = time.time()
             timedelta = finish - start
-            print('Timelength: {}'.format(str( datetime.timedelta(seconds = timedelta) )))
+            print('\nTimelength: {}'.format(str( datetime.timedelta(seconds = timedelta) )))
 
             del self.env
             
