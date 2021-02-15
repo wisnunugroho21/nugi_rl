@@ -3,12 +3,11 @@ import numpy as np
 from eps_runner.standard import StandardRunner
 
 class SlimeVolleyRunner(StandardRunner):
-    def run_discrete_iteration(self, agent = None):
-        if agent is None:
-            agent = self.agent
+    def run_iteration(self, agent):
+        self.memories.clear_memory()       
 
         for _ in range(self.n_update):
-            action = agent.act(self.states)
+            action  = agent.act(self.states)
 
             if action == 0:
                 action_gym = [0, 0, 0] # NOOP
@@ -23,10 +22,10 @@ class SlimeVolleyRunner(StandardRunner):
             elif action == 5:
                 action_gym = [0, 1, 1] # UPRIGHT (backward jump)
 
-            next_state, reward, done, _ =  self.env.step(action_gym)     
+            next_state, reward, done, _ =  self.env.step(action_gym)
             
             if self.training_mode:
-                agent.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 
@@ -45,6 +44,6 @@ class SlimeVolleyRunner(StandardRunner):
 
                 self.states         = self.env.reset()
                 self.total_reward   = 0
-                self.eps_time       = 0             
-        
-        return agent
+                self.eps_time       = 0        
+
+        return self.memories

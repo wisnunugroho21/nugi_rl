@@ -22,19 +22,7 @@ class CarlaRunner(StandardRunner):
         self.memories               = ImageStateMemory()
         self.images, self.states    = self.env.reset()
 
-    def finish_episode(self):
-        self.i_episode  += 1
-        print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
-
-        if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
-            self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
-            self.writer.add_scalar('Times', self.eps_time, self.i_episode)
-
-        self.images, self.states    = self.env.reset()
-        self.total_reward           = 0
-        self.eps_time               = 0
-
-    def run_continous_iteration(self, agent = None):
+    def run_iteration(self, agent):
         self.memories.clear_memory()       
 
         for _ in range(self.n_update):
@@ -55,6 +43,15 @@ class CarlaRunner(StandardRunner):
                 self.env.render()
 
             if done:                
-                self.finish_episode()
+                self.i_episode  += 1
+                print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
+
+                if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
+                    self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
+                    self.writer.add_scalar('Times', self.eps_time, self.i_episode)
+
+                self.images, self.states    = self.env.reset()
+                self.total_reward           = 0
+                self.eps_time               = 0
 
         return self.memories

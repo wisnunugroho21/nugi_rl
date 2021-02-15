@@ -6,15 +6,18 @@ import numpy as np
 
 from memory.list_memory import ListMemory
 from memory.aux_memory import AuxMemory
+from loss.truly_ppo import TrulyPPO
+from loss.joint_aux import JointAux
 
-from utils.pytorch_utils import set_device
+from utils.pytorch_utils import set_device, to_numpy
 
 class Agent():  
-    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim,
-                is_training_mode = True, policy_kl_range = 0.0008, policy_params = 20, 
+    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, Distribution,
+                is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, 
                 value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
-                batch_size = 32, PPO_epochs = 4, Aux_epochs = 4, gamma = 0.99, 
-                lam = 0.95, learning_rate = 2.5e-4, folder = 'model', use_gpu = True):   
+                batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, gamma = 0.99,
+                lam = 0.95, learning_rate = 3e-4, folder = 'model', use_gpu = True,
+                Policy_loss = TrulyPPO, Aux_loss = JointAux):   
 
         self.policy_kl_range    = policy_kl_range 
         self.policy_params      = policy_params
@@ -31,6 +34,8 @@ class Agent():
         self.folder             = folder
         self.use_gpu            = use_gpu
 
+        self.device             = set_device(self.use_gpu)
+
         self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
         self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu)
 
@@ -38,13 +43,16 @@ class Agent():
         self.value_old          = Value_Model(state_dim, action_dim, self.use_gpu)        
 
         self.policy_memory      = ListMemory()
-        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate) # sps.Sps(list(self.policy.parameters()) + list(self.value.parameters()))
+        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)
 
         self.aux_memory         = AuxMemory()
-        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate) # sps.Sps(self.policy.parameters())
-
-        self.device             = set_device(self.use_gpu)
+        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
+        
         self.scaler             = torch.cuda.amp.GradScaler()
+        self.distribution       = Distribution(self.use_gpu)
+        
+        self.trulyPPO           = Policy_loss(self.device, Distribution, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)
+        self.auxLoss            = Aux_loss(self.device, Distribution)
 
         if is_training_mode:
           self.policy.train()
@@ -52,9 +60,6 @@ class Agent():
         else:
           self.policy.eval()
           self.value.eval()
-
-    def set_params(self, params):
-        pass
 
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)
@@ -67,16 +72,47 @@ class Agent():
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):
-        pass
+        state           = torch.FloatTensor(state).to(self.device)
+        state           = state.unsqueeze(0).detach() if len(state.shape) == 1 or len(state.shape) == 3 else state.detach()
+        action_datas, _ = self.policy(state)
+        
+        if self.is_training_mode:
+            action = self.distribution.sample(action_datas)
+        else:
+            action = self.distribution.act_deterministic(action_datas)
+              
+        return to_numpy(action, self.use_gpu)
 
-    # Get loss and Do backpropagation
     def training_ppo(self, states, actions, rewards, dones, next_states): 
-        pass
+        self.ppo_optimizer.zero_grad()
+
+        action_datas, _     = self.policy(states)
+        values              = self.value(states)
+        old_action_datas, _ = self.policy_old(states)
+        old_values          = self.value_old(states)
+        next_values         = self.value(next_states)
+
+        with torch.cuda.amp.autocast():
+            ppo_loss    = self.trulyPPO.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+
+        self.scaler.scale(ppo_loss).backward()
+        self.scaler.step(self.ppo_optimizer)
+        self.scaler.update()
 
     def training_aux(self, states):
-        pass
+        self.aux_optimizer.zero_grad()
 
-    # Update the model
+        returns                 = self.value(states)
+        action_datas, values    = self.policy(states)
+        old_action_datas, _     = self.policy_old(states)
+
+        with torch.cuda.amp.autocast():
+            joint_loss  = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+
+        self.scaler.scale(joint_loss).backward()
+        self.scaler.step(self.aux_optimizer)
+        self.scaler.update()
+
     def update_ppo(self, policy_memory = None, aux_memory = None):
         if policy_memory is None:
             policy_memory = self.policy_memory
@@ -86,18 +122,15 @@ class Agent():
 
         dataloader = DataLoader(policy_memory, self.batch_size, shuffle = False)
 
-        # Optimize policy for K epochs:
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader: 
                 self.training_ppo(states.float().to(self.device), actions.float().to(self.device), \
                     rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
-        # Clear the memory
         states, _, _, _, _ = policy_memory.get_all_items()
         aux_memory.save_all(states)
         policy_memory.clear_memory()
 
-        # Copy new weights into old policy:
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
@@ -109,15 +142,11 @@ class Agent():
 
         dataloader  = DataLoader(aux_memory, self.batch_size, shuffle = False)
 
-        # Optimize policy for K epochs:
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
                 self.training_aux(states.float().to(self.device))
 
-        # Clear the memory
         aux_memory.clear_memory()
-
-        # Copy new weights into old policy
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         return aux_memory

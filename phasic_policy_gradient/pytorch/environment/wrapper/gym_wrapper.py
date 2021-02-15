@@ -5,7 +5,7 @@ class GymWrapper():
         self.env = env        
 
     def is_discrete(self):
-        return type(self.env.observation_space) is gym.spaces.Box
+        return type(self.env.action_space) is not gym.spaces.Box
 
     def get_obs_dim(self):
         if type(self.env.observation_space) is gym.spaces.Box:
@@ -22,7 +22,7 @@ class GymWrapper():
             return self.env.observation_space.n
             
     def get_action_dim(self):
-        if self.isDiscrete():
+        if self.is_discrete():
             return self.env.action_space.n
         else:
             return self.env.action_space.shape[0]
@@ -32,3 +32,6 @@ class GymWrapper():
 
     def step(self, action):
         return self.env.step(action)
+
+    def render(self):
+        self.env.render()

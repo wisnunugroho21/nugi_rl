@@ -13,8 +13,8 @@ def set_device(use_gpu = True):
 def to_numpy(datas, use_gpu = True):
     if use_gpu:
         if torch.cuda.is_available():
-            return datas.cpu().numpy()
+            return datas.detach().cpu().numpy()
         else:
-            return datas.numpy()
+            return datas.detach().numpy()
     else:
-        return datas.numpy()
+        return datas.detach().numpy()

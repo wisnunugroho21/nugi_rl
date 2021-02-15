@@ -5,7 +5,7 @@ class VectorEnv():
         self.envs = envs
 
     def is_discrete(self):
-        return type(self.env.observation_space) is gym.spaces.Box
+        return type(self.envs[0].action_space) is not gym.spaces.Box
 
     def get_obs_dim(self):
         if type(self.envs[0].observation_space) is gym.spaces.Box:
@@ -23,7 +23,7 @@ class VectorEnv():
             return self.envs[0].observation_space.n
             
     def get_action_dim(self):
-        if self.isDiscrete():
+        if self.is_discrete():
             return self.envs[0].action_space.n
         else:
             return self.envs[0].action_space.shape[0]

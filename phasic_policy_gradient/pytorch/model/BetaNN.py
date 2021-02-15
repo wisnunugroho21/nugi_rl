@@ -13,9 +13,14 @@ class Policy_Model(nn.Module):
                 nn.ReLU(),
               ).float().to(set_device(use_gpu))
 
-        self.actor_layer = nn.Sequential(
+        self.actor_alpha_layer = nn.Sequential(
                 nn.Linear(64, action_dim),
-                nn.Tanh()
+                nn.Softplus()
+              ).float().to(set_device(use_gpu))
+
+        self.actor_beta_layer = nn.Sequential(
+                nn.Linear(64, action_dim),
+                nn.Softplus()
               ).float().to(set_device(use_gpu))
 
         self.critic_layer = nn.Sequential(
@@ -24,6 +29,8 @@ class Policy_Model(nn.Module):
         
     def forward(self, states):
       x = self.nn_layer(states)
+
+      alpha = self.actor_alpha_layer
       return self.actor_layer(x), self.critic_layer(x)
       
 class Value_Model(nn.Module):
