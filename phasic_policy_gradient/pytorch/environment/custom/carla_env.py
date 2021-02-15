@@ -134,12 +134,12 @@ class CarlaEnv():
         return (image, np.array([0]))
 
     def step(self, action):
-        prev_loc    = self.vehicle.get_location()        
+        prev_loc    = self.vehicle.get_location()
 
-        if action[0] >= 0:
-            self.vehicle.apply_control(carla.VehicleControl(throttle = float(action[0]), steer = float(action[1])))
-        else:
-            self.vehicle.apply_control(carla.VehicleControl(brake = float(action[0] * -1), steer = float(action[1])))
+        steer       = -1 if action[0] < -1 else 1 if action[0] > 1 else action[0]
+        throttle    = 0 if action[1] < 0 else 1 if action[1] > 1 else action[1]
+        brake       = 0 if action[2] < 0 else 1 if action[2] > 1 else action[2]
+        self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), throttle = float(throttle), brake = float(brake)))
 
         self.__tick_env()
         self.cur_step   += 1

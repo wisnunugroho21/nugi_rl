@@ -36,8 +36,6 @@ class StandardExecutor():
                 memories  = self.runner.run_iteration(self.agent)
                 self.agent.save_memory(memories)
 
-                print('update agent')
-
                 self.agent.update_ppo()
                 self.t_aux_updates += 1                
 

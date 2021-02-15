@@ -6,18 +6,15 @@ import numpy as np
 
 from memory.list_memory import ListMemory
 from memory.aux_memory import AuxMemory
-from loss.truly_ppo import TrulyPPO
-from loss.joint_aux import JointAux
 
 from utils.pytorch_utils import set_device, to_numpy
 
 class Agent():  
-    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, Distribution,
+    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory,
                 is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, 
                 value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
                 batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, gamma = 0.99,
-                lam = 0.95, learning_rate = 3e-4, folder = 'model', use_gpu = True,
-                Policy_loss = TrulyPPO, Aux_loss = JointAux):   
+                lam = 0.95, learning_rate = 3e-4, folder = 'model', use_gpu = True):   
 
         self.policy_kl_range    = policy_kl_range 
         self.policy_params      = policy_params
@@ -40,19 +37,19 @@ class Agent():
         self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu)
 
         self.value              = Value_Model(state_dim, action_dim, self.use_gpu)
-        self.value_old          = Value_Model(state_dim, action_dim, self.use_gpu)        
-
-        self.policy_memory      = ListMemory()
-        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)
-
-        self.aux_memory         = AuxMemory()
+        self.value_old          = Value_Model(state_dim, action_dim, self.use_gpu)
+        
+        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)        
         self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
+
+        self.distribution       = distribution
+        self.policy_memory      = policy_memory
+        self.aux_memory         = aux_memory
         
+        self.trulyPPO           = policy_loss
+        self.auxLoss            = aux_loss
+
         self.scaler             = torch.cuda.amp.GradScaler()
-        self.distribution       = Distribution(self.use_gpu)
-        
-        self.trulyPPO           = Policy_loss(self.device, Distribution, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)
-        self.auxLoss            = Aux_loss(self.device, Distribution)
 
         if is_training_mode:
           self.policy.train()
@@ -72,8 +69,16 @@ class Agent():
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):
-        state           = torch.FloatTensor(state).to(self.device)
-        state           = state.unsqueeze(0).detach() if len(state.shape) == 1 or len(state.shape) == 3 else state.detach()
+        if isinstance(state, tuple):
+            state = list(state)
+            for i, s in enumerate(list(state)):
+                s           = torch.FloatTensor(s).to(self.device)
+                state[i]    = s.unsqueeze(0).detach() if len(s.shape) == 1 or len(s.shape) == 3 else s.detach()
+            state = tuple(state)            
+        else:
+            state   = torch.FloatTensor(state).to(self.device)
+            state   = state.unsqueeze(0).detach() if len(state.shape) == 1 or len(state.shape) == 3 else state.detach()
+        
         action_datas, _ = self.policy(state)
         
         if self.is_training_mode:
@@ -88,9 +93,9 @@ class Agent():
 
         action_datas, _     = self.policy(states)
         values              = self.value(states)
-        old_action_datas, _ = self.policy_old(states)
-        old_values          = self.value_old(states)
-        next_values         = self.value(next_states)
+        old_action_datas, _ = self.policy_old(states, True)
+        old_values          = self.value_old(states, True)
+        next_values         = self.value(next_states, True)
 
         with torch.cuda.amp.autocast():
             ppo_loss    = self.trulyPPO.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
@@ -101,10 +106,10 @@ class Agent():
 
     def training_aux(self, states):
         self.aux_optimizer.zero_grad()
-
-        returns                 = self.value(states)
+        
         action_datas, values    = self.policy(states)
-        old_action_datas, _     = self.policy_old(states)
+        returns                 = self.value(states, True)
+        old_action_datas, _     = self.policy_old(states, True)
 
         with torch.cuda.amp.autocast():
             joint_loss  = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
@@ -123,9 +128,16 @@ class Agent():
         dataloader = DataLoader(policy_memory, self.batch_size, shuffle = False)
 
         for _ in range(self.PPO_epochs):       
-            for states, actions, rewards, dones, next_states in dataloader: 
-                self.training_ppo(states.float().to(self.device), actions.float().to(self.device), \
-                    rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
+            for states, actions, rewards, dones, next_states in dataloader:
+                if isinstance(states, list) and isinstance(next_states, list):
+                    for i, (s, ns) in enumerate(zip(states, next_states)):
+                        states[i], next_states[i]   = torch.FloatTensor(s).to(self.device), torch.FloatTensor(ns).to(self.device)
+                    states, next_states = tuple(states), tuple(next_states)
+                else:
+                    states      = states.float().to(self.device)
+                    next_states = next_states.float().to(self.device)
+
+                self.training_ppo(states, actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states)
 
         states, _, _, _, _ = policy_memory.get_all_items()
         aux_memory.save_all(states)
@@ -144,6 +156,12 @@ class Agent():
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
+                if isinstance(states, tuple):
+                    for i, s in enumerate(states):
+                        states[i]   = torch.FloatTensor(s).to(self.device)
+                else:
+                    states  = states.float().to(self.device)
+
                 self.training_aux(states.float().to(self.device))
 
         aux_memory.clear_memory()

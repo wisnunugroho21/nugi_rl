@@ -10,7 +10,7 @@ class BetaContinous(BasicContinous):
 
         distribution    = Beta(alpha, beta)
         action          = distribution.sample().squeeze(0).float().to(set_device(self.use_gpu))
-        return to_numpy(action, self.use_gpu)
+        return action
         
     def entropy(self, datas):
         alpha, beta = datas

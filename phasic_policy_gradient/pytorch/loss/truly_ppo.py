@@ -6,7 +6,7 @@ from policy_function.advantage_function import AdvantageFunction
 from loss.ppo import PPO
 
 class TrulyPPO(PPO):
-    def __init__(self, device, Distribution, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01):
+    def __init__(self, distribution, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01):
         self.policy_kl_range    = policy_kl_range
         self.policy_params      = policy_params
         self.value_clip         = value_clip
@@ -14,12 +14,12 @@ class TrulyPPO(PPO):
         self.entropy_coef       = entropy_coef
 
         self.advantage_function = AdvantageFunction()
-        self.distribution       = Distribution(device)
+        self.distribution       = distribution
 
     def compute_loss(self, action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones):
         advantages      = self.advantage_function.generalized_advantage_estimation(rewards, values, next_values, dones)
         returns         = (advantages + values).detach()
-        advantages      = ((advantages - advantages.mean()) / (advantages.std() + 1e-6)).detach()
+        advantages      = ((advantages - advantages.mean()) / (advantages.std() + 1e-6)).detach()       
 
         logprobs        = self.distribution.logprob(action_datas, actions)
         old_logprobs    = self.distribution.logprob(old_action_datas, actions).detach()

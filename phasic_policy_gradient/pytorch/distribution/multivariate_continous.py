@@ -10,7 +10,7 @@ class MultivariateContinous(BasicContinous):
 
         distribution    = MultivariateNormal(mean, std)
         action          = distribution.sample().float().to(set_device(self.use_gpu))
-        return to_numpy(action, self.use_gpu)
+        return action
         
     def entropy(self, datas):
         mean, std = datas

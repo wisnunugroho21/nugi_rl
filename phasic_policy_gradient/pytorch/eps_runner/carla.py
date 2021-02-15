@@ -4,7 +4,7 @@ from eps_runner.standard import StandardRunner
 from memory.image_state_memory import ImageStateMemory
 
 class CarlaRunner(StandardRunner):
-    def __init__(self, env, render, training_mode, n_update, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+    def __init__(self, env, render, training_mode, n_update, is_discrete, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.env                = env
         self.agent              = agent
         self.render             = render
@@ -26,14 +26,12 @@ class CarlaRunner(StandardRunner):
         self.memories.clear_memory()       
 
         for _ in range(self.n_update):
-            action = agent.act(self.images, self.states)
-
-            action_gym = np.clip(action, -1.0, 1.0) * self.max_action
-            next_data, reward, done, _  = self.env.step(action_gym)
+            action                      = agent.act((self.images, self.states))
+            next_data, reward, done, _  = self.env.step(action)
             next_image, next_state      = next_data
             
             if self.training_mode:
-                self.memories.save_eps(self.images.tolist(), self.states.tolist(), action, reward, float(done), next_image.tolist(), next_state.tolist())
+                self.memories.save_eps((self.images.tolist(), self.states.tolist()), action, reward, float(done), (next_image.tolist(), next_state.tolist()))
                 
             self.images, self.states    = next_image, next_state
             self.eps_time               += 1 
@@ -54,4 +52,5 @@ class CarlaRunner(StandardRunner):
                 self.total_reward           = 0
                 self.eps_time               = 0
 
+        print('Updating agent..')
         return self.memories
