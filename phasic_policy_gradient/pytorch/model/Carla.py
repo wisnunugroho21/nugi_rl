@@ -57,6 +57,8 @@ class Policy_Model(nn.Module):
       self.critic_layer = nn.Sequential(
         nn.Linear(64, 1)
       ).float().to(set_device(use_gpu))
+
+      self.std = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(self.use_gpu))
         
     def forward(self, datas, detach = False):
       x = datas[0]
@@ -82,9 +84,9 @@ class Policy_Model(nn.Module):
       action          = torch.cat((action_tanh, action_sigmoid), -1)
 
       if detach:
-        return (action.detach(), torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(self.use_gpu)).detach()), self.critic_layer(x7).detach()
+        return (action.detach(), self.std.detach()), self.critic_layer(x7).detach()
       else:
-        return (action, torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(self.use_gpu))), self.critic_layer(x7)
+        return (action, self.std), self.critic_layer(x7)
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim, action_dim, use_gpu = True):

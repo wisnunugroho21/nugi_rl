@@ -1,13 +1,8 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch.optim import Adam
 
-import numpy as np
-
-from memory.list_memory import ListMemory
-from memory.aux_memory import AuxMemory
-
-from utils.pytorch_utils import set_device, to_numpy
+from utils.pytorch_utils import set_device, to_numpy, to_tensor
 
 class Agent():  
     def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory,
@@ -69,17 +64,7 @@ class Agent():
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):
-        if isinstance(state, tuple):
-            state = list(state)
-            for i, s in enumerate(list(state)):
-                s           = torch.FloatTensor(s).to(self.device)
-                state[i]    = s.unsqueeze(0).detach() if len(s.shape) == 1 or len(s.shape) == 3 else s.detach()
-            state = tuple(state)            
-        else:
-            state   = torch.FloatTensor(state).to(self.device)
-            state   = state.unsqueeze(0).detach() if len(state.shape) == 1 or len(state.shape) == 3 else state.detach()
-        
-        action_datas, _ = self.policy(state)
+        action_datas, _ = self.policy(to_tensor(state, self.use_gpu, True))
         
         if self.is_training_mode:
             action = self.distribution.sample(action_datas)
@@ -129,15 +114,8 @@ class Agent():
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
-                if isinstance(states, list) and isinstance(next_states, list):
-                    for i, (s, ns) in enumerate(zip(states, next_states)):
-                        states[i], next_states[i]   = torch.FloatTensor(s).to(self.device), torch.FloatTensor(ns).to(self.device)
-                    states, next_states = tuple(states), tuple(next_states)
-                else:
-                    states      = states.float().to(self.device)
-                    next_states = next_states.float().to(self.device)
-
-                self.training_ppo(states, actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states)
+                self.training_ppo(to_tensor(states, self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
+                    dones.float().to(self.device), to_tensor(next_states, self.use_gpu))
 
         states, _, _, _, _ = policy_memory.get_all_items()
         aux_memory.save_all(states)
@@ -156,13 +134,7 @@ class Agent():
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
-                if isinstance(states, tuple):
-                    for i, s in enumerate(states):
-                        states[i]   = torch.FloatTensor(s).to(self.device)
-                else:
-                    states  = states.float().to(self.device)
-
-                self.training_aux(states.float().to(self.device))
+                self.training_aux(to_tensor(states, self.use_gpu))
 
         aux_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())

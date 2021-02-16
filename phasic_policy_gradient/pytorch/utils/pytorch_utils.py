@@ -19,13 +19,31 @@ def to_numpy(datas, use_gpu = True):
     else:
         return datas.detach().numpy()
 
-def to_tensor(datas, use_gpu = True, unsqueeze = 0):
+def to_tensor(datas, use_gpu = True, first_unsqueeze = False, last_unsqueeze = False):
     if isinstance(datas, tuple):
         datas = list(datas)
-        for i, s in enumerate(list(datas)):
-            s           = torch.FloatTensor(s).to(set_device(use_gpu))
-            datas[i]    = s.unsqueeze(0).detach() if len(s.shape) == 1 or len(s.shape) == 3 else s.detach()
-        datas = tuple(datas)            
+        for i, data in enumerate(datas):
+            data    = torch.FloatTensor(data).to(set_device(use_gpu))
+            if first_unsqueeze: 
+                datas[i]    = data.unsqueeze(0).detach() if len(data.shape) == 1 or len(data.shape) == 3 else data.detach()
+            if last_unsqueeze:
+                datas[i]    = data.unsqueeze(-1).detach() if data.shape[-1] != 1 else data.detach()
+        datas = tuple(datas)
+
+    elif isinstance(datas, list):
+        for i, data in enumerate(datas):
+            data    = torch.FloatTensor(data).to(set_device(use_gpu))
+            if first_unsqueeze: 
+                datas[i]    = data.unsqueeze(0).detach() if len(data.shape) == 1 or len(data.shape) == 3 else data.detach()
+            if last_unsqueeze:
+                datas[i]    = data.unsqueeze(-1).detach() if data.shape[-1] != 1 else data.detach()
+        datas = tuple(datas)
+
     else:
-        state   = torch.FloatTensor(state).to(self.device)
-        state   = state.unsqueeze(0).detach() if len(state.shape) == 1 or len(state.shape) == 3 else state.detach()
+        datas   = torch.FloatTensor(datas).to(set_device(use_gpu))
+        if first_unsqueeze: 
+            datas   = datas.unsqueeze(0).detach() if len(datas.shape) == 1 or len(datas.shape) == 3 else datas.detach()
+        if last_unsqueeze:
+            datas   = datas.unsqueeze(-1).detach() if datas.shape[-1] != 1 else datas.detach()
+
+    return datas
