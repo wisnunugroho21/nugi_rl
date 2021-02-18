@@ -6,11 +6,11 @@ class PongRunner(Runner):
     def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         super().__init__(env, render, training_mode, n_update, is_discrete, memories, agent, max_action, writer, n_plot_batch)
 
-        self.obs    = self.env.reset()  
-        self.obs    = prepro_half_one_dim(self.obs)
+        obs         = self.env.reset()  
+        self.obs    = prepro_half_one_dim(obs)
         self.states = self.obs
 
-    def run_discrete_iteration(self, agent):
+    def run_iteration(self, agent):
         self.memories.clear_memory()
 
         for _ in range(self.n_update):
@@ -40,8 +40,8 @@ class PongRunner(Runner):
                     self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
                     self.writer.add_scalar('Times', self.eps_time, self.i_episode)
 
-                self.obs    = self.env.reset()  
-                self.obs    = prepro_half_one_dim(self.obs)
+                obs         = self.env.reset()  
+                self.obs    = prepro_half_one_dim(obs)
                 self.states = self.obs
 
                 self.total_reward   = 0

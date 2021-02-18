@@ -22,8 +22,12 @@ class Policy_Model(nn.Module):
           nn.Linear(640, 1)
         ).float().to(set_device(use_gpu))
         
-    def forward(self, states):
-        x = self.nn_layer(states)
+    def forward(self, states, detach = False):
+      x = self.nn_layer(states)
+
+      if detach:
+        return self.actor_layer(x).detach(), self.critic_layer(x).detach()
+      else:
         return self.actor_layer(x), self.critic_layer(x)
 
 class Value_Model(nn.Module):
@@ -38,5 +42,8 @@ class Value_Model(nn.Module):
           nn.Linear(640, 1)
         ).float().to(set_device(use_gpu))
         
-    def forward(self, states):
+    def forward(self, states, detach = False):
+      if detach:
+        return self.nn_layer(states).detach()
+      else:
         return self.nn_layer(states)

@@ -21,14 +21,16 @@ class Policy_Model(nn.Module):
         self.critic_layer = nn.Sequential(
           nn.Linear(64, 1)
         ).float().to(set_device(use_gpu))
+
+        self.std = torch.FloatTensor([1.0]).to(set_device(use_gpu))
         
     def forward(self, states, detach = False):
       x = self.nn_layer(states)
 
       if detach:
-        return (self.actor_layer(x).detach(), 1.0), self.critic_layer(x).detach()
+        return (self.actor_layer(x).detach(), self.std.detach()), self.critic_layer(x).detach()
       else:
-        return (self.actor_layer(x), 1.0), self.critic_layer(x)
+        return (self.actor_layer(x), self.std), self.critic_layer(x)
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim, action_dim, use_gpu = True):

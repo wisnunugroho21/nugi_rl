@@ -9,7 +9,7 @@ class MultivariateContinous(BasicContinous):
         mean, std = datas
 
         distribution    = MultivariateNormal(mean, std)
-        action          = distribution.sample().float().to(set_device(self.use_gpu))
+        action          = distribution.sample().squeeze(0).float().to(set_device(self.use_gpu))
         return action
         
     def entropy(self, datas):
@@ -31,3 +31,7 @@ class MultivariateContinous(BasicContinous):
         distribution1 = MultivariateNormal(mean1, std1)
         distribution2 = MultivariateNormal(mean2, std2)
         return kl_divergence(distribution1, distribution2).float().to(set_device(self.use_gpu))
+
+    def act_deterministic(self, datas):
+        mean, _ = datas
+        return mean.squeeze(0)

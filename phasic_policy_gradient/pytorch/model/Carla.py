@@ -12,43 +12,43 @@ class Policy_Model(nn.Module):
         nn.ReLU(),
         DepthwiseSeparableConv2d(16, 64, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.conv2 = nn.Sequential(
         DepthwiseSeparableConv2d(64, 128, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
         DepthwiseSeparableConv2d(128, 256, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.conv3 = nn.Sequential(
         DepthwiseSeparableConv2d(64, 256, kernel_size = 8, stride = 4, padding = 2),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.state_extractor = nn.Sequential(
         nn.Linear(1, 64),
         nn.ReLU()
-      )
+      ).float().to(set_device(use_gpu))
 
       self.nn_layer = nn.Sequential(
         nn.Linear(320, 64),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.actor_tanh_layer = nn.Sequential(
         nn.Linear(64, 1),
         nn.Tanh()
-      )
+      ).float().to(set_device(use_gpu))
 
       self.actor_sigmoid_layer = nn.Sequential(
         nn.Linear(64, 2),
         nn.Sigmoid()
-      )
+      ).float().to(set_device(use_gpu))
 
       self.critic_layer = nn.Sequential(
         nn.Linear(64, 1)
-      )
+      ).float().to(set_device(use_gpu))
 
       self.std = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(use_gpu))
         

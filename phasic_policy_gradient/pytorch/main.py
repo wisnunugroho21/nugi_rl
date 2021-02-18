@@ -7,14 +7,13 @@ import os
 
 from torch.utils.tensorboard import SummaryWriter
 
-from eps_runner.runner import Runner
+from eps_runner.pong_eps import PongRunner
 from train_executor.executor import Executor
-
 from agent.agent import Agent
-from distribution.basic import BasicContinous
+from distribution.basic import BasicDiscrete
 from loss.joint_aux import JointAux
 from loss.truly_ppo import TrulyPPO
-from model.TanhNN import Policy_Model, Value_Model
+from model.Pong import Policy_Model, Value_Model
 from environment.wrapper.gym_wrapper import GymWrapper
 from memory.policy_memory import PolicyMemory
 from memory.aux_memory import AuxMemory
@@ -27,7 +26,7 @@ from mlagents_envs.environment import UnityEnvironment """
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = False # If you want to save the agent, set this to True
+save_weights            = True # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -40,14 +39,14 @@ n_iteration             = 1000000 # How many episode you want to run
 n_update                = 1024 # How many episode before you update the Policy
 n_aux_update            = 5
 
-policy_kl_range         = 0.03
-policy_params           = 5
-value_clip              = 5.0
-entropy_coef            = 0.0
+policy_kl_range         = 0.0008
+policy_params           = 20
+value_clip              = 6.0
+entropy_coef            = 0.01
 vf_loss_coef            = 1.0
 batch_size              = 32
-PPO_epochs              = 10
-Aux_epochs              = 10
+PPO_epochs              = 6
+Aux_epochs              = 6
 action_std              = 1.0
 gamma                   = 0.99
 lam                     = 0.95
@@ -57,17 +56,17 @@ params_max              = 1.0
 params_min              = 0.25
 params_subtract         = 0.001
 params_dynamic          = False
-max_action              = 1.0
+max_action              = None
 
-folder                  = 'weights/carla'
-env                     = gym.make('BipedalWalker-v3') # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
+folder                  = 'weights/pong'
+env                     = gym.make('Pong-v4') # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 #env                     = UnityEnvironment(file_name=None, seed=1)
 #env                     = UnityToGymWrapper(env)
 
 Policy_Model    = Policy_Model
 Value_Model     = Value_Model
-Distribution    = BasicContinous
-Runner          = Runner
+Distribution    = BasicDiscrete
+Runner          = PongRunner
 Executor        = Executor
 Policy_loss     = TrulyPPO
 Aux_loss        = JointAux
@@ -75,8 +74,8 @@ Wrapper         = GymWrapper(env) # CarlaEnv(im_height = 240, im_width = 240, im
 Policy_Memory   = PolicyMemory
 Aux_Memory      = AuxMemory
 
-state_dim       = None
-action_dim      = None
+state_dim       = 80 * 80
+action_dim      = 3
 
 #####################################################################################################################################################
 
