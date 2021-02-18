@@ -1,18 +1,14 @@
 import numpy as np
 from utils.math_function import prepro_half_one_dim
-from eps_runner.standard import StandardRunner
+from eps_runner.runner import Runner
 
-from memory.list_memory import ListMemory
-
-class PongRunner(StandardRunner):
-    def __init__(self, env, render, training_mode, n_update, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
-        super().__init__(env, render, training_mode, n_update, agent, max_action, writer, n_plot_batch)
+class PongRunner(Runner):
+    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+        super().__init__(env, render, training_mode, n_update, is_discrete, memories, agent, max_action, writer, n_plot_batch)
 
         self.obs    = self.env.reset()  
         self.obs    = prepro_half_one_dim(self.obs)
         self.states = self.obs
-
-        self.memories   = ListMemory()
 
     def run_discrete_iteration(self, agent):
         self.memories.clear_memory()

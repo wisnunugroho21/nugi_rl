@@ -2,9 +2,7 @@ import numpy as np
 import time
 import datetime
 
-from memory.list_memory import ListMemory
-
-class StandardExecutor():
+class Executor():
     def __init__(self, agent, env, n_iteration, runner, reward_threshold, save_weights = False, n_plot_batch = 100, render = True, training_mode = True, n_update = 1024, n_aux_update = 10, 
         n_saved = 10, max_action = 1.0, load_weights = False):
 

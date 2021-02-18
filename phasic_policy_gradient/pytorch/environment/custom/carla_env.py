@@ -75,6 +75,7 @@ class CarlaEnv():
             cv2.imshow('', i)
             cv2.waitKey(1)
 
+        i = i / 255.0
         return i
 
     def __process_collision(self, event):

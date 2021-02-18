@@ -1,11 +1,7 @@
 import torch
-
-from distribution.basic import BasicDiscrete, BasicContinous
 from policy_function.advantage_function import AdvantageFunction
 
-from loss.ppo import PPO
-
-class TrulyPPO(PPO):
+class TrulyPPO():
     def __init__(self, distribution, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01):
         self.policy_kl_range    = policy_kl_range
         self.policy_params      = policy_params

@@ -1,8 +1,9 @@
+from eps_runner.runner import Runner
 import numpy as np
 
-from eps_runner.standard import StandardRunner
+from eps_runner.runner import Runner
 
-class SlimeVolleyRunner(StandardRunner):
+class SlimeVolleyRunner(Runner):
     def run_iteration(self, agent):
         self.memories.clear_memory()       
 

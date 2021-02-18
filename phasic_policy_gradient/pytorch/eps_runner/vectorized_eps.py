@@ -1,10 +1,8 @@
 import numpy as np
 from eps_runner.standard import Runner
 
-from memory.list_memory import ListMemory
-
 class VectorizedRunner(Runner): 
-    def __init__(self, envs, render, training_mode, n_update, is_discrete, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+    def __init__(self, envs, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.envs               = envs
         self.agent              = agent
         self.render             = render
@@ -20,7 +18,7 @@ class VectorizedRunner(Runner):
         self.eps_time           = 0
 
         self.states             = [env.reset() for env in self.envs]
-        self.memories           = [ListMemory() for _ in range(len(envs))]
+        self.memories           = memories
 
         self.states             = [env.reset() for env in envs]
         self.total_rewards      = [0 for _ in range(len(envs))]

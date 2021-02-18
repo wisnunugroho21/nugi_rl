@@ -2,13 +2,11 @@ import numpy as np
 import torch
 
 from eps_runner.runner import Runner
-from memory.list_memory import ListMemory
-
 import ray
 
 @ray.remote(num_gpus = 0.25)
 class SyncRunner(Runner):
-    def __init__(self, env, render, training_mode, n_update, is_discrete, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.env                = env
         self.agent              = agent
         self.render             = render
@@ -24,7 +22,7 @@ class SyncRunner(Runner):
         self.eps_time           = 0
 
         self.states             = self.env.reset()
-        self.memories           = ListMemory()
+        self.memories           = memories
         self.is_discrete        = is_discrete
 
     def run_iteration(self):

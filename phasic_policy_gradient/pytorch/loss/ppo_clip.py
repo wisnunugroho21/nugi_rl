@@ -3,9 +3,7 @@ import torch
 from distribution.basic import BasicDiscrete, BasicContinous
 from policy_function.advantage_function import AdvantageFunction
 
-from loss.ppo import PPO
-
-class PPOClip(PPO):
+class PPOClip():
     def __init__(self, device, policy_clip = 0.2, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, action_std = 1.0):
         self.policy_clip    = policy_clip
         self.value_clip     = value_clip

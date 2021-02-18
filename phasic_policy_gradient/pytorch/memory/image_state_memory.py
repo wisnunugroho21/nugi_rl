@@ -2,9 +2,9 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset
 
-from memory.list_memory import ListMemory
+from memory.policy_memory import PolicyMemory
 
-class ImageStateMemory(ListMemory):
+class ImageStateMemory(PolicyMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.images         = []

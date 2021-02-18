@@ -28,11 +28,11 @@ class Agent():
 
         self.device             = set_device(self.use_gpu)
 
-        self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
-        self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu)
+        self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu).float().to(set_device(use_gpu))
+        self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu).float().to(set_device(use_gpu))
 
-        self.value              = Value_Model(state_dim, action_dim, self.use_gpu)
-        self.value_old          = Value_Model(state_dim, action_dim, self.use_gpu)
+        self.value              = Value_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+        self.value_old          = Value_Model(state_dim, action_dim).float().to(set_device(use_gpu))
         
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)        
         self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
@@ -56,15 +56,13 @@ class Agent():
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)
 
-    def save_all(self, states, actions, rewards, dones, next_states):
-        self.policy_memory.save_all(states, actions, rewards, dones, next_states)
-
     def save_memory(self, memory):
         states, actions, rewards, dones, next_states = memory.get_all_items()
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):
-        action_datas, _ = self.policy(to_tensor(state, self.use_gpu, True))
+        state           = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
+        action_datas, _ = self.policy(state)
         
         if self.is_training_mode:
             action = self.distribution.sample(action_datas)
@@ -103,43 +101,30 @@ class Agent():
         self.scaler.step(self.aux_optimizer)
         self.scaler.update()
 
-    def update_ppo(self, policy_memory = None, aux_memory = None):
-        if policy_memory is None:
-            policy_memory = self.policy_memory
-
-        if aux_memory is None:
-            aux_memory = self.aux_memory
-
-        dataloader = DataLoader(policy_memory, self.batch_size, shuffle = False)
+    def update_ppo(self):
+        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
-                self.training_ppo(to_tensor(states, self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
-                    dones.float().to(self.device), to_tensor(next_states, self.use_gpu))
+                self.training_ppo(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
+                    dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu))
 
-        states, _, _, _, _ = policy_memory.get_all_items()
-        aux_memory.save_all(states)
-        policy_memory.clear_memory()
+        states, _, _, _, _ = self.policy_memory.get_all_items()
+        self.aux_memory.save_all(states)
+        self.policy_memory.clear_memory()
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
-        return policy_memory, aux_memory
-
-    def update_aux(self, aux_memory = None):
-        if aux_memory is None:
-            aux_memory = self.aux_memory
-
-        dataloader  = DataLoader(aux_memory, self.batch_size, shuffle = False)
+    def update_aux(self):
+        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False)
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
-                self.training_aux(to_tensor(states, self.use_gpu))
+                self.training_aux(to_tensor(states, use_gpu = self.use_gpu))
 
-        aux_memory.clear_memory()
+        self.aux_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())
-
-        return aux_memory
 
     def save_weights(self):
         torch.save({
