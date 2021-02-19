@@ -53,7 +53,7 @@ class AgentPPG():
           self.policy.eval()
           self.value.eval()
 
-    def __training_ppo(self, states, actions, rewards, dones, next_states): 
+    def __training_ppo(self, states, actions, rewards, dones, next_states):         
         self.ppo_optimizer.zero_grad()
 
         action_datas, _     = self.policy(states)
@@ -69,7 +69,7 @@ class AgentPPG():
         self.scaler.step(self.ppo_optimizer)
         self.scaler.update()
 
-    def __training_aux(self, states):
+    def __training_aux(self, states):        
         self.aux_optimizer.zero_grad()
         
         action_datas, values    = self.policy(states)
@@ -89,7 +89,7 @@ class AgentPPG():
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
-                self.training_ppo(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
+                self.__training_ppo(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
                     dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu))
 
         states, _, _, _, _ = self.policy_memory.get_all_items()
@@ -104,7 +104,7 @@ class AgentPPG():
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
-                self.training_aux(to_tensor(states, use_gpu = self.use_gpu))
+                self.__training_aux(to_tensor(states, use_gpu = self.use_gpu))
 
         self.aux_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())

@@ -7,13 +7,13 @@ import os
 
 from torch.utils.tensorboard import SummaryWriter
 
-from eps_runner.pong_eps import PongRunner
+from eps_runner.runner import Runner
 from train_executor.executor import Executor
 from agent.ppg import AgentPPG
-from distribution.basic import BasicDiscrete
+from distribution.basic import BasicContinous
 from loss.joint_aux import JointAux
 from loss.truly_ppo import TrulyPPO
-from model.Pong import Policy_Model, Value_Model
+from model.TanhNN import Policy_Model, Value_Model
 from environment.wrapper.gym_wrapper import GymWrapper
 from memory.policy_memory import PolicyMemory
 from memory.aux_memory import AuxMemory
@@ -26,7 +26,7 @@ from mlagents_envs.environment import UnityEnvironment """
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = True # If you want to save the agent, set this to True
+save_weights            = False # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -39,14 +39,14 @@ n_iteration             = 1000000 # How many episode you want to run
 n_update                = 1024 # How many episode before you update the Policy
 n_aux_update            = 5
 
-policy_kl_range         = 0.0008
-policy_params           = 20
-value_clip              = 6.0
-entropy_coef            = 0.01
+policy_kl_range         = 0.03
+policy_params           = 5
+value_clip              = 10.0
+entropy_coef            = 0.0
 vf_loss_coef            = 1.0
 batch_size              = 32
-PPO_epochs              = 6
-Aux_epochs              = 6
+PPO_epochs              = 10
+Aux_epochs              = 10
 action_std              = 1.0
 gamma                   = 0.99
 lam                     = 0.95
@@ -59,23 +59,23 @@ params_dynamic          = False
 max_action              = None
 
 folder                  = 'weights/pong'
-env                     = gym.make('Pong-v4') # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
+env                     = gym.make('BipedalWalker-v3') # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 #env                     = UnityEnvironment(file_name=None, seed=1)
 #env                     = UnityToGymWrapper(env)
 
+state_dim       = None
+action_dim      = None
+
 Policy_Model    = Policy_Model
 Value_Model     = Value_Model
-Distribution    = BasicDiscrete
-Runner          = PongRunner
+Distribution    = BasicContinous
+Runner          = Runner
 Executor        = Executor
 Policy_loss     = TrulyPPO
 Aux_loss        = JointAux
 Wrapper         = GymWrapper(env) # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512)
 Policy_Memory   = PolicyMemory
 Aux_Memory      = AuxMemory
-
-state_dim       = 80 * 80
-action_dim      = 3
 
 #####################################################################################################################################################
 
