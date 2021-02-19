@@ -112,8 +112,8 @@ class AgentPPG():
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)
 
-    def save_memory(self, memory):
-        states, actions, rewards, dones, next_states = memory.get_all_items()
+    def save_memory(self, policy_memory):
+        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):
