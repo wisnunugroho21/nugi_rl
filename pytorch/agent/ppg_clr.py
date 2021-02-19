@@ -1,11 +1,11 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, dataloader
 from torch.optim import Adam
 
 from utils.pytorch_utils import set_device, to_numpy, to_tensor
 
 class AgentPPG():  
-    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory,
+    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory,
                 is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
                 batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, gamma = 0.99, lam = 0.95, 
                 learning_rate = 3e-4, folder = 'model', use_gpu = True, n_aux_update = 10):   
@@ -33,11 +33,14 @@ class AgentPPG():
         self.value_old          = Value_Model(state_dim, action_dim).float().to(set_device(use_gpu))
 
         self.distribution       = distribution
+
         self.policy_memory      = policy_memory
         self.aux_memory         = aux_memory
+        self.clr_memory         = clr_memory
         
         self.trulyPPO           = policy_loss
-        self.auxLoss            = aux_loss      
+        self.auxLoss            = aux_loss
+        self.clr_loss           = clr_loss
 
         self.scaler             = torch.cuda.amp.GradScaler()
         self.device             = set_device(self.use_gpu)
@@ -85,9 +88,17 @@ class AgentPPG():
         self.scaler.update()
 
     def __training_clr(self, states):
-        self.aux_optimizer.zero_grad()
+        self.clr_optimizer.zero_grad()
 
+        _, _, first_encoded     = self.policy(states)
+        _, _, second_encoded    = self.value(states)
 
+        with torch.cuda.amp.autocast():
+            clr_loss    = self.auxLoss.compute_loss(first_encoded, second_encoded)
+
+        self.scaler.scale(clr_loss).backward()
+        self.scaler.step(self.clr_optimizer)
+        self.scaler.update()
 
     def __update_ppo(self):
         dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
@@ -113,6 +124,10 @@ class AgentPPG():
 
         self.aux_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())
+
+    def __update_clr(self):
+        dataloader = DataLoader(self.clr_memory, self.batch_size, shuffle = False)
+
 
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)
