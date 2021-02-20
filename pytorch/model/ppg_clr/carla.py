@@ -62,21 +62,28 @@ class Policy_Model(nn.Module):
       self.conv                 = CnnModel().float().to(set_device(use_gpu))
       self.projection_clr       = ProjectionModel(256).float().to(set_device(use_gpu))
 
+      self.memory_layer         = nn.LSTM(256, 256).float().to(set_device(use_gpu))
       self.state_extractor      = nn.Sequential( nn.Linear(1, 64), nn.ReLU() ).float().to(set_device(use_gpu))
       self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
-      self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
 
+      self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
       self.actor_tanh_layer     = nn.Sequential( nn.Linear(64, 1), nn.Tanh() ).float().to(set_device(use_gpu))
       self.actor_sigmoid_layer  = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() ).float().to(set_device(use_gpu))            
         
     def forward(self, datas, detach = False):
       i   = datas[0]
-      i   = i.transpose(2, 3).transpose(1, 2)
+      batch_size, timesteps, H, W, C  = i.shape
+      
+      i   = i.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
+
+      m   = i.reshape(timesteps, batch_size, i.shape[-1])
+      m   = self.memory_layer(m)
 
       s   = datas[1]
       s   = self.state_extractor(s)
-      x   = torch.cat((s, i), -1)
+      
+      x   = torch.cat((s, m), -1)
       x   = self.nn_layer(x)
 
       action_tanh     = self.actor_tanh_layer(x)
@@ -95,18 +102,25 @@ class Value_Model(nn.Module):
       self.conv                 = CnnModel().float().to(set_device(use_gpu))
       self.projection_clr       = ProjectionModel(256).float().to(set_device(use_gpu))
 
+      self.memory_layer         = nn.LSTM(256, 256).float().to(set_device(use_gpu))
       self.state_extractor      = nn.Sequential( nn.Linear(1, 64), nn.ReLU() ).float().to(set_device(use_gpu))
       self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
+
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
-      i   = datas[0]
-      i   = i.transpose(2, 3).transpose(1, 2)
+      batch_size, timesteps, H, W, C  = datas.shape
+      
+      i   = datas.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
+
+      m   = i.reshape(timesteps, batch_size, i.shape[-1])
+      m   = self.memory_layer(m)
 
       s   = datas[1]
       s   = self.state_extractor(s)
-      x   = torch.cat((s, i), -1)
+
+      x   = torch.cat((s, m), -1)
       x   = self.nn_layer(x)
 
       if detach:
