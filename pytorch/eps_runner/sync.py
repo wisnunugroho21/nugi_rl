@@ -6,7 +6,7 @@ import ray
 
 @ray.remote(num_gpus = 0.25)
 class SyncRunner(Runner):
-    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1, folder = ''):
         self.env                = env
         self.agent              = agent
         self.render             = render
@@ -25,7 +25,7 @@ class SyncRunner(Runner):
         self.memories           = memories
         self.is_discrete        = is_discrete
 
-    def run_iteration(self):
+    def run_iteration(self, agent):
         self.memories.clear_memory()
         self.agent.load_temp_weights()
 

@@ -8,10 +8,10 @@ class PongFullRunner(Runner):
 
         self.frame = 4
 
-        obs         = self.env.reset()
-        obs         = prepo_crop(obs)
-        self.states = np.zeros((self.frame, 160, 160, 3))
-        self.states[self.frame - 1] = obs
+        obs             = self.env.reset()
+        obs             = prepo_crop(obs)
+        self.states     = np.zeros((self.frame, 160, 160, 3))
+        self.states[-1] = obs
 
     def run_iteration(self, agent):
         self.memories.clear_memory()
@@ -54,10 +54,10 @@ class PongFullRunner(Runner):
                     self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
                     self.writer.add_scalar('Times', self.eps_time, self.i_episode)
                 
-                obs         = self.env.reset()
-                obs         = prepo_crop(obs)
-                self.states = np.zeros((self.frame, 160, 160, 3))
-                self.states[self.frame - 1] = obs
+                obs             = self.env.reset()
+                obs             = prepo_crop(obs)
+                self.states     = np.zeros((self.frame, 160, 160, 3))
+                self.states[-1] = obs
 
                 self.total_reward   = 0
                 self.eps_time       = 0             

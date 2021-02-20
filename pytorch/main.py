@@ -16,7 +16,7 @@ from loss.truly_ppo import TrulyPPO
 from loss.clr import CLR
 from model.ppg_clr.CnnLstm import Policy_Model, Value_Model
 from environment.wrapper.gym_wrapper import GymWrapper
-from memory.policy_memory import PolicyMemory
+from memory.on_policy_memory import OnPolicyMemory
 from memory.aux_memory import AuxMemory
 from memory.clr_memory import ClrMemory
 
@@ -79,7 +79,7 @@ Policy_loss     = TrulyPPO
 Aux_loss        = JointAux
 Clr_loss        = CLR
 Wrapper         = GymWrapper(env) # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512)
-Policy_Memory   = PolicyMemory
+Policy_Memory   = OnPolicyMemory
 Aux_Memory      = AuxMemory
 Clr_Memory      = ClrMemory
 
