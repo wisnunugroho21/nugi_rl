@@ -64,7 +64,7 @@ class Policy_Model(nn.Module):
       self.nn_layer       = nn.Sequential( nn.Linear(256, 64), nn.ReLU() ).float().to(set_device(use_gpu))
 
       self.critic_layer   = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
-      self.actor_layer    = nn.Sequential( nn.Linear(64, action_dim), nn.Softmax() ).float().to(set_device(use_gpu))   
+      self.actor_layer    = nn.Sequential( nn.Linear(64, action_dim), nn.Softmax(-1) ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
       batch_size, timesteps, H, W, C  = datas.shape
@@ -72,10 +72,12 @@ class Policy_Model(nn.Module):
       i   = datas.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
 
-      m   = i.reshape(timesteps, batch_size, i.shape[-1])
-      m   = self.memory_layer(m)
+      m         = i.reshape(timesteps, batch_size, i.shape[-1])
+      m, (h, c) = self.memory_layer(m)
 
-      x   = self.nn_layer(m)
+      x   = m[-1]
+      x   = self.nn_layer(x)
+      i   = i.reshape(timesteps * batch_size, i.shape[-1])
 
       if detach:
         return self.actor_layer(x).detach(), self.critic_layer(x).detach(), self.projection_clr(i).detach()
@@ -100,10 +102,12 @@ class Value_Model(nn.Module):
       i   = datas.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
 
-      m   = i.reshape(timesteps, batch_size, i.shape[-1])
-      m   = self.memory_layer(m)
+      m         = i.reshape(timesteps, batch_size, i.shape[-1])
+      m, (h, c) = self.memory_layer(m)
 
-      x   = self.nn_layer(m)
+      x   = m[-1]
+      x   = self.nn_layer(x)
+      i   = i.reshape(timesteps * batch_size, i.shape[-1])
 
       if detach:
         return self.critic_layer(x).detach(), self.projection_clr(i).detach()

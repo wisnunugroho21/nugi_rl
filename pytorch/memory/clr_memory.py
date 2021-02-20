@@ -1,11 +1,12 @@
 import torch
 import numpy as np
-from torch.utils.data import IterableDataset
+from torch.utils.data import Dataset
 
-class AuxMemory(IterableDataset):
-    def __init__(self, states = [], capacity = 10000):
+class ClrMemory(Dataset):
+    def __init__(self, capacity = 10000, states = []):
         self.capacity   = capacity
         self.states     = states
+        self.position   = 0
 
     def __len__(self):
         return len(self.states)

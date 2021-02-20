@@ -36,6 +36,10 @@ def prepro_half_one_dim(I):
     I = I.astype(np.float32).ravel()
     return I
 
+def prepo_crop(I):
+    I = I[35:195] # crop
+    return I
+
 def plot(datas):
     print('----------')
 

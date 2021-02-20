@@ -25,7 +25,7 @@ def to_tensor(datas, use_gpu = True, first_unsqueeze = False, last_unsqueeze = F
         for i, data in enumerate(datas):
             data    = torch.FloatTensor(data).to(set_device(use_gpu))
             if first_unsqueeze: 
-                data    = data.unsqueeze(0) if len(data.shape) == 1 or len(data.shape) == 3 else data
+                data    = data.unsqueeze(0)
             if last_unsqueeze:
                 data    = data.unsqueeze(-1) if data.shape[-1] != 1 else data
             if detach:
@@ -37,7 +37,7 @@ def to_tensor(datas, use_gpu = True, first_unsqueeze = False, last_unsqueeze = F
         for i, data in enumerate(datas):
             data    = torch.FloatTensor(data).to(set_device(use_gpu))
             if first_unsqueeze: 
-                data    = data.unsqueeze(0) if len(data.shape) == 1 or len(data.shape) == 3 else data
+                data    = data.unsqueeze(0)
             if last_unsqueeze:
                 data    = data.unsqueeze(-1) if data.shape[-1] != 1 else data
             if detach:
@@ -48,7 +48,7 @@ def to_tensor(datas, use_gpu = True, first_unsqueeze = False, last_unsqueeze = F
     else:
         datas   = torch.FloatTensor(datas).to(set_device(use_gpu))
         if first_unsqueeze: 
-            datas   = datas.unsqueeze(0) if len(datas.shape) == 1 or len(datas.shape) == 3 else datas
+            datas   = datas.unsqueeze(0)
         if last_unsqueeze:
             datas   = datas.unsqueeze(-1) if datas.shape[-1] != 1 else datas
         if detach:
