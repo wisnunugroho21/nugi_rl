@@ -35,7 +35,7 @@ class Executor():
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
                         self.agent.save_weights()
-                        # print('weights saved')
+                        print('weights saved')
 
         finally:
             finish = time.time()

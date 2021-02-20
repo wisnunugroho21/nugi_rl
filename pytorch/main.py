@@ -31,16 +31,16 @@ load_weights            = True # If you want to load the agent, set this to True
 save_weights            = True # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
-reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
-
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
-n_saved                 = 1
+reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
+n_memory_clr            = 128
 n_update                = 32 # How many episode before you update the Policy
 n_ppo_update            = 4
 n_aux_update            = 2
+n_saved                 = n_update * n_ppo_update * n_aux_update
 
 policy_kl_range         = 0.0008
 policy_params           = 20
@@ -107,7 +107,7 @@ distribution    = Distribution(use_gpu)
 aux_memory      = Aux_Memory()
 policy_memory   = Policy_Memory()
 runner_memory   = Policy_Memory()
-clr_memory      = Clr_Memory(128)
+clr_memory      = Clr_Memory(n_memory_clr)
 aux_loss        = Aux_loss(distribution)
 policy_loss     = Policy_loss(distribution, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma, lam)
 clr_loss        = Clr_loss()
