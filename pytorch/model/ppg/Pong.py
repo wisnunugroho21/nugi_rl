@@ -31,7 +31,7 @@ class Policy_Model(nn.Module):
         return self.actor_layer(x), self.critic_layer(x)
 
 class Value_Model(nn.Module):
-    def __init__(self, state_dim, action_dim, use_gpu = True):
+    def __init__(self, state_dim, use_gpu = True):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(

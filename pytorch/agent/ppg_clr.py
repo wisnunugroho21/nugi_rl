@@ -29,11 +29,11 @@ class AgentPpgClr():
         self.n_aux_update       = n_aux_update
         self.n_ppo_update       = n_ppo_update
 
-        self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu).float().to(set_device(use_gpu))
-        self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu).float().to(set_device(use_gpu))
+        self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
+        self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu)
 
-        self.value              = Value_Model(state_dim, action_dim).float().to(set_device(use_gpu))
-        self.value_old          = Value_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+        self.value              = Value_Model(state_dim, self.use_gpu)
+        self.value_old          = Value_Model(state_dim, self.use_gpu)
 
         self.distribution       = distribution
 

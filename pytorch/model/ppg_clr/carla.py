@@ -96,7 +96,7 @@ class Policy_Model(nn.Module):
         return (action, self.std), self.critic_layer(x), self.projection_clr(i)
       
 class Value_Model(nn.Module):
-    def __init__(self, state_dim, action_dim, use_gpu = True):
+    def __init__(self, state_dim, use_gpu = True):
       super(Value_Model, self).__init__()
 
       self.conv                 = CnnModel().float().to(set_device(use_gpu))

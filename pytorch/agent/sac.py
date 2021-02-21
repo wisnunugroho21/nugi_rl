@@ -18,11 +18,11 @@ class AgentSAC():
         self.epochs             = epochs
         self.soft_tau           = soft_tau
 
-        self.value              = Value_Model(state_dim).float().to(set_device(use_gpu))
-        self.target_value       = Value_Model(state_dim).float().to(set_device(use_gpu))
-        self.soft_q1            = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
-        self.soft_q2            = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
-        self.policy             = Policy_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+        self.value              = Value_Model(state_dim, self.use_gpu)
+        self.target_value       = Value_Model(state_dim, self.use_gpu)
+        self.soft_q1            = Q_Model(state_dim, action_dim, self.use_gpu)
+        self.soft_q2            = Q_Model(state_dim, action_dim, self.use_gpu)
+        self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
 
         self.distribution       = distribution
         self.memory             = memory

@@ -3,8 +3,8 @@ from utils.pytorch_utils import set_device
 
 class AdvantageFunction():
     def __init__(self, gamma = 0.99, lam = 0.95):
-        self.gamma = 0.99
-        self.lam = 0.95
+        self.gamma  = gamma
+        self.lam    = lam
 
     def generalized_advantage_estimation(self, rewards, values, next_values, dones):
         gae     = 0

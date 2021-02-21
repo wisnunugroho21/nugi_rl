@@ -77,7 +77,7 @@ class Policy_Model(nn.Module):
         return (action, self.std), self.critic_layer(x)
       
 class Value_Model(nn.Module):
-    def __init__(self, state_dim, action_dim):
+    def __init__(self, state_dim, use_gpu = True):
       super(Value_Model, self).__init__()
 
       self.conv1 = nn.Sequential(
@@ -85,33 +85,33 @@ class Value_Model(nn.Module):
         nn.ReLU(),
         DepthwiseSeparableConv2d(16, 64, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.conv2 = nn.Sequential(
         DepthwiseSeparableConv2d(64, 128, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
         DepthwiseSeparableConv2d(128, 256, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.conv3 = nn.Sequential(
         DepthwiseSeparableConv2d(64, 256, kernel_size = 8, stride = 4, padding = 2),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.state_extractor = nn.Sequential(
         nn.Linear(1, 64),
         nn.ReLU()
-      )
+      ).float().to(set_device(use_gpu))
 
       self.nn_layer = nn.Sequential(
         nn.Linear(320, 64),
         nn.ReLU(),
-      )
+      ).float().to(set_device(use_gpu))
 
       self.critic_layer = nn.Sequential(
         nn.Linear(64, 1)
-      )
+      ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
       i   = datas[0]
