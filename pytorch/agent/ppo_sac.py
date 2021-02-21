@@ -4,7 +4,7 @@ from torch.optim import Adam
 
 from utils.pytorch_utils import set_device, to_numpy, to_tensor
 
-class AgentSAC():
+class AgentPPOSAC():
     def __init__(self, Policy_Model, Value_Model, Q_Model, state_dim, action_dim, distribution, on_policy_loss, aux_loss, q_loss, v_loss, off_policy_loss, 
                 on_policy_memory, aux_memory, off_memory, is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, 
                 entropy_coef = 0.0, vf_loss_coef = 1.0, soft_tau = 0.95, batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, SAC_epochs = 1, 
@@ -53,8 +53,7 @@ class AgentSAC():
         self.device             = set_device(self.use_gpu)
         self.i_update           = 0
         
-        self.soft_q1_optimizer  = Adam(self.soft_q1.parameters(), lr = learning_rate)
-        self.soft_q2_optimizer  = Adam(self.soft_q2.parameters(), lr = learning_rate)
+        self.soft_q_optimizer   = Adam(self.soft_q.parameters(), lr = learning_rate)
         self.value_optimizer    = Adam(self.value.parameters(), lr = learning_rate)
         self.policy_optimizer   = Adam(self.policy.parameters(), lr = learning_rate)
         
@@ -156,7 +155,7 @@ class AgentSAC():
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
-                self.__training_ppo(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
+                self.__training_on_policy(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
                     dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu))
 
         states, _, _, _, _ = self.policy_memory.get_all_items()
@@ -171,7 +170,7 @@ class AgentSAC():
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
-                self.__training_aux(to_tensor(states, use_gpu = self.use_gpu))
+                self.__training_on_aux(to_tensor(states, use_gpu = self.use_gpu))
 
         self.auxMemory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())
