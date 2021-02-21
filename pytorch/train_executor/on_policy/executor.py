@@ -2,7 +2,7 @@ import numpy as np
 import time
 import datetime
 
-class Executor():
+class OnExecutor():
     def __init__(self, agent, env, n_iteration, runner, reward_threshold, save_weights = False, n_plot_batch = 100,
         n_saved = 10, max_action = 1.0, load_weights = False):
 

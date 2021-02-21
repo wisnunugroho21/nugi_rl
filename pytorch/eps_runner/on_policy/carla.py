@@ -1,9 +1,6 @@
-import numpy as np
+from eps_runner.on_policy.runner import OnRunner
 
-from eps_runner.runner import Runner
-from memory.image_state_memory import ImageStateMemory
-
-class CarlaRunner(Runner):
+class CarlaRunner(OnRunner):
     def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.env                = env
         self.agent              = agent

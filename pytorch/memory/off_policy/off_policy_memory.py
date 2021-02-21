@@ -1,7 +1,7 @@
 import numpy as np
 from torch.utils.data import Dataset
 
-class ClrMemory(Dataset):
+class OffPolicyMemory(Dataset):
     def __init__(self, capacity = 10000, datas = None):
         self.capacity   = capacity
         self.position   = 0

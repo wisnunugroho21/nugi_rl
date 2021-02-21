@@ -1,11 +1,11 @@
 import numpy as np
 import torch
 
-from eps_runner.runner import Runner
+from eps_runner.on_policy.runner import OnRunner
 import ray
 
 @ray.remote(num_gpus = 0.25)
-class SyncRunner(Runner):
+class SyncRunner(OnRunner):
     def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1, folder = ''):
         self.env                = env
         self.agent              = agent

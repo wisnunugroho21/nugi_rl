@@ -1,7 +1,7 @@
 import numpy as np
-from eps_runner.standard import Runner
+from eps_runner.on_policy.runner import OnRunner
 
-class VectorizedRunner(Runner): 
+class VectorizedRunner(OnRunner): 
     def __init__(self, envs, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.envs               = envs
         self.agent              = agent

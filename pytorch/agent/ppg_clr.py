@@ -129,7 +129,7 @@ class AgentPpgClr():
         self.aux_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())
 
-    def __update_clr(self):
+    def __update_clr(self): 
         dataloader      = DataLoader(self.clr_memory, int(self.batch_size / 2), shuffle = True)
         dataloader      = iter(dataloader)
 

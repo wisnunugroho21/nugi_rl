@@ -36,7 +36,7 @@ class AgentPPG():
         self.policy_memory      = policy_memory
         self.aux_memory         = aux_memory
         
-        self.trulyPPO           = policy_loss
+        self.policyLoss         = policy_loss
         self.auxLoss            = aux_loss      
 
         self.scaler             = torch.cuda.amp.GradScaler()
@@ -63,7 +63,7 @@ class AgentPPG():
         next_values         = self.value(next_states, True)
 
         with torch.cuda.amp.autocast():
-            ppo_loss    = self.trulyPPO.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+            ppo_loss    = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
 
         self.scaler.scale(ppo_loss).backward()
         self.scaler.step(self.ppo_optimizer)

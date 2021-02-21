@@ -1,6 +1,6 @@
 import numpy as np
 
-class Runner():
+class OnRunner():
     def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.env                = env
         self.render             = render

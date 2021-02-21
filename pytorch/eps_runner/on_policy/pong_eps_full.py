@@ -1,8 +1,8 @@
 import numpy as np
 from utils.math_function import prepo_crop
-from eps_runner.runner import Runner
+from eps_runner.on_policy.runner import OnRunner
 
-class PongFullRunner(Runner):
+class PongFullRunner(OnRunner):
     def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         super().__init__(env, render, training_mode, n_update, is_discrete, memories, agent, max_action, writer, n_plot_batch)
 

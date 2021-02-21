@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 class OnPolicyMemory(Dataset):
     def __init__(self, datas = None):
-        if datas is None :
+        if datas is None:
             self.states         = []
             self.actions        = []
             self.rewards        = []

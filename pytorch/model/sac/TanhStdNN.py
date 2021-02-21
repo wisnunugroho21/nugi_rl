@@ -1,0 +1,70 @@
+import torch
+import torch.nn as nn
+from utils.pytorch_utils import set_device
+
+class Policy_Model(nn.Module):
+    def __init__(self, state_dim, action_dim, use_gpu = True):
+        super(Policy_Model, self).__init__()
+
+        self.nn_layer = nn.Sequential(
+          nn.Linear(state_dim, 128),
+          nn.ReLU(),
+          nn.Linear(128, 64),
+          nn.ReLU(),
+        ).float().to(set_device(use_gpu))
+
+        self.actor_layer = nn.Sequential(
+          nn.Linear(64, action_dim),
+          nn.Tanh()
+        ).float().to(set_device(use_gpu))
+
+        self.actor_std_layer = nn.Sequential(
+          nn.Linear(64, action_dim),
+          nn.Softplus()
+        ).float().to(set_device(use_gpu))
+        
+    def forward(self, states, detach = False):
+      x = self.nn_layer(states)
+
+      if detach:
+        return (self.actor_layer(x).detach(), self.actor_std_layer(x).detach())
+      else:
+        return (self.actor_layer(x), self.actor_std_layer(x))
+
+class Value_Model(nn.Module):
+    def __init__(self, state_dim, use_gpu = True):
+        super(Value_Model, self).__init__()   
+
+        self.nn_layer = nn.Sequential(
+          nn.Linear(state_dim, 128),
+          nn.ReLU(),
+          nn.Linear(128, 64),
+          nn.ReLU(),
+          nn.Linear(64, 1)
+        ).float().to(set_device(use_gpu))
+        
+    def forward(self, states, detach = False):
+      if detach:
+        return self.nn_layer(states).detach()
+      else:
+        return self.nn_layer(states)
+      
+class Q_Model(nn.Module):
+    def __init__(self, state_dim, action_dim, use_gpu = True):
+        super(Q_Model, self).__init__()   
+
+        self.nn_layer = nn.Sequential(
+          nn.Linear(state_dim + action_dim, 128),
+          nn.ReLU(),
+          nn.Linear(128, 64),
+          nn.ReLU(),
+          nn.Linear(64, 1)
+        ).float().to(set_device(use_gpu))
+        
+    def forward(self, states, actions, detach = False):
+      x   = torch.cat((states, actions), -1)
+
+      if detach:
+        return self.nn_layer(x).detach()
+      else:
+        return self.nn_layer(x)

@@ -1,6 +1,6 @@
 import numpy as np
 
-from memory.on_policy_memory import OnPolicyMemory
+from memory.on_policy.on_policy_memory import OnPolicyMemory
 
 class ImageStatePolicyMemory(OnPolicyMemory):
     def __init__(self, datas = None):
