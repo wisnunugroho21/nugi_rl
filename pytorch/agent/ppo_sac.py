@@ -34,8 +34,8 @@ class AgentPPOSAC():
         self.value              = Value_Model(state_dim, self.use_gpu)
         self.value_old          = Value_Model(state_dim, self.use_gpu)
 
-        self.soft_q1            = Q_Model(state_dim, action_dim, self.use_gpu)
-        self.soft_q2            = Q_Model(state_dim, action_dim, self.use_gpu)
+        self.soft_q             = Q_Model(state_dim, action_dim, self.use_gpu)
+        self.soft_q_old         = Q_Model(state_dim, action_dim, self.use_gpu)
 
         self.distribution       = distribution
 
@@ -53,39 +53,35 @@ class AgentPPOSAC():
         self.device             = set_device(self.use_gpu)
         self.i_update           = 0
         
-        self.soft_q_optimizer   = Adam(self.soft_q.parameters(), lr = learning_rate)
-        self.value_optimizer    = Adam(self.value.parameters(), lr = learning_rate)
-        self.policy_optimizer   = Adam(self.policy.parameters(), lr = learning_rate)
+        self.soft_q_optimizer       = Adam(self.soft_q.parameters(), lr = learning_rate)
+        self.value_optimizer        = Adam(self.value.parameters(), lr = learning_rate)
+        self.off_policy_optimizer   = Adam(self.policy.parameters(), lr = learning_rate)
         
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)        
-        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)  
+        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate) 
+
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.value_old.load_state_dict(self.value.state_dict()) 
+        self.soft_q_old.load_state_dict(self.soft_q.state_dict()) 
 
         if is_training_mode:
           self.policy.train()
           self.value.train()
         else:
           self.policy.eval()
-          self.value.eval()
+          self.value.eval()    
 
-    def save_eps(self, state, action, reward, done, next_state):
-        self.memory.save_eps(state, action, reward, done, next_state)
+    def __training_off_q(self, states, actions, rewards, dones, next_states):
+        self.soft_q_optimizer.zero_grad()
 
-    def save_memory(self, policy_memory):
-        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
+        predicted_q_values  = self.soft_q(states, actions)
+        old_q_values        = self.soft_q_old(states, actions, True)
+        next_values         = self.value(next_states, True)
 
-    def __training_off_q(self, states, actions, rewards, dones, next_states, q_net, q_optimizer):
-        q_optimizer.zero_grad()
+        loss = self.qLoss.compute_loss(predicted_q_values, old_q_values, rewards, dones, next_values)
+        loss.backward()
 
-        predicted_q_value   = q_net(states, actions)
-        next_value          = self.value(next_states)
-
-        with torch.cuda.amp.autocast():
-            loss = self.qLoss.compute_loss(predicted_q_value, rewards, dones, next_value)
-
-        self.scaler.scale(loss).backward()
-        self.scaler.step(q_optimizer)
-        self.scaler.update()
+        self.soft_q_optimizer.step()
 
     def __training_off_values(self, states):
         self.value_optimizer.zero_grad()
@@ -93,32 +89,26 @@ class AgentPPOSAC():
         action_datas, _     = self.policy(states)
         actions             = self.distribution.sample(action_datas)
 
-        q_value1            = self.soft_q1(states, actions)
-        q_value2            = self.soft_q2(states, actions)
+        q_value             = self.soft_q(states, actions, True)
         predicted_value     = self.value(states)
 
-        with torch.cuda.amp.autocast():
-            loss = self.vLoss.compute_loss(predicted_value, action_datas, actions, q_value1, q_value2)
+        loss = self.vLoss.compute_loss(predicted_value, q_value)
+        loss.backward()
 
-        self.scaler.scale(loss).backward()
-        self.scaler.step(self.value_optimizer)
-        self.scaler.update()
+        self.value_optimizer.step()
 
     def __training_off_policy(self, states):
-        self.policy_optimizer.zero_grad()
+        self.off_policy_optimizer.zero_grad()
 
         action_datas, _ = self.policy(states)
         actions         = self.distribution.sample(action_datas)
 
-        q_value1        = self.soft_q1(states, actions)
-        q_value2        = self.soft_q2(states, actions)
+        q_value         = self.soft_q(states, actions)
 
-        with torch.cuda.amp.autocast():
-            loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
+        loss = self.offPolicyLoss.compute_loss(q_value)
+        loss.backward()
 
-        self.scaler.scale(loss).backward()
-        self.scaler.step(self.policy_optimizer)
-        self.scaler.update()
+        self.off_policy_optimizer.step()
 
     def __training_on_policy(self, states, actions, rewards, dones, next_states):         
         self.ppo_optimizer.zero_grad()
@@ -129,12 +119,10 @@ class AgentPPOSAC():
         old_values          = self.value_old(states, True)
         next_values         = self.value(next_states, True)
 
-        with torch.cuda.amp.autocast():
-            ppo_loss    = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
-
-        self.scaler.scale(ppo_loss).backward()
-        self.scaler.step(self.ppo_optimizer)
-        self.scaler.update()
+        loss = self.onPolicyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        loss.backward()
+        
+        self.ppo_optimizer.step()
 
     def __training_on_aux(self, states):        
         self.aux_optimizer.zero_grad()
@@ -143,22 +131,20 @@ class AgentPPOSAC():
         returns                 = self.value(states, True)
         old_action_datas, _     = self.policy_old(states, True)
 
-        with torch.cuda.amp.autocast():
-            joint_loss  = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss  = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss.backward()
 
-        self.scaler.scale(joint_loss).backward()
-        self.scaler.step(self.aux_optimizer)
-        self.scaler.update()
+        self.aux_optimizer.step()
 
     def __update_ppo(self):
-        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
+        dataloader = DataLoader(self.onPolicyMemory, self.batch_size, shuffle = False)
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
                 self.__training_on_policy(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
                     dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu))
 
-        states, _, _, _, _ = self.policy_memory.get_all_items()
+        states, _, _, _, _ = self.onPolicyMemory.get_all_items()
         self.auxMemory.save_all(states)
         self.onPolicyMemory.clear_memory()
 
@@ -166,7 +152,7 @@ class AgentPPOSAC():
         self.value_old.load_state_dict(self.value.state_dict())    
 
     def __update_aux(self):
-        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False)
+        dataloader  = DataLoader(self.auxMemory, self.batch_size, shuffle = False)
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
@@ -174,28 +160,15 @@ class AgentPPOSAC():
 
         self.auxMemory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())
-        
-    def act(self, state):
-        state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
-        action_datas        = self.policy(state)
-        
-        if self.is_training_mode:
-            action = self.distribution.sample(action_datas)
-        else:
-            action = self.distribution.act_deterministic(action_datas)
-              
-        return to_numpy(action, self.use_gpu)
 
     def update_off(self):
-        dataloader  = DataLoader(self.offMemory, self.batch_size, shuffle = False)
-
-        for _ in range(self.SAC_epochs):       
-            for states, actions, rewards, dones, next_states in dataloader:
-                self.__training_off_q(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
-                    dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu), self.soft_q1, self.soft_q1_optimizer)
+        if len(self.offMemory) > self.batch_size:
+            for _ in range(self.epochs):
+                dataloader  = DataLoader(self.offMemory, self.batch_size, shuffle = True)
+                states, actions, rewards, dones, next_states = next(iter(dataloader))
 
                 self.__training_off_q(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
-                    dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu), self.soft_q2, self.soft_q2_optimizer)
+                    dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu))
 
                 self.__training_off_values(to_tensor(states, use_gpu = self.use_gpu))
                 self.__training_off_policy(to_tensor(states, use_gpu = self.use_gpu))
@@ -209,6 +182,31 @@ class AgentPPOSAC():
         if self.i_update % self.n_aux_update == 0:
             self.__update_aux()
             self.i_update = 0
+
+    def act(self, state):
+        state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
+        action_datas        = self.policy(state)
+        
+        if self.is_training_mode:
+            action = self.distribution.sample(action_datas)
+        else:
+            action = self.distribution.act_deterministic(action_datas)
+              
+        return to_numpy(action, self.use_gpu)
+
+    def save_on_eps(self, state, action, reward, done, next_state):
+        self.onPolicyMemory.save_eps(state, action, reward, done, next_state)
+
+    def save_off_eps(self, state, action, reward, done, next_state):
+        self.offMemory.save_eps(state, action, reward, done, next_state)
+
+    def save_on_memory(self, policy_memory):
+        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
+        self.onPolicyMemory.save_all(states, actions, rewards, dones, next_states)
+
+    def save_off_memory(self, policy_memory):
+        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
+        self.offMemory.save_all(states, actions, rewards, dones, next_states)
 
     def save_weights(self):
         torch.save({

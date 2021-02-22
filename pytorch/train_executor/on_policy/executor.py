@@ -3,19 +3,14 @@ import time
 import datetime
 
 class OnExecutor():
-    def __init__(self, agent, env, n_iteration, runner, reward_threshold, save_weights = False, n_plot_batch = 100,
-        n_saved = 10, max_action = 1.0, load_weights = False):
+    def __init__(self, agent, n_iteration, runner, save_weights = False, n_saved = 10, load_weights = False):
 
         self.agent              = agent
-        self.env                = env
         self.runner             = runner
 
         self.n_iteration        = n_iteration
         self.save_weights       = save_weights
         self.n_saved            = n_saved
-        self.reward_threshold   = reward_threshold
-        self.n_plot_batch       = n_plot_batch
-        self.max_action         = max_action
 
         if load_weights:
             self.agent.load_weights()

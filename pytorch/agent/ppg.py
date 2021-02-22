@@ -39,12 +39,14 @@ class AgentPPG():
         self.policyLoss         = policy_loss
         self.auxLoss            = aux_loss      
 
-        self.scaler             = torch.cuda.amp.GradScaler()
         self.device             = set_device(self.use_gpu)
         self.i_update           = 0
 
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)        
-        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)  
+        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
+
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.value_old.load_state_dict(self.value.state_dict())
 
         if is_training_mode:
           self.policy.train()
@@ -62,12 +64,10 @@ class AgentPPG():
         old_values          = self.value_old(states, True)
         next_values         = self.value(next_states, True)
 
-        with torch.cuda.amp.autocast():
-            ppo_loss    = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        loss.backward()
 
-        self.scaler.scale(ppo_loss).backward()
-        self.scaler.step(self.ppo_optimizer)
-        self.scaler.update()
+        self.ppo_optimizer.step()
 
     def __training_aux(self, states):        
         self.aux_optimizer.zero_grad()
@@ -76,12 +76,10 @@ class AgentPPG():
         returns                 = self.value(states, True)
         old_action_datas, _     = self.policy_old(states, True)
 
-        with torch.cuda.amp.autocast():
-            joint_loss  = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss.backward()
 
-        self.scaler.scale(joint_loss).backward()
-        self.scaler.step(self.aux_optimizer)
-        self.scaler.update()
+        self.aux_optimizer.step()
 
     def __update_ppo(self):
         dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
@@ -106,7 +104,15 @@ class AgentPPG():
                 self.__training_aux(to_tensor(states, use_gpu = self.use_gpu))
 
         self.aux_memory.clear_memory()
-        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.policy_old.load_state_dict(self.policy.state_dict())    
+
+    def update(self):
+        self.__update_ppo()
+        self.i_update += 1
+
+        if self.i_update % self.n_aux_update == 0:
+            self.__update_aux()
+            self.i_update = 0
 
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)
@@ -126,34 +132,32 @@ class AgentPPG():
               
         return to_numpy(action, self.use_gpu)
 
-    def update(self):
-        self.__update_ppo()
-        self.i_update += 1
-
-        if self.i_update % self.n_aux_update == 0:
-            self.__update_aux()
-            self.i_update = 0
-
-    def save_weights(self):
+    def save_weights(self, folder = None):
+        if folder == None:
+            folder = self.folder
+            
         torch.save({
             'model_state_dict': self.policy.state_dict(),
             'optimizer_state_dict': self.ppo_optimizer.state_dict()
-            }, self.folder + '/policy.tar')
+            }, folder + '/policy.tar')
         
         torch.save({
             'model_state_dict': self.value.state_dict(),
             'optimizer_state_dict': self.aux_optimizer.state_dict()
-            }, self.folder + '/value.tar')
+            }, folder + '/value.tar')
         
-    def load_weights(self, device = None):
+    def load_weights(self, folder = None, device = None):
         if device == None:
             device = self.device
 
-        policy_checkpoint = torch.load(self.folder + '/policy.tar', map_location = device)
+        if folder == None:
+            folder = self.folder
+
+        policy_checkpoint = torch.load(folder + '/policy.tar', map_location = device)
         self.policy.load_state_dict(policy_checkpoint['model_state_dict'])
         self.ppo_optimizer.load_state_dict(policy_checkpoint['optimizer_state_dict'])
 
-        value_checkpoint = torch.load(self.folder + '/value.tar', map_location = device)
+        value_checkpoint = torch.load(folder + '/value.tar', map_location = device)
         self.value.load_state_dict(value_checkpoint['model_state_dict'])
         self.aux_optimizer.load_state_dict(value_checkpoint['optimizer_state_dict'])
 

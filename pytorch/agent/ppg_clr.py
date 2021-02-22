@@ -41,18 +41,20 @@ class AgentPpgClr():
         self.aux_memory         = aux_memory
         self.clr_memory         = clr_memory
         
-        self.trulyPPO           = policy_loss
+        self.policyLoss         = policy_loss
         self.auxLoss            = aux_loss
-        self.clr_loss           = clr_loss
+        self.clrLoss            = clr_loss
 
-        self.scaler             = torch.cuda.amp.GradScaler()
         self.device             = set_device(self.use_gpu)
         self.i_aux_update       = 0
         self.i_ppo_update       = 0
 
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)
         self.clr_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)        
-        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)       
+        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
+
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.value_old.load_state_dict(self.value.state_dict())       
 
         if is_training_mode:
           self.policy.train()
@@ -70,12 +72,10 @@ class AgentPpgClr():
         old_values, _           = self.value_old(states, True)
         next_values, _          = self.value(next_states, True)
 
-        with torch.cuda.amp.autocast():
-            ppo_loss    = self.trulyPPO.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        loss.backward()
 
-        self.scaler.scale(ppo_loss).backward()
-        self.scaler.step(self.ppo_optimizer)
-        self.scaler.update()
+        self.ppo_optimizer.step()
 
     def __training_aux(self, states):        
         self.aux_optimizer.zero_grad()
@@ -84,12 +84,10 @@ class AgentPpgClr():
         returns, _              = self.value(states, True)
         old_action_datas, _, _  = self.policy_old(states, True)
 
-        with torch.cuda.amp.autocast():
-            joint_loss  = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss.backward()
 
-        self.scaler.scale(joint_loss).backward()
-        self.scaler.step(self.aux_optimizer)
-        self.scaler.update()
+        self.aux_optimizer.step()
 
     def __training_clr(self, first_states, second_states):
         self.clr_optimizer.zero_grad()
@@ -97,12 +95,10 @@ class AgentPpgClr():
         _, _, first_encoded = self.policy(first_states)
         _, second_encoded   = self.value(second_states)
 
-        with torch.cuda.amp.autocast():
-            clr_loss    = self.clr_loss.compute_loss(first_encoded, second_encoded)
+        loss = self.clrLoss.compute_loss(first_encoded, second_encoded)
+        loss.backward()
 
-        self.scaler.scale(clr_loss).backward()
-        self.scaler.step(self.clr_optimizer)
-        self.scaler.update()
+        self.clr_optimizer.step()
 
     def __update_ppo(self):
         dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
@@ -129,14 +125,14 @@ class AgentPpgClr():
         self.aux_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())
 
-    def __update_clr(self): 
-        dataloader      = DataLoader(self.clr_memory, int(self.batch_size / 2), shuffle = True)
-        dataloader      = iter(dataloader)
-
-        first_states    = next(dataloader)
-        second_states   = next(dataloader)
-
+    def __update_clr(self):
         for _ in range(self.Clr_epochs):
+            dataloader      = DataLoader(self.clr_memory, int(self.batch_size / 2), shuffle = True)
+            dataloader      = iter(dataloader)
+
+            first_states    = next(dataloader)
+            second_states   = next(dataloader)
+
             self.__training_clr(to_tensor(first_states, use_gpu = self.use_gpu), to_tensor(second_states, use_gpu = self.use_gpu))
 
     def save_eps(self, state, action, reward, done, next_state):

@@ -15,6 +15,7 @@ class SyncRunner(OnRunner):
         self.max_action         = max_action
         self.writer             = writer
         self.n_plot_batch       = n_plot_batch
+        self.folder             = folder
 
         self.t_updates          = 0
         self.i_episode          = 0
@@ -27,7 +28,7 @@ class SyncRunner(OnRunner):
 
     def run_iteration(self, agent):
         self.memories.clear_memory()
-        self.agent.load_temp_weights()
+        self.agent.load_weights(self.folder)
 
         for _ in range(self.n_update):
             action = self.agent.act(self.states)

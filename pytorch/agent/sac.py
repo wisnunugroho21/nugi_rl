@@ -56,12 +56,10 @@ class AgentSAC():
         predicted_q_value   = q_net(states, actions)
         next_value          = self.target_value(next_states)
 
-        with torch.cuda.amp.autocast():
-            loss = self.qLoss.compute_loss(predicted_q_value, rewards, dones, next_value)
+        loss = self.qLoss.compute_loss(predicted_q_value, rewards, dones, next_value)        
+        loss.backward()
 
-        self.scaler.scale(loss).backward()
-        self.scaler.step(q_optimizer)
-        self.scaler.update()        
+        q_optimizer.step()        
 
     def __training_values(self, states):
         self.value_optimizer.zero_grad()
@@ -73,12 +71,10 @@ class AgentSAC():
         q_value2            = self.soft_q2(states, actions)
         predicted_value     = self.value(states)
 
-        with torch.cuda.amp.autocast():
-            loss = self.vLoss.compute_loss(predicted_value, action_datas, actions, q_value1, q_value2)
+        loss = self.vLoss.compute_loss(predicted_value, action_datas, actions, q_value1, q_value2)
+        loss.backward()
 
-        self.scaler.scale(loss).backward()
-        self.scaler.step(self.value_optimizer)
-        self.scaler.update()
+        self.value_optimizer.step()
 
     def __training_policy(self, states):
         self.policy_optimizer.zero_grad()
@@ -89,12 +85,10 @@ class AgentSAC():
         q_value1        = self.soft_q1(states, actions)
         q_value2        = self.soft_q2(states, actions)
 
-        with torch.cuda.amp.autocast():
-            loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
+        loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
+        loss.backward()
 
-        self.scaler.scale(loss).backward()
-        self.scaler.step(self.policy_optimizer)
-        self.scaler.update()
+        self.policy_optimizer.step()
         
     def act(self, state):
         state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
