@@ -40,12 +40,8 @@ class AgentSAC():
         self.value_optimizer    = Adam(self.value.parameters(), lr = learning_rate)
         self.policy_optimizer   = Adam(self.policy.parameters(), lr = learning_rate)  
 
-        if is_training_mode:
-          self.policy.train()
-          self.value.train()
-        else:
-          self.policy.eval()
-          self.value.eval()
+        for target_param, param in zip(self.target_value.parameters(), self.value.parameters()):
+            target_param.data.copy_(param.data)
 
     def save_eps(self, state, action, reward, done, next_state):
         self.memory.save_eps(state, action, reward, done, next_state)
@@ -115,9 +111,7 @@ class AgentSAC():
         if len(self.memory) > self.batch_size:
             for _ in range(self.epochs):
                 dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True)
-                dataloader  = iter(dataloader)
-
-                states, actions, rewards, dones, next_states = next(dataloader)
+                states, actions, rewards, dones, next_states = next(iter(dataloader))
 
                 self.__training_q(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
                     dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu), self.soft_q1, self.soft_q1_optimizer)
@@ -153,13 +147,3 @@ class AgentSAC():
         value_checkpoint = torch.load(self.folder + '/value.tar', map_location = device)
         self.value.load_state_dict(value_checkpoint['model_state_dict'])
         self.aux_optimizer.load_state_dict(value_checkpoint['optimizer_state_dict'])
-
-        if self.is_training_mode:
-            self.policy.train()
-            self.value.train()
-            print('Model is training...')
-
-        else:
-            self.policy.eval()
-            self.value.eval()
-            print('Model is evaluating...')
