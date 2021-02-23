@@ -6,7 +6,9 @@ import ray
 
 @ray.remote(num_gpus = 0.25)
 class SyncRunner(OnRunner):
-    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1, folder = ''):
+    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1, 
+        folder = '', tag = 0):
+
         self.env                = env
         self.agent              = agent
         self.render             = render
@@ -16,6 +18,7 @@ class SyncRunner(OnRunner):
         self.writer             = writer
         self.n_plot_batch       = n_plot_batch
         self.folder             = folder
+        self.tag                = tag
 
         self.t_updates          = 0
         self.i_episode          = 0
@@ -64,4 +67,4 @@ class SyncRunner(OnRunner):
                 self.total_reward   = 0
                 self.eps_time       = 0             
         
-        return self.memories
+        return self.memories, self.tag
