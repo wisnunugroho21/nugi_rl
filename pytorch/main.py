@@ -15,9 +15,9 @@ from environment.wrapper.gym_wrapper import GymWrapper
 """ from loss.sac.q_loss import QLoss
 from loss.sac.v_loss import VLoss
 from loss.sac.policy_loss import PolicyLoss """
-from loss.joint_aux import JointAux
+from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
-from loss.clr import CLR
+from loss.other.clr import CLR
 from model.ppg_clr.CnnLstm import Policy_Model, Value_Model
 """ from model.sac.TanhStdNN import Q_Model, Value_Model, Policy_Model
 from memory.off_policy.off_policy_memory import OffPolicyMemory """
@@ -33,7 +33,7 @@ from mlagents_envs.environment import UnityEnvironment """
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = True # If you want to save the agent, set this to True
+save_weights            = False # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
@@ -136,7 +136,7 @@ runner_memory   = Policy_Memory()
 clr_memory      = Clr_Memory(n_memory_clr)
 aux_loss        = Aux_loss(distribution)
 policy_loss     = Policy_loss(distribution, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma, lam)
-clr_loss        = Clr_loss()
+clr_loss        = Clr_loss(use_gpu)
 
 """ agent = AgentPPG(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory,
      training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, 
