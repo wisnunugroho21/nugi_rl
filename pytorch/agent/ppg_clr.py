@@ -8,8 +8,8 @@ from utils.pytorch_utils import set_device, to_numpy, to_tensor
 class AgentPpgClr():  
     def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory,
                 is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
-                batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, Clr_epochs = 10, gamma = 0.99, lam = 0.95, 
-                learning_rate = 3e-4, folder = 'model', use_gpu = True, n_ppo_update = 1024, n_aux_update = 10):   
+                batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, Clr_epochs = 10, learning_rate = 3e-4, folder = 'model', 
+                use_gpu = True, n_ppo_update = 1024, n_aux_update = 10):   
 
         self.policy_kl_range    = policy_kl_range 
         self.policy_params      = policy_params

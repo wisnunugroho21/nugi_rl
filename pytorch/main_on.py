@@ -139,7 +139,7 @@ clr_loss        = Clr_loss(use_gpu)
 
 """ agent = AgentPPG(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory,
      training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, 
-     gamma, lam, learning_rate, folder, use_gpu, n_aux_update) """
+     learning_rate, folder, use_gpu, n_aux_update) """
 
 agent = AgentPpgClr(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory, training_mode, policy_kl_range, 
     policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, Clr_epochs, learning_rate, folder, use_gpu, n_ppo_update, n_aux_update)

@@ -6,7 +6,7 @@ from utils.pytorch_utils import set_device, to_numpy, to_tensor
 
 class AgentSAC():
     def __init__(self, Q_Model, Value_Model, Policy_Model, state_dim, action_dim, distribution, q_loss, v_loss, policy_loss, memory, is_training_mode = True, 
-        batch_size = 32, epochs = 1, soft_tau = 0.95, gamma = 0.99, lam = 0.95, learning_rate = 3e-4, folder = 'model', use_gpu = True):
+        batch_size = 32, epochs = 1, soft_tau = 0.95, learning_rate = 3e-4, folder = 'model', use_gpu = True):
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
