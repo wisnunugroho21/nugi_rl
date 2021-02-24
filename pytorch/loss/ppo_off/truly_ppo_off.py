@@ -12,9 +12,9 @@ class TrulyPPO():
         self.advantage_function = AdvantageFunction(gamma)
         self.distribution       = distribution
 
-    def compute_loss(self, action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones):
-        advantages      = self.advantage_function.generalized_advantage_estimation(rewards, values, next_values, dones)
-        returns         = (advantages + values).detach()
+    def compute_loss(self, action_datas, old_action_datas, q_values, q_old_values, next_values, actions, rewards, dones):
+        advantages      = self.advantage_function.generalized_advantage_estimation(rewards, q_values, next_values, dones)
+        returns         = (advantages + q_values).detach()
         advantages      = ((advantages - advantages.mean()) / (advantages.std() + 1e-6)).detach()       
 
         logprobs        = self.distribution.logprob(action_datas, actions)
@@ -32,9 +32,9 @@ class TrulyPPO():
         dist_entropy    = self.distribution.entropy(action_datas).mean()
 
         if self.value_clip is None:
-            critic_loss     = ((returns - values).pow(2) * 0.5).mean()
+            critic_loss     = ((returns - q_values).pow(2) * 0.5).mean()
         else:
-            vpredclipped    = old_values + torch.clamp(values - old_values, -self.value_clip, self.value_clip)
+            vpredclipped    = q_old_values + torch.clamp(q_values - q_old_values, -self.value_clip, self.value_clip)
             critic_loss     = ((returns - vpredclipped).pow(2) * 0.5).mean()
 
         loss = (critic_loss * self.vf_loss_coef) - (dist_entropy * self.entropy_coef) - pg_loss

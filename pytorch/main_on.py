@@ -59,8 +59,7 @@ PPO_epochs              = 4
 Aux_epochs              = 4
 Clr_epochs              = 2
 action_std              = 1.0
-gamma                   = 0.99
-lam                     = 0.95
+gamma                   = 0.95
 learning_rate           = 3e-4
 
 """ epochs                  = 1
@@ -135,7 +134,7 @@ policy_memory   = Policy_Memory()
 runner_memory   = Policy_Memory()
 clr_memory      = Clr_Memory(n_memory_clr)
 aux_loss        = Aux_loss(distribution)
-policy_loss     = Policy_loss(distribution, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma, lam)
+policy_loss     = Policy_loss(distribution, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
 clr_loss        = Clr_loss(use_gpu)
 
 """ agent = AgentPPG(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory,
@@ -143,7 +142,7 @@ clr_loss        = Clr_loss(use_gpu)
      gamma, lam, learning_rate, folder, use_gpu, n_aux_update) """
 
 agent = AgentPpgClr(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory, training_mode, policy_kl_range, 
-    policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, Clr_epochs, gamma, lam, learning_rate, folder, use_gpu, n_ppo_update, n_aux_update)
+    policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, Clr_epochs, learning_rate, folder, use_gpu, n_ppo_update, n_aux_update)
 
 # ray.init()
 runner      = Runner(Wrapper, render, training_mode, n_update, Wrapper.is_discrete(), runner_memory, agent, max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
