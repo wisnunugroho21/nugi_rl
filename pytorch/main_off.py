@@ -7,23 +7,17 @@ import os
 
 from torch.utils.tensorboard import SummaryWriter
 
-from eps_runner.on_policy.pong_eps_full import PongFullRunner
-from train_executor.on_policy.executor import OnExecutor
-from agent.ppg_clr import AgentPpgClr
-from distribution.basic import BasicDiscrete
+from eps_runner.off_policy.runner import OffRunner
+from train_executor.off_policy.executor import OffExecutor
+from agent.sac import AgentSAC
+from distribution.basic import BasicContinous
 from environment.wrapper.gym_wrapper import GymWrapper
-""" from loss.sac.q_loss import QLoss
+from loss.sac.q_loss import QLoss
 from loss.sac.v_loss import VLoss
-from loss.sac.policy_loss import PolicyLoss """
-from loss.other.joint_aux import JointAux
-from loss.ppo.truly_ppo import TrulyPPO
-from loss.other.clr import CLR
-from model.ppg_clr.CnnLstm import Policy_Model, Value_Model
-""" from model.sac.TanhStdNN import Q_Model, Value_Model, Policy_Model
-from memory.off_policy.off_policy_memory import OffPolicyMemory """
-from memory.on_policy.on_policy_memory import OnPolicyMemory
-from memory.other.aux_memory import AuxMemory
-from memory.other.clr_memory import ClrMemory 
+from loss.sac.policy_loss import PolicyLoss
+from model.sac.TanhStdNN import Policy_Model, Value_Model
+from model.sac.TanhStdNN import Q_Model, Value_Model, Policy_Model
+from memory.off_policy.off_policy_memory import OffPolicyMemory
 
 # from environment.custom.carla_env import CarlaEnv
 """ from mlagents_envs.registry import default_registry
@@ -45,34 +39,16 @@ n_iteration             = 1000000 # How many episode you want to run
 n_saved                 = 100
 n_memory_clr            = 64
 n_update                = 32 # How many episode before you update the Policy
-n_ppo_update            = 8 
-n_aux_update            = 2 
-n_saved                 = n_update * n_ppo_update * n_aux_update
+n_saved                 = n_update
 
-policy_kl_range         = 0.0008
-policy_params           = 20
-value_clip              = 4.0
-entropy_coef            = 0.01
-vf_loss_coef            = 1.0
-batch_size              = 32
-PPO_epochs              = 4
-Aux_epochs              = 4
-Clr_epochs              = 2
-action_std              = 1.0
-gamma                   = 0.99
-lam                     = 0.95
-learning_rate           = 3e-4
-
-""" epochs                  = 1
+epochs                  = 1
 batch_size              = 32
 soft_tau                = 0.01
 gamma                   = 0.99
 lam                     = 0.95              
 learning_rate           = 3e-4    
 folder                  = 'model'
-use_gpu                 = True """
-
-
+use_gpu                 = True
 
 folder                  = 'weights/pong'
 env                     = gym.make('PongNoFrameskip-v4') # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
@@ -83,20 +59,8 @@ state_dim       = 80 * 80
 action_dim      = 3
 max_action      = None
 
-Policy_Model    = Policy_Model
-Value_Model     = Value_Model
-Distribution    = BasicDiscrete
-Runner          = PongFullRunner
-Executor        = OnExecutor
-Policy_loss     = TrulyPPO
-Aux_loss        = JointAux
-Clr_loss        = CLR
-Wrapper         = GymWrapper(env) # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512)
-Policy_Memory   = OnPolicyMemory
-Aux_Memory      = AuxMemory
-Clr_Memory      = ClrMemory
 
-""" Agent           = AgentSAC
+Agent           = AgentSAC
 Q_Model         = Q_Model
 Value_Model     = Value_Model
 Policy_Model    = Policy_Model
@@ -107,7 +71,7 @@ Q_Loss          = QLoss
 V_Loss          = VLoss
 Policy_Loss     = PolicyLoss
 Wrapper         = GymWrapper(env)
-Memory          = OffPolicyMemory """
+Memory          = OffPolicyMemory
 
 #####################################################################################################################################################
 
@@ -130,28 +94,6 @@ if action_dim is None:
 print('action_dim: ', action_dim)
 
 distribution    = Distribution(use_gpu)
-aux_memory      = Aux_Memory()
-policy_memory   = Policy_Memory()
-runner_memory   = Policy_Memory()
-clr_memory      = Clr_Memory(n_memory_clr)
-aux_loss        = Aux_loss(distribution)
-policy_loss     = Policy_loss(distribution, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma, lam)
-clr_loss        = Clr_loss(use_gpu)
-
-""" agent = AgentPPG(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory,
-     training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, 
-     gamma, lam, learning_rate, folder, use_gpu, n_aux_update) """
-
-agent = AgentPpgClr(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory, training_mode, policy_kl_range, 
-    policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size, PPO_epochs, Aux_epochs, Clr_epochs, gamma, lam, learning_rate, folder, use_gpu, n_ppo_update, n_aux_update)
-
-# ray.init()
-runner      = Runner(Wrapper, render, training_mode, n_update, Wrapper.is_discrete(), runner_memory, agent, max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights)
-
-executor.execute()
-
-""" distribution    = Distribution(use_gpu)
 memory          = Memory(1000)
 q_loss          = Q_Loss(gamma)
 v_loss          = V_Loss(distribution)
@@ -163,4 +105,4 @@ agent       = Agent(Q_Model, Value_Model, Policy_Model, state_dim, action_dim, d
 runner      = Runner(env, render, training_mode, n_update, Wrapper.is_discrete(), memory, agent, max_action)
 executor    = Executor(agent, n_iteration, runner, reward_threshold, save_weights, n_plot_batch, n_saved, max_action, SummaryWriter())
 
-executor.execute() """
+executor.execute()
