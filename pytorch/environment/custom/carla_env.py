@@ -160,4 +160,4 @@ class CarlaEnv():
         if len(self.crossed_line_hist) > 0 or len(self.collision_hist) > 0 or loc.x >= -100 or loc.y >= -10 or self.cur_step >= self.max_step:
             done = True
         
-        return (image, np.array([kmh])), reward, done, None
+        return (image, np.array([kmh, float(steer)])), reward, done, None

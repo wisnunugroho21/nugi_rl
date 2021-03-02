@@ -10,7 +10,9 @@ class CnnModel(nn.Module):
       super(CnnModel, self).__init__()   
 
       self.conv1 = nn.Sequential(
-        DepthwiseSeparableConv2d(3, 16, kernel_size = 4, stride = 2, padding = 1),
+        DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1),
+        nn.ReLU(),
+        DepthwiseSeparableConv2d(16, 32, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
         DepthwiseSeparableConv2d(16, 64, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
@@ -38,21 +40,6 @@ class CnnModel(nn.Module):
       i4  = i23.mean([2, 3])
       return i4
 
-class ProjectionModel(nn.Module):
-    def __init__(self, size):
-      super(ProjectionModel, self).__init__()
-
-      self.nn_layer   = nn.Sequential(
-        nn.Linear(size, size),
-        nn.ReLU(),
-        nn.Linear(size, size),
-        nn.ReLU(),
-        nn.Linear(size, size)
-      )
-
-    def forward(self, states):
-      return self.nn_layer(states)
-
 class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim, use_gpu = True):
       super(Policy_Model, self).__init__()
@@ -60,10 +47,9 @@ class Policy_Model(nn.Module):
       self.std                  = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(use_gpu))
 
       self.conv                 = CnnModel().float().to(set_device(use_gpu))
-      self.projection_clr       = ProjectionModel(256).float().to(set_device(use_gpu))
-
       self.memory_layer         = nn.LSTM(256, 256).float().to(set_device(use_gpu))
-      self.state_extractor      = nn.Sequential( nn.Linear(1, 64), nn.ReLU() ).float().to(set_device(use_gpu))
+
+      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() ).float().to(set_device(use_gpu))      
       self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
 
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
@@ -92,19 +78,18 @@ class Policy_Model(nn.Module):
       action          = torch.cat((action_tanh, action_sigmoid), -1)
 
       if detach:
-        return (action.detach(), self.std.detach()), self.critic_layer(x).detach(), self.projection_clr(i).detach()
+        return (action.detach(), self.std.detach()), self.critic_layer(x).detach()
       else:
-        return (action, self.std), self.critic_layer(x), self.projection_clr(i)
+        return (action, self.std), self.critic_layer(x)
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim, use_gpu = True):
       super(Value_Model, self).__init__()
 
       self.conv                 = CnnModel().float().to(set_device(use_gpu))
-      self.projection_clr       = ProjectionModel(256).float().to(set_device(use_gpu))
-
       self.memory_layer         = nn.LSTM(256, 256).float().to(set_device(use_gpu))
-      self.state_extractor      = nn.Sequential( nn.Linear(1, 64), nn.ReLU() ).float().to(set_device(use_gpu))
+
+      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() ).float().to(set_device(use_gpu))
       self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
 
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
@@ -127,6 +112,6 @@ class Value_Model(nn.Module):
       x   = self.nn_layer(x)
 
       if detach:
-        return self.critic_layer(x).detach(), self.projection_clr(i).detach()
+        return self.critic_layer(x).detach()
       else:
-        return self.critic_layer(x), self.projection_clr(i)
+        return self.critic_layer(x)
