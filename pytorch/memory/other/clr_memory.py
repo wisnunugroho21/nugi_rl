@@ -2,9 +2,9 @@ import numpy as np
 from torch.utils.data import Dataset
 
 class ClrMemory(Dataset):
-    def __init__(self, capacity = 10000, states = []):
+    def __init__(self, capacity = 10000):
         self.capacity   = capacity
-        self.states     = states
+        self.states     = []
         self.position   = 0
 
     def __len__(self):

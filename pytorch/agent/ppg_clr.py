@@ -126,14 +126,15 @@ class AgentPpgClr():
         self.policy_old.load_state_dict(self.policy.state_dict())
 
     def __update_clr(self):
-        for _ in range(self.Clr_epochs):
-            dataloader      = DataLoader(self.clr_memory, int(self.batch_size / 2), shuffle = True)
-            dataloader      = iter(dataloader)
+        if len(self.clr_memory) >= self.batch_size:
+            for _ in range(self.Clr_epochs):
+                dataloader      = DataLoader(self.clr_memory, self.batch_size, shuffle = True)
+                dataloader      = iter(dataloader)
 
-            first_states    = next(dataloader)
-            second_states   = next(dataloader)
+                first_states    = next(dataloader)
+                second_states   = next(dataloader)
 
-            self.__training_clr(to_tensor(first_states, use_gpu = self.use_gpu), to_tensor(second_states, use_gpu = self.use_gpu))
+                self.__training_clr(to_tensor(first_states, use_gpu = self.use_gpu), to_tensor(second_states, use_gpu = self.use_gpu))
 
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)
