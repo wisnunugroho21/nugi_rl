@@ -1,5 +1,4 @@
 import torch
-from utils.pytorch_utils import set_device
 
 class AdvantageFunction():
     def __init__(self, gamma = 0.99):
@@ -21,7 +20,7 @@ class AdvantageFunction():
         adv     = []
 
         limit   = torch.FloatTensor([1.0])
-        ratio   = torch.min(limit, (worker_logprobs - learner_logprobs).sum().exp())
+        ratio   = torch.min(limit, (learner_logprobs - worker_logprobs).exp())
 
         delta   = rewards + (1.0 - dones) * self.gamma * next_values - values
         delta   = ratio * delta
