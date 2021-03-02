@@ -1,7 +1,7 @@
 import numpy as np
 from torch.utils.data import Dataset
 
-from memory.aux_memory import AuxMemory
+from memory.other.aux_memory import AuxMemory
 
 class ImageStateAuxMemory(AuxMemory):
     def __init__(self):

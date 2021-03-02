@@ -10,9 +10,11 @@ class CnnModel(nn.Module):
       super(CnnModel, self).__init__()   
 
       self.conv1 = nn.Sequential(
-        DepthwiseSeparableConv2d(3, 16, kernel_size = 4, stride = 2, padding = 1),
+        DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1),
         nn.ReLU(),
-        DepthwiseSeparableConv2d(16, 64, kernel_size = 4, stride = 2, padding = 1),
+        DepthwiseSeparableConv2d(16, 32, kernel_size = 4, stride = 2, padding = 1),
+        nn.ReLU(),
+        DepthwiseSeparableConv2d(32, 64, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
       )
 
@@ -71,9 +73,9 @@ class Policy_Model(nn.Module):
         
     def forward(self, datas, detach = False):
       i   = datas[0]
-      batch_size, H, W, C  = datas.shape
+      batch_size, H, W, C  = i.shape
       
-      i   = datas.transpose(2, 3).transpose(0, 1).reshape(batch_size, C, H, W)
+      i   = i.transpose(2, 3).transpose(1, 2).reshape(batch_size, C, H, W)
       i   = self.conv(i)
       
       s   = datas[1]
@@ -105,9 +107,9 @@ class Value_Model(nn.Module):
         
     def forward(self, datas, detach = False):
       i   = datas[0]
-      batch_size, H, W, C  = datas.shape
+      batch_size, H, W, C  = i.shape
       
-      i   = datas.transpose(2, 3).transpose(0, 1).reshape(batch_size, C, H, W)
+      i   = i.transpose(2, 3).transpose(0, 1).reshape(batch_size, C, H, W)
       i   = self.conv(i)
       
       s   = datas[1]
