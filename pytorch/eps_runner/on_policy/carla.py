@@ -49,5 +49,5 @@ class CarlaRunner(OnRunner):
                 self.total_reward           = 0
                 self.eps_time               = 0
 
-        print('Updating agent..')
+        # print('Updating agent..')
         return self.memories
