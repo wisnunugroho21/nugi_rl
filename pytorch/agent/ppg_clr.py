@@ -1,4 +1,6 @@
 import torch
+import torchvision.transforms as transforms
+
 from torch.utils import data
 from torch.utils.data import DataLoader, dataloader
 from torch.optim import Adam
@@ -52,6 +54,13 @@ class AgentPpgClr():
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)
         self.clr_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)        
         self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
+
+        self.img_trans          = transforms.Compose([
+            transforms.RandomCrop(160),
+            transforms.Resize(240),
+            transforms.ColorJitter(),
+            transforms.GaussianBlur(240)
+        ])
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())       
@@ -129,12 +138,12 @@ class AgentPpgClr():
         if len(self.clr_memory) >= self.batch_size:
             for _ in range(self.Clr_epochs):
                 dataloader      = DataLoader(self.clr_memory, self.batch_size, shuffle = True)
-                dataloader      = iter(dataloader)
+                states          = next(iter(dataloader))
 
-                first_states    = next(dataloader)
-                second_states   = next(dataloader)
+                trans_states    = self.img_trans(states)
+                states          = torch.cat((states,  trans_states), dim = 1)
 
-                self.__training_clr(to_tensor(first_states, use_gpu = self.use_gpu), to_tensor(second_states, use_gpu = self.use_gpu))
+                self.__training_clr(to_tensor(states, use_gpu = self.use_gpu), to_tensor(states, use_gpu = self.use_gpu))
 
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)

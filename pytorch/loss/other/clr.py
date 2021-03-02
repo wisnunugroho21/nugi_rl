@@ -6,7 +6,7 @@ class CLR():
         self.use_gpu = use_gpu
 
     def compute_loss(self, first_encoded, second_encoded):
-        zeros           = torch.zeros(first_encoded.shape[0]).long().to(set_device(self.use_gpu))
+        zeros           = torch.zeros(1, first_encoded.shape[0]).long().to(set_device(self.use_gpu))
 
         first_encoded   = ((first_encoded - first_encoded.mean()) / (first_encoded.std() + 1e-6))
         second_encoded  = ((second_encoded - second_encoded.mean()) / (second_encoded.std() + 1e-6))
