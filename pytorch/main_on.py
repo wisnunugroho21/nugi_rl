@@ -20,12 +20,9 @@ from memory.policy.policy_memory import PolicyMemory
 from memory.aux_ppg.aux_memory import AuxMemory
 from memory.clr.image_timestep_clr_memory import ImageTimestepClrMemory 
 
-# from environment.custom.carla_env import CarlaEnv
-#from gym_unity.envs import UnityToGymWrapper
-
 ############## Hyperparameters ##############
 
-load_weights            = False # If you want to load the agent, set this to True
+load_weights            = True # If you want to load the agent, set this to True
 save_weights            = True # If you want to save the agent, set this to True
 training_mode           = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True

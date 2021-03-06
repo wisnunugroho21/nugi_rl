@@ -1,4 +1,4 @@
-from eps_runner.iteration.runner import IterRunner
+from eps_runner.iteration.iter_runner import IterRunner
 
 class CarlaRunner(IterRunner):
     def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):

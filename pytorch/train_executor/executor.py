@@ -4,7 +4,6 @@ import datetime
 
 class Executor():
     def __init__(self, agent, n_iteration, runner, save_weights = False, n_saved = 10, load_weights = False):
-
         self.agent              = agent
         self.runner             = runner
 
@@ -21,10 +20,10 @@ class Executor():
         print('Running the training!!')
 
         try:
-            for i_iteration in range(self.n_iteration):
+            for i_iteration in range(1, self.n_iteration, 1):
                 memories  = self.runner.run()
-                self.agent.save_memory(memories)
 
+                self.agent.save_memory(memories)
                 self.agent.update()
 
                 if self.save_weights:

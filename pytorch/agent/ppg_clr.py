@@ -112,7 +112,7 @@ class AgentPpgClr():
         self.clr_val_optimizer.step()
 
     def __update_ppo(self):
-        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
+        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False, num_workers = 2)
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
@@ -127,7 +127,7 @@ class AgentPpgClr():
         self.value_old.load_state_dict(self.value.state_dict())
 
     def __update_aux(self):
-        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False)
+        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 2)
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
@@ -139,7 +139,7 @@ class AgentPpgClr():
     def __update_clr(self):
         if len(self.clr_memory) >= self.batch_size:
             for _ in range(self.Clr_epochs):
-                dataloader                  = DataLoader(self.clr_memory, self.batch_size, shuffle = True)
+                dataloader                  = DataLoader(self.clr_memory, self.batch_size, shuffle = True, num_workers = 2)
                 crop_inputs, jitter_inputs  = next(iter(dataloader))
 
                 self.__training_clr(to_tensor(crop_inputs, use_gpu = self.use_gpu), to_tensor(jitter_inputs, use_gpu = self.use_gpu))
