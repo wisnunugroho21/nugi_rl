@@ -77,7 +77,6 @@ class Policy_Model(nn.Module):
 
       x   = m[-1]
       x   = self.nn_layer(x)
-      i   = i.reshape(timesteps * batch_size, i.shape[-1])
 
       if detach:
         return self.actor_layer(x).detach(), self.critic_layer(x).detach(), self.projection_clr(i).detach()
@@ -107,7 +106,6 @@ class Value_Model(nn.Module):
 
       x   = m[-1]
       x   = self.nn_layer(x)
-      i   = i.reshape(timesteps * batch_size, i.shape[-1])
 
       if detach:
         return self.critic_layer(x).detach(), self.projection_clr(i).detach()

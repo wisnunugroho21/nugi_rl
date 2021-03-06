@@ -109,7 +109,7 @@ class Value_Model(nn.Module):
       i   = datas[0]
       batch_size, H, W, C  = i.shape
       
-      i   = i.transpose(2, 3).transpose(0, 1).reshape(batch_size, C, H, W)
+      i   = i.transpose(2, 3).transpose(1, 2).reshape(batch_size, C, H, W)
       i   = self.conv(i)
       
       s   = datas[1]

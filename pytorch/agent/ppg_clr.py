@@ -51,16 +51,10 @@ class AgentPpgClr():
         self.i_aux_update       = 0
         self.i_ppo_update       = 0
 
-        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)
-        self.clr_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)        
+        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)               
         self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
-
-        self.img_trans          = transforms.Compose([
-            transforms.RandomCrop(160),
-            transforms.Resize(240),
-            transforms.ColorJitter(),
-            transforms.GaussianBlur(240)
-        ])
+        self.clr_pol_optimizer  = Adam(self.policy.parameters(), lr = 0.01) 
+        self.clr_val_optimizer  = Adam(self.value.parameters(), lr = 0.01) 
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())       
@@ -98,16 +92,24 @@ class AgentPpgClr():
 
         self.aux_optimizer.step()
 
-    def __training_clr(self, first_states, second_states):
-        self.clr_optimizer.zero_grad()
+    def __training_clr(self, crop_inputs, jitter_inputs):
+        self.clr_pol_optimizer.zero_grad()
 
-        _, _, first_encoded = self.policy(first_states)
-        _, second_encoded   = self.value(second_states)
+        _, _, first_encoded  = self.policy(crop_inputs)
+        _, _, second_encoded = self.policy(jitter_inputs)
 
         loss = self.clrLoss.compute_loss(first_encoded, second_encoded)
         loss.backward()
+        self.clr_pol_optimizer.step()
 
-        self.clr_optimizer.step()
+        self.clr_val_optimizer.zero_grad()
+
+        _, first_encoded  = self.value(crop_inputs)
+        _, second_encoded = self.value(jitter_inputs)
+
+        loss = self.clrLoss.compute_loss(first_encoded, second_encoded)
+        loss.backward()
+        self.clr_val_optimizer.step()
 
     def __update_ppo(self):
         dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
@@ -137,13 +139,10 @@ class AgentPpgClr():
     def __update_clr(self):
         if len(self.clr_memory) >= self.batch_size:
             for _ in range(self.Clr_epochs):
-                dataloader      = DataLoader(self.clr_memory, self.batch_size, shuffle = True)
-                states          = next(iter(dataloader))
+                dataloader                  = DataLoader(self.clr_memory, self.batch_size, shuffle = True)
+                crop_inputs, jitter_inputs  = next(iter(dataloader))
 
-                trans_states    = self.img_trans(states)
-                states          = torch.cat((states,  trans_states), dim = 1)
-
-                self.__training_clr(to_tensor(states, use_gpu = self.use_gpu), to_tensor(states, use_gpu = self.use_gpu))
+                self.__training_clr(to_tensor(crop_inputs, use_gpu = self.use_gpu), to_tensor(jitter_inputs, use_gpu = self.use_gpu))
 
     def save_eps(self, state, action, reward, done, next_state):
         self.policy_memory.save_eps(state, action, reward, done, next_state)

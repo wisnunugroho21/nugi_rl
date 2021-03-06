@@ -74,7 +74,7 @@ class Policy_Model(nn.Module):
       i   = datas[0]
       batch_size, timesteps, H, W, C  = i.shape
       
-      i   = i.transpose(3, 4).transpose(2, 3).reshape(timesteps * batch_size, C, H, W)
+      i   = i.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
 
       m         = i.reshape(timesteps, batch_size, i.shape[-1])
@@ -113,7 +113,7 @@ class Value_Model(nn.Module):
       i   = datas[0]
       batch_size, timesteps, H, W, C  = datas.shape
       
-      i   = datas.transpose(3, 4).transpose(2, 3).reshape(timesteps * batch_size, C, H, W)
+      i   = datas.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
 
       m         = i.reshape(timesteps, batch_size, i.shape[-1])
