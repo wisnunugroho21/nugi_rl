@@ -13,8 +13,8 @@ class ClrMemory(Dataset):
 
         if self.trans_crop is None:
             self.trans_crop = transforms.Compose([
-                transforms.RandomCrop(24),
-                transforms.Resize(32)
+                transforms.RandomCrop(128),
+                transforms.Resize(160)
             ])
 
         if self.trans_jitter is None:
@@ -34,11 +34,11 @@ class ClrMemory(Dataset):
 
         return (np.array(crop_inputs, dtype = np.float32), np.array(jitter_inputs, dtype = np.float32))
 
-    def save_eps(self, state):
+    def save_eps(self, image):
         if len(self.images) < self.capacity:
             self.images.append(None)
 
-        self.images[self.position]  = state
+        self.images[self.position]  = image
         self.position               = (self.position + 1) % self.capacity
 
     def save_replace_all(self, images):

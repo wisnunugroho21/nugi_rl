@@ -53,8 +53,8 @@ class AgentPpgClr():
 
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)               
         self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
-        self.clr_pol_optimizer  = Adam(self.policy.parameters(), lr = 0.01) 
-        self.clr_val_optimizer  = Adam(self.value.parameters(), lr = 0.01) 
+        self.clr_pol_optimizer  = Adam(self.policy.parameters(), lr = learning_rate) 
+        self.clr_val_optimizer  = Adam(self.value.parameters(), lr = learning_rate) 
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())       

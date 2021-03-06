@@ -67,9 +67,9 @@ class Policy_Model(nn.Module):
       self.actor_layer    = nn.Sequential( nn.Linear(64, action_dim), nn.Softmax(-1) ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
-      batch_size, timesteps, H, W, C  = datas.shape
+      batch_size, timesteps, C, H, W  = datas.shape
       
-      i   = datas.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
+      i   = datas.transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
 
       m         = i.reshape(timesteps, batch_size, i.shape[-1])
@@ -96,9 +96,9 @@ class Value_Model(nn.Module):
       self.critic_layer   = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
-      batch_size, timesteps, H, W, C  = datas.shape
+      batch_size, timesteps, C, H, W  = datas.shape
       
-      i   = datas.transpose(3, 4).transpose(2, 3).transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
+      i   = datas.transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
       i   = self.conv(i)
 
       m         = i.reshape(timesteps, batch_size, i.shape[-1])

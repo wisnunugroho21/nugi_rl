@@ -9,8 +9,8 @@ class PongFullRunner(IterRunner):
         self.frame      = 4
 
         obs             = self.env.reset()
-        obs             = prepo_crop(obs)
-        self.states     = np.zeros((self.frame, 160, 160, 3))
+        obs             = np.transpose(prepo_crop(obs), (2, 0, 1)).reshape(1, 3, 160, 160)
+        self.states     = np.zeros((self.frame, 3, 160, 160))
         self.states[-1] = obs
 
     def run(self):
@@ -25,14 +25,14 @@ class PongFullRunner(IterRunner):
             next_state  = None
             for i in range(self.frame):
                 next_obs, reward_temp, done, _  = self.env.step(action_gym)
-                next_obs                        = prepo_crop(next_obs).reshape(1, 160, 160, 3)
+                next_obs                        = np.transpose(prepo_crop(next_obs), (2, 0, 1)).reshape(1, 3, 160, 160)
 
                 reward      += reward_temp
                 next_state  = next_obs if i == 0 else np.concatenate((next_state, next_obs), axis = 0)
 
                 if done:
                     if len(next_state) < self.frame:
-                        next_obs      = np.zeros((self.frame - len(next_state), 160, 160, 3))
+                        next_obs      = np.zeros((self.frame - len(next_state), 3, 160, 160))
                         next_state    = np.concatenate((next_state, next_obs), axis = 0)  
                     break 
             
@@ -55,8 +55,8 @@ class PongFullRunner(IterRunner):
                     self.writer.add_scalar('Times', self.eps_time, self.i_episode)
                 
                 obs             = self.env.reset()
-                obs             = prepo_crop(obs)
-                self.states     = np.zeros((self.frame, 160, 160, 3))
+                obs             = np.transpose(prepo_crop(obs), (2, 0, 1)).reshape(1, 3, 160, 160)
+                self.states     = np.zeros((self.frame, 3, 160, 160))
                 self.states[-1] = obs
 
                 self.total_reward   = 0

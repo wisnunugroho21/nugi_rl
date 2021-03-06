@@ -2,7 +2,7 @@ import numpy as np
 import time
 import datetime
 
-class OnExecutor():
+class Executor():
     def __init__(self, agent, n_iteration, runner, save_weights = False, n_saved = 10, load_weights = False):
 
         self.agent              = agent
@@ -22,7 +22,7 @@ class OnExecutor():
 
         try:
             for i_iteration in range(self.n_iteration):
-                memories  = self.runner.run(self.agent)
+                memories  = self.runner.run()
                 self.agent.save_memory(memories)
 
                 self.agent.update()
