@@ -1,14 +1,18 @@
 import numpy as np
 
-class OnRunner():
-    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+class IterRunner():
+    def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+        self.agent              = agent
         self.env                = env
+        self.memories           = memory
+
         self.render             = render
         self.training_mode      = training_mode
         self.n_update           = n_update
         self.max_action         = max_action
         self.writer             = writer
         self.n_plot_batch       = n_plot_batch
+        self.is_discrete        = is_discrete
 
         self.t_updates          = 0
         self.i_episode          = 0
@@ -16,14 +20,12 @@ class OnRunner():
         self.eps_time           = 0
 
         self.states             = self.env.reset()
-        self.memories           = memories
-        self.is_discrete        = is_discrete
 
-    def run_iteration(self, agent):
+    def run(self):
         self.memories.clear_memory()       
 
         for _ in range(self.n_update):
-            action  = agent.act(self.states)
+            action  = self.agent.act(self.states)
 
             if self.is_discrete:
                 action = int(action)

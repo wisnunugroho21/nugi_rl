@@ -1,13 +1,13 @@
 import numpy as np
 
-from eps_runner.on_policy.runner import OnRunner
+from eps_runner.iteration.iter_runner import IterRunner
 
-class SlimeVolleyRunner(OnRunner):
-    def run_iteration(self, agent):
+class SlimeVolleyRunner(IterRunner):
+    def run(self):
         self.memories.clear_memory()       
 
         for _ in range(self.n_update):
-            action  = agent.act(self.states)
+            action  = self.agent.act(self.states)
 
             if action == 0:
                 action_gym = [0, 0, 0] # NOOP

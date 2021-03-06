@@ -1,7 +1,7 @@
 import numpy as np
 from torch.utils.data import Dataset
 
-class OnPolicyMemory(Dataset):
+class PolicyMemory(Dataset):
     def __init__(self, datas = None):
         if datas is None:
             self.states         = []

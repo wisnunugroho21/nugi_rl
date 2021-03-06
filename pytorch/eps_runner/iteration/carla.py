@@ -1,6 +1,6 @@
-from eps_runner.on_policy.runner import OnRunner
+from eps_runner.iteration.runner import IterRunner
 
-class CarlaRunner(OnRunner):
+class CarlaRunner(IterRunner):
     def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
         self.env                = env
         self.agent              = agent
@@ -19,7 +19,7 @@ class CarlaRunner(OnRunner):
         self.images, self.states    = self.env.reset()
         self.memories               = memories        
 
-    def run_iteration(self, agent):
+    def run(self, agent):
         self.memories.clear_memory()       
 
         for _ in range(self.n_update):

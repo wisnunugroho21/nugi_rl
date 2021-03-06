@@ -35,7 +35,7 @@ class VectorizedExecutor():
 
         try:
             for i_iteration in range(self.n_iteration):
-                memories  = self.runner.run_iteration(self.agent)
+                memories  = self.runner.run(self.agent)
 
                 for memory in memories:
                     self.agent.save_memory(memory)

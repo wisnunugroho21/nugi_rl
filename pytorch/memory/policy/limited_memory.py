@@ -1,7 +1,7 @@
 import numpy as np
-from torch.utils.data import Dataset
+from memory.policy.policy_memory import PolicyMemory
 
-class OffPolicyMemory(Dataset):
+class LimitedPolicyMemory(PolicyMemory):
     def __init__(self, capacity = 10000, datas = None):
         self.capacity   = capacity
         self.position   = 0

@@ -1,23 +1,23 @@
 import numpy as np
 from utils.math_function import prepo_crop
-from eps_runner.on_policy.runner import OnRunner
+from eps_runner.iteration.iter_runner import IterRunner
 
-class PongFullRunner(OnRunner):
-    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
-        super().__init__(env, render, training_mode, n_update, is_discrete, memories, agent, max_action, writer, n_plot_batch)
+class PongFullRunner(IterRunner):
+    def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+        super().__init__(agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer, n_plot_batch)
 
-        self.frame = 4
+        self.frame      = 4
 
         obs             = self.env.reset()
         obs             = prepo_crop(obs)
         self.states     = np.zeros((self.frame, 160, 160, 3))
         self.states[-1] = obs
 
-    def run_iteration(self, agent):
+    def run(self):
         self.memories.clear_memory()
 
         for _ in range(self.n_update):
-            action      = agent.act(self.states)
+            action      = self.agent.act(self.states)
             action_gym  = action + 1 if action != 0 else 0
 
             reward      = 0

@@ -1,8 +1,8 @@
 import numpy as np
-from eps_runner.on_policy.runner import OnRunner
+from eps_runner.iteration.iter_runner import IterRunner
 
-class VectorizedRunner(OnRunner): 
-    def __init__(self, envs, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1):
+class VectorizedRunner(IterRunner): 
+    def __init__(self, agent, envs, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.envs               = envs
         self.agent              = agent
         self.render             = render
@@ -18,19 +18,19 @@ class VectorizedRunner(OnRunner):
         self.eps_time           = 0
 
         self.states             = [env.reset() for env in self.envs]
-        self.memories           = memories
+        self.memories           = memory
 
         self.states             = [env.reset() for env in envs]
         self.total_rewards      = [0 for _ in range(len(envs))]
         self.eps_times          = [0 for _ in range(len(envs))]
         self.i_episodes         = [0 for _ in range(len(envs))]
 
-    def run_iteration(self, agent):
+    def run(self):
         for memory in self.memories:
             memory.clear_memory()
 
         for _ in range(self.n_update):
-            actions = agent.act(self.states)
+            actions = self.agent.act(self.states)
 
             for index, (env, memory, action) in enumerate(zip(self.envs, self.memories, actions)):
                 if self.is_discrete:

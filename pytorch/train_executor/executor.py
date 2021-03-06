@@ -22,7 +22,7 @@ class OnExecutor():
 
         try:
             for i_iteration in range(self.n_iteration):
-                memories  = self.runner.run_iteration(self.agent)
+                memories  = self.runner.run(self.agent)
                 self.agent.save_memory(memories)
 
                 self.agent.update()

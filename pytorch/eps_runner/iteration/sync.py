@@ -1,12 +1,12 @@
 import numpy as np
 import torch
 
-from eps_runner.on_policy.runner import OnRunner
+from eps_runner.iteration.iter_runner import IterRunner
 import ray
 
 @ray.remote(num_gpus = 0.25)
-class SyncRunner(OnRunner):
-    def __init__(self, env, render, training_mode, n_update, is_discrete, memories, agent = None, max_action = 1, writer = None, n_plot_batch = 1, 
+class SyncRunner(IterRunner):
+    def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100, 
         folder = '', tag = 0):
 
         self.env                = env
@@ -26,10 +26,10 @@ class SyncRunner(OnRunner):
         self.eps_time           = 0
 
         self.states             = self.env.reset()
-        self.memories           = memories
+        self.memories           = memory
         self.is_discrete        = is_discrete
 
-    def run_iteration(self, agent):
+    def run(self):
         self.memories.clear_memory()
         self.agent.load_weights(self.folder)
 

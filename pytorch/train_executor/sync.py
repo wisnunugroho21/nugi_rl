@@ -38,7 +38,7 @@ class SyncExecutor():
         try:            
             for i_iteration in range(self.n_iteration):
                 self.agent.save_temp_weights()
-                futures  = [runner.run_iteration.remote() for runner in self.runner]
+                futures  = [runner.run.remote() for runner in self.runner]
                 memories = ray.get(futures)
 
                 for memory in memories:

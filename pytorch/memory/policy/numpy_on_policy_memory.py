@@ -1,8 +1,8 @@
 import numpy as np
 
-from memory.on_policy.on_policy_memory import OnPolicyMemory
+from memory.trajectories.policy_memory import PolicyMemory
 
-class NumpyOnPolicyMemory(OnPolicyMemory):
+class NumpyPolicyMemory(PolicyMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.states         = np.array([], dtype = np.float32)

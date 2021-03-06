@@ -1,8 +1,8 @@
 import numpy as np
 
-from memory.on_policy.on_policy_memory import OnPolicyMemory
+from memory.policy.policy_memory import PolicyMemory
 
-class EmbeddingOnPolicyMemory(OnPolicyMemory):
+class EmbeddingPolicyMemory(PolicyMemory):
     def __init__(self, datas):
         if datas is None :
             self.available_actions = []
