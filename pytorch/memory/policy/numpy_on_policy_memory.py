@@ -1,6 +1,6 @@
 import numpy as np
 
-from memory.trajectories.policy_memory import PolicyMemory
+from memory.policy.policy_memory import PolicyMemory
 
 class NumpyPolicyMemory(PolicyMemory):
     def __init__(self, datas = None):

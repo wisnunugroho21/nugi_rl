@@ -5,9 +5,9 @@ from torch.optim import Adam
 from utils.pytorch_utils import set_device, to_numpy, to_tensor
 
 class AgentPPG():  
-    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory,
-                is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
-                batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, learning_rate = 3e-4, folder = 'model', use_gpu = True, n_aux_update = 10):   
+    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory, 
+                PPO_epochs = 10, Aux_epochs = 10, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, 
+                entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32,  learning_rate = 3e-4, folder = 'model', use_gpu = True):   
 
         self.policy_kl_range    = policy_kl_range 
         self.policy_params      = policy_params
@@ -81,7 +81,7 @@ class AgentPPG():
         self.aux_optimizer.step()
 
     def __update_ppo(self):
-        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
+        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False, num_workers = 2)
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
@@ -96,7 +96,7 @@ class AgentPPG():
         self.value_old.load_state_dict(self.value.state_dict())    
 
     def __update_aux(self):
-        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False)
+        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 2)
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
@@ -113,9 +113,6 @@ class AgentPPG():
             self.__update_aux()
             self.i_update = 0
 
-    def save_eps(self, state, action, reward, done, next_state):
-        self.policy_memory.save_eps(state, action, reward, done, next_state)
-
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
@@ -127,7 +124,7 @@ class AgentPPG():
         if self.is_training_mode:
             action = self.distribution.sample(action_datas)
         else:
-            action = self.distribution.act_deterministic(action_datas)
+            action = self.distribution.deterministic(action_datas)
               
         return to_numpy(action, self.use_gpu)
 

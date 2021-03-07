@@ -45,11 +45,19 @@ class ClrMemory(Dataset):
         self.clear_memory()
 
         for image in images:
-            self.save_eps(image)
+            if len(self.images) < self.capacity:
+                self.images.append(None)
+
+            self.images[self.position]  = image
+            self.position               = (self.position + 1) % self.capacity
 
     def save_all(self, images):
         for image in images:
-            self.save_eps(image)
+            if len(self.images) < self.capacity:
+                self.images.append(None)
+
+            self.images[self.position]  = image
+            self.position               = (self.position + 1) % self.capacity
 
     def get_all_items(self):         
         return self.images

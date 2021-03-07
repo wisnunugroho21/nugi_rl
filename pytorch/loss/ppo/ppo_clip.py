@@ -1,17 +1,16 @@
 import torch
 
 from distribution.basic import BasicDiscrete, BasicContinous
-from policy_function.advantage_function import AdvantageFunction
 
 class PPOClip():
-    def __init__(self, device, policy_clip = 0.2, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, action_std = 1.0, gamma = 0.99):
+    def __init__(self, advantage_function, device, policy_clip = 0.2, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, action_std = 1.0, gamma = 0.99):
         self.policy_clip    = policy_clip
         self.value_clip     = value_clip
         self.vf_loss_coef   = vf_loss_coef
         self.entropy_coef   = entropy_coef
         self.action_std     = action_std
 
-        self.advantagefunction  = AdvantageFunction(gamma)
+        self.advantagefunction  = advantage_function
 
         self.discrete    = BasicDiscrete(device)
         self.continous   = BasicContinous(device)

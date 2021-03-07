@@ -42,7 +42,7 @@ class ImageStatePolicyMemory(PolicyMemory):
         self.images         = images
         self.next_images    = next_images
 
-    def save_all(self, data_states, actions, rewards, dones, next_data_states):
+    def save_all(self, data_states, actions, rewards, dones, next_data_states):        
         images, states              = data_states
         next_images, next_states    = next_data_states
 

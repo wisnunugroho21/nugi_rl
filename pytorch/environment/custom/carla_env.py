@@ -132,7 +132,7 @@ class CarlaEnv():
         del self.collision_hist[:]
         del self.crossed_line_hist[:] 
         
-        return (image, np.array([0]))
+        return (image, np.array([0, 0]))
 
     def step(self, action):
         prev_loc    = self.vehicle.get_location()

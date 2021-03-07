@@ -1,19 +1,18 @@
 import torch
-from policy_function.advantage_function import AdvantageFunction
 
 class TrulyPPO():
-    def __init__(self, distribution, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, gamma = 0.95):
+    def __init__(self, distribution, advantage_function, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, gamma = 0.95):
         self.policy_kl_range    = policy_kl_range
         self.policy_params      = policy_params
         self.value_clip         = value_clip
         self.vf_loss_coef       = vf_loss_coef
         self.entropy_coef       = entropy_coef
 
-        self.advantage_function = AdvantageFunction(gamma)
+        self.advantage_function = advantage_function
         self.distribution       = distribution
 
     def compute_loss(self, action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones):
-        advantages      = self.advantage_function.generalized_advantage_estimation(rewards, values, next_values, dones)
+        advantages      = self.advantage_function.compute_advantages(rewards, values, next_values, dones)
         returns         = (advantages + values).detach()
         advantages      = ((advantages - advantages.mean()) / (advantages.std() + 1e-6)).detach()       
 

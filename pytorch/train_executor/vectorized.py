@@ -40,12 +40,7 @@ class VectorizedExecutor():
                 for memory in memories:
                     self.agent.save_memory(memory)
 
-                self.agent.update_ppo()
-                self.t_aux_updates += 1                
-
-                if self.t_aux_updates == self.n_aux_update:
-                    self.agent.update_aux()
-                    self.t_aux_updates = 0   
+                self.agent.update()  
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:

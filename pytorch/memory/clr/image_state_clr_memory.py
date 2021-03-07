@@ -1,12 +1,8 @@
 from memory.clr.clr_memory import ClrMemory
+import numpy as np
 
 class ImageStateClrMemory(ClrMemory):
-    def __init__(self, capacity = 10000):        
-        self.capacity   = capacity
-        self.images     = []
-        self.position   = 0
-
-    def save_eps(self, data_state):
+    def save_eps(self, data_state):        
         image, _    = data_state
         return super().save_eps(image)
 

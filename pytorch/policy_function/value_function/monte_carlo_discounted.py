@@ -3,9 +3,9 @@ from utils.pytorch_utils import set_device
 
 class ValueFunction():
     def __init__(self, gamma = 0.99):
-        self.gamma = 0.99
+        self.gamma = gamma
 
-    def monte_carlo_discounted(self, reward, done):
+    def compute_value(self, reward, done):
         returns = []        
         running_add = 0
         

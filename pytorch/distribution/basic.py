@@ -25,7 +25,7 @@ class BasicDiscrete():
         distribution2 = Categorical(datas2)
         return kl_divergence(distribution1, distribution2).unsqueeze(1).float().to(set_device(self.use_gpu))
 
-    def act_deterministic(self, datas):
+    def deterministic(self, datas):
         return int(torch.argmax(datas, 1))
 
 class BasicContinous():
@@ -59,6 +59,6 @@ class BasicContinous():
         distribution2 = Normal(mean2, std2)
         return kl_divergence(distribution1, distribution2).float().to(set_device(self.use_gpu))
 
-    def act_deterministic(self, datas):
+    def deterministic(self, datas):
         mean, _ = datas
         return mean.squeeze(0)

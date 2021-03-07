@@ -5,13 +5,14 @@ from torch.utils import data
 from torch.utils.data import DataLoader, dataloader
 from torch.optim import Adam
 
-from utils.pytorch_utils import set_device, to_numpy, to_tensor
+import numpy as np
 
+from utils.pytorch_utils import set_device, to_numpy, to_tensor
 class AgentPpgClr():  
     def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory,
-                is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
-                batch_size = 32, PPO_epochs = 10, Aux_epochs = 10, Clr_epochs = 10, learning_rate = 3e-4, folder = 'model', 
-                use_gpu = True, n_ppo_update = 1024, n_aux_update = 10):   
+                PPO_epochs = 10, Aux_epochs = 10, Clr_epochs = 10, n_ppo_update = 1024, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
+                policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32,  learning_rate = 3e-4, folder = 'model', 
+                use_gpu = True):   
 
         self.policy_kl_range    = policy_kl_range 
         self.policy_params      = policy_params
@@ -144,16 +145,6 @@ class AgentPpgClr():
 
                 self.__training_clr(to_tensor(crop_inputs, use_gpu = self.use_gpu), to_tensor(jitter_inputs, use_gpu = self.use_gpu))
 
-    def save_eps(self, state, action, reward, done, next_state):
-        self.policy_memory.save_eps(state, action, reward, done, next_state)
-        self.clr_memory.save_eps(state)
-
-    def save_memory(self, policy_memory):
-        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-
-        self.policy_memory.save_all(states, actions, rewards, dones, next_states)
-        self.clr_memory.save_all(states)
-
     def act(self, state):
         state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
         action_datas, _, _  = self.policy(state)
@@ -161,9 +152,14 @@ class AgentPpgClr():
         if self.is_training_mode:
             action = self.distribution.sample(action_datas)
         else:
-            action = self.distribution.act_deterministic(action_datas)
+            action = self.distribution.deterministic(action_datas)
               
         return to_numpy(action, self.use_gpu)
+
+    def save_memory(self, policy_memory):
+        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states)
+        self.clr_memory.save_all(states)    
 
     def update(self):
         self.__update_clr()

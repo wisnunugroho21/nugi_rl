@@ -10,11 +10,9 @@ class CnnModel(nn.Module):
       super(CnnModel, self).__init__()   
 
       self.conv1 = nn.Sequential(
-        DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1),
+        DepthwiseSeparableConv2d(3, 16, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
-        DepthwiseSeparableConv2d(16, 32, kernel_size = 4, stride = 2, padding = 1),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(32, 64, kernel_size = 4, stride = 2, padding = 1),
+        DepthwiseSeparableConv2d(16, 64, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
       )
 
@@ -26,9 +24,7 @@ class CnnModel(nn.Module):
       )
 
       self.conv3 = nn.Sequential(
-        DepthwiseSeparableConv2d(64, 128, kernel_size = 8, stride = 4, padding = 2),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(128, 256, kernel_size = 3, stride = 1, padding = 1),
+        DepthwiseSeparableConv2d(64, 256, kernel_size = 8, stride = 4, padding = 2),
         nn.ReLU(),
       )
         
@@ -47,8 +43,6 @@ class ProjectionModel(nn.Module):
       self.nn_layer   = nn.Sequential(
         nn.Linear(size, size),
         nn.ReLU(),
-        nn.Linear(size, size),
-        nn.ReLU(),
         nn.Linear(size, size)
       )
 
@@ -64,7 +58,7 @@ class Policy_Model(nn.Module):
       self.conv                 = CnnModel().float().to(set_device(use_gpu))
       self.projection_clr       = ProjectionModel(256).float().to(set_device(use_gpu))
 
-      self.state_extractor      = nn.Sequential( nn.Linear(1, 64), nn.ReLU() ).float().to(set_device(use_gpu))
+      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() ).float().to(set_device(use_gpu))
       self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
 
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
@@ -73,9 +67,6 @@ class Policy_Model(nn.Module):
         
     def forward(self, datas, detach = False):
       i   = datas[0]
-      batch_size, H, W, C  = i.shape
-      
-      i   = i.transpose(2, 3).transpose(1, 2).reshape(batch_size, C, H, W)
       i   = self.conv(i)
       
       s   = datas[1]
@@ -100,16 +91,13 @@ class Value_Model(nn.Module):
       self.conv                 = CnnModel().float().to(set_device(use_gpu))
       self.projection_clr       = ProjectionModel(256).float().to(set_device(use_gpu))
 
-      self.state_extractor      = nn.Sequential( nn.Linear(1, 64), nn.ReLU() ).float().to(set_device(use_gpu))
+      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() ).float().to(set_device(use_gpu))
       self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
 
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
       i   = datas[0]
-      batch_size, H, W, C  = i.shape
-      
-      i   = i.transpose(2, 3).transpose(1, 2).reshape(batch_size, C, H, W)
       i   = self.conv(i)
       
       s   = datas[1]
