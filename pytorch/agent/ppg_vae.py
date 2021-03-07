@@ -164,8 +164,8 @@ class AgentPpgClr():
         self.policy_old.load_state_dict(self.policy.state_dict())
 
     def __update_vae(self):
-        if len(self.clr_memory) >= self.batch_size:
-            for _ in range(self.Clr_epochs):
+        if len(self.vae_memory) >= self.batch_size:
+            for _ in range(self.Vae_epochs):
                 dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = True, num_workers = 2)
                 inputs      = next(iter(dataloader))
 
