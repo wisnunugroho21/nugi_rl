@@ -66,10 +66,9 @@ class Policy_Model(nn.Module):
       self.actor_sigmoid_layer  = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() ).float().to(set_device(use_gpu))            
         
     def forward(self, datas, detach = False):
-      i   = datas[0]
+      i, s   = datas
+
       i   = self.conv(i)
-      
-      s   = datas[1]
       s   = self.state_extractor(s)
 
       x   = torch.cat((i, s), -1)
@@ -97,10 +96,9 @@ class Value_Model(nn.Module):
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
-      i   = datas[0]
+      i, s   = datas
+
       i   = self.conv(i)
-      
-      s   = datas[1]
       s   = self.state_extractor(s)
 
       x   = torch.cat((i, s), -1)

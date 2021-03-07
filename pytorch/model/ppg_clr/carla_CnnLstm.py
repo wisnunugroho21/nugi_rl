@@ -69,7 +69,7 @@ class Policy_Model(nn.Module):
       self.actor_sigmoid_layer  = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() ).float().to(set_device(use_gpu))            
         
     def forward(self, datas, detach = False):
-      i   = datas[0]
+      i, s   = datas
       batch_size, timesteps, C, H, W  = i.shape
       
       i   = datas.transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
@@ -78,7 +78,6 @@ class Policy_Model(nn.Module):
       m         = i.reshape(timesteps, batch_size, i.shape[-1])
       m, (h, c) = self.memory_layer(m)
 
-      s   = datas[1]
       s   = self.state_extractor(s)
       
       x   = m[-1]
@@ -108,7 +107,7 @@ class Value_Model(nn.Module):
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
         
     def forward(self, datas, detach = False):
-      i   = datas[0]
+      i, s   = datas
       batch_size, timesteps, C, H, W  = i.shape
       
       i   = datas.transpose(0, 1).reshape(timesteps * batch_size, C, H, W)
@@ -117,7 +116,6 @@ class Value_Model(nn.Module):
       m         = i.reshape(timesteps, batch_size, i.shape[-1])
       m, (h, c) = self.memory_layer(m)
 
-      s   = datas[1]
       s   = self.state_extractor(s)
 
       x   = m[-1]
