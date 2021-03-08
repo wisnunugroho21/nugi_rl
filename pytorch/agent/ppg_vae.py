@@ -6,11 +6,12 @@ from torch.utils.data import DataLoader, dataloader
 from torch.optim import Adam
 
 import numpy as np
+from distribution.basic import BasicContinous
 
 from utils.pytorch_utils import set_device, to_numpy, to_tensor
-class AgentPpgClr():  
-    def __init__(self, Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, distribution, policy_loss, aux_loss, vae_loss, 
-                policy_memory, aux_memory, vae_memory, PPO_epochs = 10, Aux_epochs = 10, Vae_epochs = 10, n_ppo_update = 1024, n_vae_update = 10, 
+class AgentPpgVae():  
+    def __init__(self, Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, policy_dist, vae_dist, policy_loss, aux_loss, vae_loss, 
+                policy_memory, aux_memory, vae_memory, PPO_epochs = 10, Aux_epochs = 10, Vae_epochs = 10, n_ppo_update = 1024, n_aux_update = 10, 
                 is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
                 batch_size = 32,  learning_rate = 3e-4, folder = 'model', use_gpu = True):   
 
@@ -29,7 +30,7 @@ class AgentPpgClr():
         self.learning_rate      = learning_rate
         self.folder             = folder
         self.use_gpu            = use_gpu
-        self.n_vae_update       = n_vae_update
+        self.n_aux_update       = n_aux_update
         self.n_ppo_update       = n_ppo_update
 
         self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
@@ -44,7 +45,8 @@ class AgentPpgClr():
         self.value_cnn_old      = CnnModel()
         self.value_decoder      = DecoderModel()
 
-        self.distribution       = distribution
+        self.policy_dist        = policy_dist
+        self.vae_dist           = vae_dist
 
         self.policy_memory      = policy_memory
         self.aux_memory         = aux_memory
@@ -82,7 +84,7 @@ class AgentPpgClr():
         action_datas, _     = self.policy(cnn_res1)
 
         cnn_res2, _, _      = self.value_cnn(states)
-        values, _           = self.value(cnn_res2)
+        values              = self.value(cnn_res2)
 
         cnn_res3, _, _      = self.policy_cnn_old(states, True)
         old_action_datas, _ = self.policy_old(cnn_res3, True)
@@ -117,7 +119,7 @@ class AgentPpgClr():
 
     def __training_vae(self, states):
         self.vae_pol_optimizer.zero_grad()
-        rand_num = self.distribution.sample((0, 1)).to(self.device)
+        rand_num = self.vae_dist.sample((0, 1)).to(self.device)
 
         _, out_mean, out_std    = self.policy_cnn(states)
         res_encoder             = out_mean + out_std * rand_num
@@ -128,7 +130,7 @@ class AgentPpgClr():
         self.vae_pol_optimizer.step()
 
         self.vae_val_optimizer.zero_grad()
-        rand_num = self.distribution.sample((0, 1)).to(self.device)
+        rand_num = self.vae_dist.sample((0, 1)).to(self.device)
 
         _, out_mean, out_std    = self.value_cnn(states)
         res_encoder             = out_mean + out_std * rand_num
@@ -166,26 +168,28 @@ class AgentPpgClr():
     def __update_vae(self):
         if len(self.vae_memory) >= self.batch_size:
             for _ in range(self.Vae_epochs):
-                dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = True, num_workers = 2)
+                dataloader  = DataLoader(self.vae_memory, self.batch_size, shuffle = True, num_workers = 2)
                 inputs      = next(iter(dataloader))
 
                 self.__training_vae(to_tensor(inputs, use_gpu = self.use_gpu))
 
     def act(self, state):
         state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
-        action_datas, _, _  = self.policy(state)
+
+        cnn_res1, _, _      = self.policy_cnn(state)
+        action_datas, _     = self.policy(cnn_res1)
         
         if self.is_training_mode:
-            action = self.distribution.sample(action_datas)
+            action = self.policy_dist.sample(action_datas)
         else:
-            action = self.distribution.deterministic(action_datas)
+            action = self.policy_dist.deterministic(action_datas)
               
         return to_numpy(action, self.use_gpu)
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
         self.policy_memory.save_all(states, actions, rewards, dones, next_states)
-        self.clr_memory.save_all(states)    
+        self.vae_memory.save_all(states)    
 
     def update(self):
         self.__update_vae()

@@ -29,6 +29,7 @@ def prepo_full(I):
 def prepo_full_one_dim(I):
     I = prepo_full(I)
     I = I.astype(np.float32).ravel()
+    I = I / 255.0
     return I
 
 def prepro_half_one_dim(I):
@@ -38,6 +39,7 @@ def prepro_half_one_dim(I):
 
 def prepo_crop(I):
     I = I[35:195] # crop
+    I = I / 255.0
     return I
 
 def plot(datas):
