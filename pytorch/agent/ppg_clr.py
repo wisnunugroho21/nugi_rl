@@ -64,7 +64,9 @@ class AgentPpgClr():
         self.clr_val_optimizer  = Adam(list(self.value_cnn.parameters()) + list(self.value_projection.parameters()), lr = learning_rate)
 
         self.policy_old.load_state_dict(self.policy.state_dict())
-        self.value_old.load_state_dict(self.value.state_dict())       
+        self.value_old.load_state_dict(self.value.state_dict())
+        self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
+        self.value_cnn_old.load_state_dict(self.value_cnn.state_dict())       
 
         if is_training_mode:
           self.policy.train()
@@ -152,6 +154,8 @@ class AgentPpgClr():
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
+        self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
+        self.value_cnn_old.load_state_dict(self.value_cnn.state_dict())
 
     def __update_aux(self):
         dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 2)
@@ -161,7 +165,9 @@ class AgentPpgClr():
                 self.__training_aux(to_tensor(states, use_gpu = self.use_gpu))
 
         self.aux_memory.clear_memory()
+
         self.policy_old.load_state_dict(self.policy.state_dict())
+        self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
 
     def __update_clr(self):
         if len(self.clr_memory) >= self.batch_size:
