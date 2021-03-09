@@ -109,7 +109,7 @@ class AgentPpgVae():
         cnn_res2, _, _          = self.value_cnn(states, True)
         returns                 = self.value(cnn_res2, True)
 
-        cnn_res3, _, _          = self.value_cnn(states, True)
+        cnn_res3, _, _          = self.policy_cnn_old(states, True)
         old_action_datas, _     = self.policy_old(cnn_res3, True)
 
         loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
@@ -154,6 +154,8 @@ class AgentPpgVae():
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
+        self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
+        self.value_cnn_old.load_state_dict(self.value_cnn.state_dict())
 
     def __update_aux(self):
         dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 2)
@@ -163,7 +165,9 @@ class AgentPpgVae():
                 self.__training_aux(to_tensor(states, use_gpu = self.use_gpu))
 
         self.aux_memory.clear_memory()
+        
         self.policy_old.load_state_dict(self.policy.state_dict())
+        self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
 
     def __update_vae(self):
         if len(self.vae_memory) >= self.batch_size:
@@ -172,6 +176,9 @@ class AgentPpgVae():
                 inputs      = next(iter(dataloader))
 
                 self.__training_vae(to_tensor(inputs, use_gpu = self.use_gpu))
+
+        self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
+        self.value_cnn_old.load_state_dict(self.value_cnn.state_dict())
 
     def act(self, state):
         state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
