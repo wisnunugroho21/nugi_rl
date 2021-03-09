@@ -89,10 +89,10 @@ class AgentPpgVae():
         cnn_res3, _, _      = self.policy_cnn_old(states, True)
         old_action_datas, _ = self.policy_old(cnn_res3, True)
 
-        cnn_res4, _, _      = self.policy_cnn_old(states, True)
+        cnn_res4, _, _      = self.value_cnn_old(states, True)
         old_values          = self.value_old(cnn_res4, True)
 
-        cnn_res5, _, _      = self.value_cnn(states, True)
+        cnn_res5, _, _      = self.value_cnn(next_states, True)
         next_values         = self.value(cnn_res5, True)
 
         loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)

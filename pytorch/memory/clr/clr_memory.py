@@ -32,7 +32,7 @@ class ClrMemory(Dataset):
         crop_inputs     = self.trans_crop(images)
         jitter_inputs   = self.trans_jitter(images)
 
-        return (np.array(crop_inputs, dtype = np.float32), np.array(jitter_inputs, dtype = np.float32))
+        return (crop_inputs.detach().cpu().numpy(), jitter_inputs.detach().cpu().numpy())
 
     def save_eps(self, image):
         if len(self.images) < self.capacity:

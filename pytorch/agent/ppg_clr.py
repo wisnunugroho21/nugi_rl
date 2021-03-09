@@ -9,10 +9,10 @@ import numpy as np
 
 from utils.pytorch_utils import set_device, to_numpy, to_tensor
 class AgentPpgClr():  
-    def __init__(self, Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory,
-                PPO_epochs = 10, Aux_epochs = 10, Clr_epochs = 10, n_ppo_update = 1024, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
-                policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32,  learning_rate = 3e-4, folder = 'model', 
-                use_gpu = True):   
+    def __init__(self, Policy_Model, Value_Model, CnnModel, ProjectionModel, state_dim, action_dim, policy_dist, policy_loss, aux_loss, clr_loss, 
+                policy_memory, aux_memory, clr_memory, PPO_epochs = 10, Aux_epochs = 10, Clr_epochs = 10, n_ppo_update = 1024, n_aux_update = 10, 
+                is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
+                batch_size = 32,  learning_rate = 3e-4, folder = 'model', use_gpu = True):   
 
         self.policy_kl_range    = policy_kl_range 
         self.policy_params      = policy_params
@@ -34,11 +34,17 @@ class AgentPpgClr():
 
         self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
         self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu)
+        self.policy_cnn         = CnnModel()
+        self.policy_cnn_old     = CnnModel()
+        self.policy_projection  = ProjectionModel()
 
         self.value              = Value_Model(state_dim, self.use_gpu)
         self.value_old          = Value_Model(state_dim, self.use_gpu)
+        self.value_cnn          = CnnModel()
+        self.value_cnn_old      = CnnModel()
+        self.value_projection   = ProjectionModel()
 
-        self.distribution       = distribution
+        self.policy_dist        = policy_dist
 
         self.policy_memory      = policy_memory
         self.aux_memory         = aux_memory
@@ -52,10 +58,10 @@ class AgentPpgClr():
         self.i_aux_update       = 0
         self.i_ppo_update       = 0
 
-        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.value.parameters()), lr = learning_rate)               
-        self.aux_optimizer      = Adam(self.policy.parameters(), lr = learning_rate)
-        self.clr_pol_optimizer  = Adam(self.policy.parameters(), lr = learning_rate) 
-        self.clr_val_optimizer  = Adam(self.value.parameters(), lr = learning_rate) 
+        self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.policy_cnn.parameters()) + list(self.value.parameters()) + list(self.value_cnn.parameters()), lr = learning_rate)               
+        self.aux_optimizer      = Adam(list(self.policy.parameters()) + list(self.policy_cnn.parameters()), lr = learning_rate)
+        self.clr_pol_optimizer  = Adam(list(self.policy_cnn.parameters()) + list(self.policy_projection.parameters()), lr = learning_rate) 
+        self.clr_val_optimizer  = Adam(list(self.value_cnn.parameters()) + list(self.value_projection.parameters()), lr = learning_rate)
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())       
@@ -70,11 +76,20 @@ class AgentPpgClr():
     def __training_ppo(self, states, actions, rewards, dones, next_states):         
         self.ppo_optimizer.zero_grad()
 
-        action_datas, _, _      = self.policy(states)
-        values, _               = self.value(states)
-        old_action_datas, _, _  = self.policy_old(states, True)
-        old_values, _           = self.value_old(states, True)
-        next_values, _          = self.value(next_states, True)
+        cnn_res1            = self.policy_cnn(states)
+        action_datas, _     = self.policy(cnn_res1)
+
+        cnn_res2            = self.value_cnn(states)
+        values              = self.value(cnn_res2)
+
+        cnn_res3            = self.policy_cnn_old(states, True)
+        old_action_datas, _ = self.policy_old(cnn_res3, True)
+
+        cnn_res4            = self.value_cnn_old(states, True)
+        old_values          = self.value_old(cnn_res4, True)
+
+        cnn_res5            = self.value_cnn(next_states, True)
+        next_values         = self.value(cnn_res5, True)
 
         loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
         loss.backward()
@@ -84,9 +99,14 @@ class AgentPpgClr():
     def __training_aux(self, states):        
         self.aux_optimizer.zero_grad()
         
-        action_datas, values, _ = self.policy(states)
-        returns, _              = self.value(states, True)
-        old_action_datas, _, _  = self.policy_old(states, True)
+        cnn_res1                = self.policy_cnn(states)
+        action_datas, values    = self.policy(cnn_res1)
+
+        cnn_res2                = self.value_cnn(states, True)
+        returns                 = self.value(cnn_res2, True)
+
+        cnn_res3                = self.policy_cnn_old(states, True)
+        old_action_datas, _     = self.policy_old(cnn_res3, True)
 
         loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
         loss.backward()
@@ -96,8 +116,11 @@ class AgentPpgClr():
     def __training_clr(self, crop_inputs, jitter_inputs):
         self.clr_pol_optimizer.zero_grad()
 
-        _, _, first_encoded  = self.policy(crop_inputs)
-        _, _, second_encoded = self.policy(jitter_inputs)
+        cnn_res1        = self.policy_cnn(crop_inputs)
+        first_encoded   = self.policy_projection(cnn_res1)
+
+        cnn_res2        = self.policy_cnn(jitter_inputs)
+        second_encoded  = self.policy_projection(cnn_res2)
 
         loss = self.clrLoss.compute_loss(first_encoded, second_encoded)
         loss.backward()
@@ -105,8 +128,11 @@ class AgentPpgClr():
 
         self.clr_val_optimizer.zero_grad()
 
-        _, first_encoded  = self.value(crop_inputs)
-        _, second_encoded = self.value(jitter_inputs)
+        cnn_res1        = self.value_cnn(crop_inputs)
+        first_encoded   = self.value_projection(cnn_res1)
+
+        cnn_res2        = self.value_cnn(jitter_inputs)
+        second_encoded  = self.value_projection(cnn_res2)
 
         loss = self.clrLoss.compute_loss(first_encoded, second_encoded)
         loss.backward()
@@ -145,14 +171,17 @@ class AgentPpgClr():
 
                 self.__training_clr(to_tensor(crop_inputs, use_gpu = self.use_gpu), to_tensor(jitter_inputs, use_gpu = self.use_gpu))
 
+        self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
+        self.value_cnn_old.load_state_dict(self.value_cnn.state_dict())
+
     def act(self, state):
         state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
         action_datas, _, _  = self.policy(state)
         
         if self.is_training_mode:
-            action = self.distribution.sample(action_datas)
+            action = self.policy_dist.sample(action_datas)
         else:
-            action = self.distribution.deterministic(action_datas)
+            action = self.policy_dist.deterministic(action_datas)
               
         return to_numpy(action, self.use_gpu)
 

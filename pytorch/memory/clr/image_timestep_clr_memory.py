@@ -9,7 +9,7 @@ class ImageTimestepClrMemory(ClrMemory):
         crop_inputs     = self.trans_crop(images)
         jitter_inputs   = self.trans_jitter(images)
 
-        return (np.array(crop_inputs.unsqueeze(0), dtype = np.float32), np.array(jitter_inputs.unsqueeze(0), dtype = np.float32))
+        return (crop_inputs.unsqueeze(0).detach().cpu().numpy(), jitter_inputs.unsqueeze(0).detach().cpu().numpy())
 
     def save_eps(self, images):
         for image in images:

@@ -13,8 +13,7 @@ class VaeMemory(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        images  = torch.FloatTensor(self.images[idx])
-        return np.array(images, dtype = np.float32)
+        return np.array(self.images[idx], dtype = np.float32)
 
     def save_eps(self, image):
         if len(self.images) < self.capacity:
