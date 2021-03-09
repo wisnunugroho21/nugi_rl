@@ -119,9 +119,12 @@ class AgentPpgVae():
 
     def __training_vae(self, states):
         self.vae_pol_optimizer.zero_grad()
-        rand_num = self.vae_dist.sample((0, 1)).to(self.device)
-
         _, out_mean, out_std    = self.policy_cnn(states)
+
+        zeros                   = torch.zeros_like(out_mean)
+        ones                    = torch.ones_like(out_std)
+        rand_num                = self.vae_dist.sample((zeros, ones)).to(self.device)
+
         res_encoder             = out_mean + out_std * rand_num
         reconstruc_states       = self.policy_decoder(res_encoder)        
 
@@ -130,13 +133,16 @@ class AgentPpgVae():
         self.vae_pol_optimizer.step()
 
         self.vae_val_optimizer.zero_grad()
-        rand_num = self.vae_dist.sample((0, 1)).to(self.device)
-
         _, out_mean, out_std    = self.value_cnn(states)
+
+        zeros                   = torch.zeros_like(out_mean)
+        ones                    = torch.ones_like(out_std)
+        rand_num                = self.vae_dist.sample((zeros, ones)).to(self.device)
+
         res_encoder             = out_mean + out_std * rand_num
         reconstruc_states       = self.value_decoder(res_encoder)        
 
-        loss = self.vaeLoss.compute_loss(states, reconstruc_states, out_mean, out_std, 0, 1)
+        loss = self.vaeLoss.compute_loss(states, reconstruc_states, out_mean, out_std, zeros, ones)
         loss.backward()
         self.vae_val_optimizer.step()
 
@@ -165,7 +171,7 @@ class AgentPpgVae():
                 self.__training_aux(to_tensor(states, use_gpu = self.use_gpu))
 
         self.aux_memory.clear_memory()
-        
+
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
 
