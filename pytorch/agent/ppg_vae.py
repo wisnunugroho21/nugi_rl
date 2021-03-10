@@ -12,7 +12,7 @@ from loss.other.kl import KL
 from utils.pytorch_utils import set_device, to_numpy, to_tensor
 class AgentPpgVae():  
     def __init__(self, Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, policy_dist, policy_loss, aux_loss, vae_loss, 
-                policy_memory, aux_memory, vae_memory, PPO_epochs = 10, Aux_epochs = 10, Vae_epochs = 10, n_ppo_update = 1024, n_aux_update = 10, 
+                policy_memory, aux_memory, vae_memory, PPO_epochs = 10, Aux_epochs = 10, Vae_epochs = 10, n_ae_update = 1, n_aux_update = 10, 
                 is_training_mode = True, policy_kl_range = 0.03, policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, 
                 batch_size = 32,  learning_rate = 3e-4, folder = 'model', use_gpu = True):   
 
@@ -32,7 +32,7 @@ class AgentPpgVae():
         self.folder             = folder
         self.use_gpu            = use_gpu
         self.n_aux_update       = n_aux_update
-        self.n_ppo_update       = n_ppo_update
+        self.n_ae_update        = n_ae_update
 
         self.policy             = Policy_Model(state_dim, action_dim, self.use_gpu)
         self.policy_old         = Policy_Model(state_dim, action_dim, self.use_gpu)
@@ -59,7 +59,7 @@ class AgentPpgVae():
 
         self.device             = set_device(self.use_gpu)
         self.i_aux_update       = 0
-        self.i_ppo_update       = 0
+        self.i_ae_update       = 0
 
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.policy_cnn.parameters()) + list(self.value.parameters()) + list(self.value_cnn.parameters()), lr = learning_rate)               
         self.aux_optimizer      = Adam(list(self.policy.parameters()) + list(self.policy_cnn.parameters()), lr = learning_rate)
@@ -161,19 +161,22 @@ class AgentPpgVae():
             for states in dataloader:
                 self.__training_aux(to_tensor(states, use_gpu = self.use_gpu))
 
+        states  = self.aux_memory.get_all_items()
+        self.vae_memory.save_all(states)
         self.aux_memory.clear_memory()
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
 
     def __update_vae(self):
-        if len(self.vae_memory) >= self.batch_size:
-            for _ in range(self.Vae_epochs):
-                dataloader  = DataLoader(self.vae_memory, self.batch_size, shuffle = True, num_workers = 2)
-                inputs      = next(iter(dataloader))
-
+        dataloader  = DataLoader(self.vae_memory, self.batch_size, shuffle = True, num_workers = 2)
+        
+        for _ in range(self.Vae_epochs):
+            for inputs in dataloader:
                 self.__training_vae(to_tensor(inputs, use_gpu = self.use_gpu))
 
+        self.vae_memory.clear_memory()
+        
         self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
         self.value_cnn_old.load_state_dict(self.value_cnn.state_dict())
 
@@ -192,21 +195,19 @@ class AgentPpgVae():
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.policy_memory.save_all(states, actions, rewards, dones, next_states)
-        self.vae_memory.save_all(states)    
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states)            
 
     def update(self):
-        self.__update_vae()
-        self.i_ppo_update += 1      
-
-        if self.i_ppo_update % self.n_ppo_update == 0 and self.i_ppo_update != 0:
-            self.__update_ppo()
-            self.i_ppo_update = 0
-            self.i_aux_update += 1
+        self.__update_ppo()
+        self.i_aux_update += 1
 
         if self.i_aux_update % self.n_aux_update == 0 and self.i_aux_update != 0:
             self.__update_aux()
             self.i_aux_update = 0
+            self.i_ae_update += 1
+        
+        if self.i_ae_update % self.n_ae_update == 0 and self.i_ae_update != 0:
+            self.__update_vae()
 
     def save_weights(self):
         torch.save({

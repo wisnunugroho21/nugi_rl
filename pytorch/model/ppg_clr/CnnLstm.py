@@ -47,14 +47,14 @@ class CnnModel(nn.Module):
 
       if timestep > 1:
         if detach:
-          return out.mean([2, 3]).reshape(batch, timestep, -1).detach()
+          return out.mean([-1, -2]).reshape(batch, timestep, -1).detach()
         else:
-          return out.mean([2, 3]).reshape(batch, timestep, -1)
+          return out.mean([-1, -2]).reshape(batch, timestep, -1)
       else:
         if detach:
-          return out.mean([2, 3]).detach()
+          return out.mean([-1, -2]).detach()
         else:
-          return out.mean([2, 3])
+          return out.mean([-1, -2])
 
 class ProjectionModel(nn.Module):
     def __init__(self, use_gpu = True):

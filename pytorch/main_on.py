@@ -32,11 +32,11 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
-n_memory_vae            = 256
-n_update                = 8 # How many episode before you update the Policy
-n_ppo_update            = 64 
-n_aux_update            = 5 
-n_saved                 = n_update * n_ppo_update * n_aux_update
+n_memory_vae            = 10250
+n_update                = 512 # How many episode before you update the Policy 
+n_aux_update            = 2 
+n_ae_update             = 2
+n_saved                 = n_update * n_ae_update * n_aux_update
 
 policy_kl_range         = 0.0008
 policy_params           = 20
@@ -46,7 +46,7 @@ vf_loss_coef            = 1.0
 batch_size              = 32
 PPO_epochs              = 4
 Aux_epochs              = 4
-Vae_epochs              = 1
+Vae_epochs              = 2
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -109,10 +109,10 @@ vae_loss            = Vae_loss()
                 entropy_coef, vf_loss_coef, batch_size,  learning_rate, folder, use_gpu) """
 
 """ agent = AgentPpgClr(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory, PPO_epochs, Aux_epochs, Clr_epochs, 
-            n_ppo_update, n_aux_update, is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  learning_rate, folder, use_gpu) """
+            n_clr_update, n_aux_update, is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  learning_rate, folder, use_gpu) """
 
 agent = AgentPpgVae(Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, policy_dist, policy_loss, aux_loss, vae_loss, 
-                policy_memory, aux_memory, vae_memory, PPO_epochs, Aux_epochs, Vae_epochs, n_ppo_update, n_aux_update, 
+                policy_memory, aux_memory, vae_memory, PPO_epochs, Aux_epochs, Vae_epochs, n_ae_update, n_aux_update, 
                 is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, 
                 batch_size,  learning_rate, folder, use_gpu)
 
