@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from eps_runner.iteration.pong_eps_full import PongFullRunner
 from train_executor.executor import Executor
 from agent.ppg_vae import AgentPpgVae
-from distribution.basic import BasicDiscrete, BasicContinous
+from distribution.basic import BasicDiscrete
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
@@ -63,7 +63,6 @@ Value_Model         = Value_Model
 Cnn_Model           = CnnModel
 Decoder_Model       = DecoderModel
 Policy_Dist         = BasicDiscrete
-Vae_Dist            = BasicContinous
 Runner              = PongFullRunner
 Executor            = Executor
 Policy_loss         = TrulyPPO
@@ -96,7 +95,6 @@ if action_dim is None:
 print('action_dim: ', action_dim)
 
 policy_dist         = Policy_Dist(use_gpu)
-vae_dist            = Vae_Dist(use_gpu)
 advantage_function  = Advantage_Function(gamma)
 aux_memory          = Aux_Memory()
 policy_memory       = Policy_Memory()
@@ -104,7 +102,7 @@ runner_memory       = Policy_Memory()
 vae_memory          = Vae_Memory(n_memory_vae)
 aux_loss            = Aux_loss(policy_dist)
 policy_loss         = Policy_loss(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
-vae_loss            = Vae_loss(vae_dist)
+vae_loss            = Vae_loss()
 
 """ agent = AgentPPG(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory, 
                 PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, policy_params, value_clip, 
@@ -113,7 +111,7 @@ vae_loss            = Vae_loss(vae_dist)
 """ agent = AgentPpgClr(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory, PPO_epochs, Aux_epochs, Clr_epochs, 
             n_ppo_update, n_aux_update, is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  learning_rate, folder, use_gpu) """
 
-agent = AgentPpgVae(Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, policy_dist, vae_dist, policy_loss, aux_loss, vae_loss, 
+agent = AgentPpgVae(Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, policy_dist, policy_loss, aux_loss, vae_loss, 
                 policy_memory, aux_memory, vae_memory, PPO_epochs, Aux_epochs, Vae_epochs, n_ppo_update, n_aux_update, 
                 is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, 
                 batch_size,  learning_rate, folder, use_gpu)

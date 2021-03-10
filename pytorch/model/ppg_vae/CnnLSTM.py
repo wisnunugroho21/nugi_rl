@@ -28,12 +28,7 @@ class CnnModel(nn.Module):
         nn.ReLU(),
       ).to(set_device(use_gpu))
 
-      self.conv_out_mean = nn.Sequential(
-        DepthwiseSeparableConv2d(128, 256, kernel_size = 4, stride = 2, padding = 1),
-        nn.ReLU(),
-      ).to(set_device(use_gpu))
-
-      self.conv_out_std = nn.Sequential(
+      self.conv_out = nn.Sequential(
         DepthwiseSeparableConv2d(128, 256, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
       ).to(set_device(use_gpu))
@@ -48,19 +43,18 @@ class CnnModel(nn.Module):
       i2  = self.conv2(i1)
       i3  = self.conv3(i1)
       i23 = i2 + i3
-      out_mean  = self.conv_out_mean(i23)
-      out_std  = self.conv_out_mean(i23)
+      out = self.conv_out(i23)
 
       if timestep > 1:
         if detach:
-          return out_mean.reshape(batch, timestep, 256, 5, 5).detach(), out_std.reshape(batch, timestep, 256, 5, 5).detach()
+          return out.reshape(batch, timestep, 256, 5, 5).detach()
         else:
-          return out_mean.reshape(batch, timestep, 256, 5, 5), out_std.reshape(batch, timestep, 256, 5, 5)
+          return out.reshape(batch, timestep, 256, 5, 5)
       else:
         if detach:
-          return out_mean.detach(), out_std.detach()
+          return out.detach()
         else:
-          return out_mean, out_std
+          return out
 
 class DecoderModel(nn.Module):
     def __init__(self, use_gpu = True):
