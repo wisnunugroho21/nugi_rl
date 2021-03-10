@@ -23,7 +23,7 @@ from memory.vae.image_timestep_vae_memory import ImageTimestepVaeMemory
 
 ############## Hyperparameters ##############
 
-load_weights            = True # If you want to load the agent, set this to True
+load_weights            = False # If you want to load the agent, set this to True
 save_weights            = True # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True

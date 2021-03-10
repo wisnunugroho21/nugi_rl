@@ -53,46 +53,40 @@ class CnnModel(nn.Module):
 
       if timestep > 1:
         if detach:
-          return out_mean.mean([2, 3]).reshape(batch, timestep, -1).detach(), out_mean.reshape(batch, timestep, -1).detach(), out_std.reshape(batch, timestep, -1).detach()
+          return out_mean.reshape(batch, timestep, 256, 5, 5).detach(), out_std.reshape(batch, timestep, 256, 5, 5).detach()
         else:
-          return out_mean.mean([2, 3]).reshape(batch, timestep, -1), out_mean.reshape(batch, timestep, -1), out_std.reshape(batch, timestep, -1)
+          return out_mean.reshape(batch, timestep, 256, 5, 5), out_std.reshape(batch, timestep, 256, 5, 5)
       else:
         if detach:
-          return out_mean.mean([2, 3]).detach(), out_mean.detach(), out_std.detach()
+          return out_mean.detach(), out_std.detach()
         else:
-          return out_mean.mean([2, 3]), out_mean, out_std
+          return out_mean, out_std
 
 class DecoderModel(nn.Module):
     def __init__(self, use_gpu = True):
       super(DecoderModel, self).__init__()   
 
       self.conv1 = nn.Sequential(
-        nn.UpsamplingBilinear2d(scale_factor = 2),
-        DepthwiseSeparableConv2d(256, 128, kernel_size = 3, stride = 1, padding = 1),
+        nn.ConvTranspose2d(256, 128, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU()
       ).to(set_device(use_gpu))
 
       self.conv2 = nn.Sequential(
-        nn.UpsamplingBilinear2d(scale_factor = 2),
-        DepthwiseSeparableConv2d(128, 64, kernel_size = 3, stride = 1, padding = 1),
+        nn.ConvTranspose2d(128, 64, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
-        nn.UpsamplingBilinear2d(scale_factor = 2),
-        DepthwiseSeparableConv2d(64, 32, kernel_size = 3, stride = 1, padding = 1),
+        nn.ConvTranspose2d(64, 32, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU()
       ).to(set_device(use_gpu))
 
       self.conv3 = nn.Sequential(
-        nn.UpsamplingBilinear2d(scale_factor = 4),
-        DepthwiseSeparableConv2d(128, 32, kernel_size = 3, stride = 1, padding = 1),
+        nn.ConvTranspose2d(128, 32, kernel_size = 8, stride = 4, padding = 2),
         nn.ReLU(),
       ).to(set_device(use_gpu))
 
       self.conv4 = nn.Sequential(
-        nn.UpsamplingBilinear2d(scale_factor = 2),
-        DepthwiseSeparableConv2d(32, 16, kernel_size = 3, stride = 1, padding = 1),
+        nn.ConvTranspose2d(32, 16, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
-        nn.UpsamplingBilinear2d(scale_factor = 2),
-        DepthwiseSeparableConv2d(16, 3, kernel_size = 3, stride = 1, padding = 1),
+        nn.ConvTranspose2d(16, 3, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU()
       ).to(set_device(use_gpu))
 

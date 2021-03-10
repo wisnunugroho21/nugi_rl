@@ -7,6 +7,7 @@ from torch.optim import Adam
 
 import numpy as np
 from distribution.basic import BasicContinous
+from loss.other.kl import KL
 
 from utils.pytorch_utils import set_device, to_numpy, to_tensor
 class AgentPpgVae():  
@@ -55,6 +56,7 @@ class AgentPpgVae():
         self.policyLoss         = policy_loss
         self.auxLoss            = aux_loss
         self.vaeLoss            = vae_loss
+        self.klLoss             = KL(BasicContinous(use_gpu))
 
         self.device             = set_device(self.use_gpu)
         self.i_aux_update       = 0
@@ -80,22 +82,24 @@ class AgentPpgVae():
     def __training_ppo(self, states, actions, rewards, dones, next_states):         
         self.ppo_optimizer.zero_grad()
 
-        cnn_res1, _, _      = self.policy_cnn(states)
-        action_datas, _     = self.policy(cnn_res1)
+        out_mean1, out_std1 = self.policy_cnn(states)
+        action_datas, _     = self.policy(self.vae_dist.sample((out_mean1, out_std1)).mean([-1, -2]))
 
-        cnn_res2, _, _      = self.value_cnn(states)
-        values              = self.value(cnn_res2)
+        out_mean2, out_std2 = self.value_cnn(states)
+        values              = self.value(self.vae_dist.sample((out_mean2, out_std2)).mean([-1, -2]))
 
-        cnn_res3, _, _      = self.policy_cnn_old(states, True)
-        old_action_datas, _ = self.policy_old(cnn_res3, True)
+        out_mean3, out_std3 = self.policy_cnn_old(states, True)
+        old_action_datas, _ = self.policy_old(self.vae_dist.sample((out_mean3, out_std3)).mean([-1, -2]), True)
 
-        cnn_res4, _, _      = self.value_cnn_old(states, True)
-        old_values          = self.value_old(cnn_res4, True)
+        out_mean4, out_std4 = self.value_cnn_old(states, True)
+        old_values          = self.value_old(self.vae_dist.sample((out_mean4, out_std4)).mean([-1, -2]), True)
 
-        cnn_res5, _, _      = self.value_cnn(next_states, True)
-        next_values         = self.value(cnn_res5, True)
+        out_mean5, out_std5 = self.value_cnn(next_states, True)
+        next_values         = self.value(self.vae_dist.sample((out_mean5, out_std5)).mean([-1, -2]), True)
 
-        loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        zeros, ones = torch.zeros_like(out_mean1), torch.ones_like(out_std1)
+
+        loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones) + self.klLoss.compute_loss(out_mean1, out_std1, zeros, ones) + self.klLoss.compute_loss(out_mean2, out_std2, zeros, ones)
         loss.backward()
 
         self.ppo_optimizer.step()
@@ -103,46 +107,42 @@ class AgentPpgVae():
     def __training_aux(self, states):        
         self.aux_optimizer.zero_grad()
         
-        cnn_res1, _, _          = self.policy_cnn(states)
-        action_datas, values    = self.policy(cnn_res1)
+        out_mean1, out_std1     = self.policy_cnn(states)
+        action_datas, values    = self.policy(self.vae_dist.sample((out_mean1, out_std1)).mean([-1, -2]))
 
-        cnn_res2, _, _          = self.value_cnn(states, True)
-        returns                 = self.value(cnn_res2, True)
+        out_mean2, out_std2     = self.value_cnn(states, True)
+        returns                 = self.value(self.vae_dist.sample((out_mean2, out_std2)).mean([-1, -2]), True)
 
-        cnn_res3, _, _          = self.policy_cnn_old(states, True)
-        old_action_datas, _     = self.policy_old(cnn_res3, True)
+        out_mean3, out_std3     = self.policy_cnn_old(states, True)
+        old_action_datas, _     = self.policy_old(self.vae_dist.sample((out_mean3, out_std3)).mean([-1, -2]), True)
 
-        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        zeros, ones = torch.zeros_like(out_mean1), torch.ones_like(out_std1)
+
+        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns) + self.klLoss.compute_loss(out_mean1, out_std1, zeros, ones)
         loss.backward()
 
         self.aux_optimizer.step()
 
     def __training_vae(self, states):
         self.vae_pol_optimizer.zero_grad()
-        _, out_mean, out_std    = self.policy_cnn(states)
 
-        zeros                   = torch.zeros_like(out_mean)
-        ones                    = torch.ones_like(out_std)
-        rand_num                = self.vae_dist.sample((zeros, ones)).to(self.device)
+        out_mean1, out_std1     = self.policy_cnn(states)
+        reconstruc_states1      = self.policy_decoder(self.vae_dist.sample((out_mean1, out_std1)))
+        
+        zeros, ones             = torch.zeros_like(out_mean1), torch.ones_like(out_std1)        
 
-        res_encoder             = out_mean + out_std * rand_num
-        reconstruc_states       = self.policy_decoder(res_encoder)        
-
-        loss = self.vaeLoss.compute_loss(states, reconstruc_states, out_mean, out_std, 0, 1)
+        loss = self.vaeLoss.compute_loss(states, reconstruc_states1, out_mean1, out_std1, zeros, ones)
         loss.backward()
         self.vae_pol_optimizer.step()
 
         self.vae_val_optimizer.zero_grad()
-        _, out_mean, out_std    = self.value_cnn(states)
 
-        zeros                   = torch.zeros_like(out_mean)
-        ones                    = torch.ones_like(out_std)
-        rand_num                = self.vae_dist.sample((zeros, ones)).to(self.device)
+        out_mean2, out_std2     = self.value_cnn(states)
+        reconstruc_states2      = self.value_decoder(self.vae_dist.sample((out_mean2, out_std2)))
 
-        res_encoder             = out_mean + out_std * rand_num
-        reconstruc_states       = self.value_decoder(res_encoder)        
+        zeros, ones = torch.zeros_like(out_mean1), torch.ones_like(out_std1)
 
-        loss = self.vaeLoss.compute_loss(states, reconstruc_states, out_mean, out_std, zeros, ones)
+        loss = self.vaeLoss.compute_loss(states, reconstruc_states2, out_mean2, out_std2, zeros, ones)
         loss.backward()
         self.vae_val_optimizer.step()
 
@@ -189,8 +189,8 @@ class AgentPpgVae():
     def act(self, state):
         state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
 
-        cnn_res1, _, _      = self.policy_cnn(state)
-        action_datas, _     = self.policy(cnn_res1)
+        out_mean1, out_std1 = self.policy_cnn(state)
+        action_datas, _     = self.policy(self.vae_dist.sample((out_mean1, out_std1)).mean([-1, -2]))
         
         if self.is_training_mode:
             action = self.policy_dist.sample(action_datas)
