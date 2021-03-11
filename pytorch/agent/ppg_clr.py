@@ -172,7 +172,7 @@ class AgentPpgClr():
         self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
 
     def __update_clr(self):
-        dataloader                  = DataLoader(self.clr_memory, self.batch_size, shuffle = True, num_workers = 2)
+        dataloader  = DataLoader(self.clr_memory, self.batch_size, shuffle = True, num_workers = 2)
 
         for _ in range(self.Clr_epochs):
             for crop_inputs, jitter_inputs in dataloader:

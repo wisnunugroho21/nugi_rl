@@ -37,3 +37,4 @@ class VaeMemory(Dataset):
 
     def clear_memory(self):
         del self.images[:]
+        self.position = 0
