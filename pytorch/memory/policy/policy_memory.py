@@ -15,7 +15,7 @@ class PolicyMemory(Dataset):
         else:
             self.states, self.actions, self.rewards, self.dones, self.next_states = datas
             if len(self.dones) >= self.capacity:
-                raise Exception('datas cannot be more long than capacity')        
+                raise Exception('datas cannot be longer than capacity')        
 
     def __len__(self):
         return len(self.dones)
@@ -40,18 +40,12 @@ class PolicyMemory(Dataset):
         self.next_states.append(next_state)
 
     def save_replace_all(self, states, actions, rewards, dones, next_states):
-        self.states         = states
-        self.actions        = actions
-        self.rewards        = rewards
-        self.dones          = dones
-        self.next_states    = next_states
+        self.clear_memory()
+        self.save_all(states, actions, rewards, dones, next_states)
 
     def save_all(self, states, actions, rewards, dones, next_states):
-        self.states         += states
-        self.actions        += actions
-        self.rewards        += rewards
-        self.dones          += dones
-        self.next_states    += next_states
+        for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
+            self.save_eps(state, action, reward, done, next_state)
 
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states 

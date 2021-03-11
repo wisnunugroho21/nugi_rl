@@ -20,7 +20,7 @@ class NumpyPolicyMemory(PolicyMemory):
         return self.states[idx], self.actions[idx], self.rewards[idx], self.dones[idx], self.next_states[idx]      
 
     def save_eps(self, state, action, reward, done, next_state):
-        if self.__len__() == 0:
+        if len(self) == 0:
             self.states         = np.array([state], dtype = np.float32)
             self.actions        = np.array([action], dtype = np.float32)
             self.rewards        = np.array([[reward]], dtype = np.float32)
