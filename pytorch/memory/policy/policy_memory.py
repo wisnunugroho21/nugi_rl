@@ -2,7 +2,10 @@ import numpy as np
 from torch.utils.data import Dataset
 
 class PolicyMemory(Dataset):
-    def __init__(self, datas = None):
+    def __init__(self, capacity = 100000, datas = None):
+        self.capacity       = capacity
+        self.position       = 0
+
         if datas is None:
             self.states         = []
             self.actions        = []
@@ -11,6 +14,8 @@ class PolicyMemory(Dataset):
             self.next_states    = []
         else:
             self.states, self.actions, self.rewards, self.dones, self.next_states = datas
+            if len(self.dones) >= self.capacity:
+                raise Exception('datas cannot be more long than capacity')        
 
     def __len__(self):
         return len(self.dones)
@@ -21,11 +26,18 @@ class PolicyMemory(Dataset):
             np.array(self.next_states[idx], dtype = np.float32)      
 
     def save_eps(self, state, action, reward, done, next_state):
+        if len(self) >= self.capacity:
+            del self.states[0]
+            del self.actions[0]
+            del self.rewards[0]
+            del self.dones[0]
+            del self.next_states[0]
+
         self.states.append(state)
         self.actions.append(action)
         self.rewards.append(reward)
         self.dones.append(done)
-        self.next_states.append(next_state)            
+        self.next_states.append(next_state)
 
     def save_replace_all(self, states, actions, rewards, dones, next_states):
         self.states         = states
