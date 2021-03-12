@@ -6,7 +6,6 @@ import torchvision.transforms as transforms
 class ClrMemory(Dataset):
     def __init__(self, capacity = 10000, trans_crop = None, trans_jitter = None):        
         self.images         = []
-        self.position       = 0
         self.capacity       = capacity
         self.trans_crop     = trans_crop
         self.trans_jitter   = trans_jitter
@@ -34,12 +33,11 @@ class ClrMemory(Dataset):
 
         return (crop_inputs.detach().cpu().numpy(), jitter_inputs.detach().cpu().numpy())
 
-    def save_eps(self, image):
-        if len(self.images) < self.capacity:
-            self.images.append(None)
+    def save_eps(self, state):
+        if len(self) >= self.capacity:
+            del self.images[0]
 
-        self.images[self.position]  = image
-        self.position               = (self.position + 1) % self.capacity
+        self.images.append(state)
 
     def save_replace_all(self, images):
         self.clear_memory()

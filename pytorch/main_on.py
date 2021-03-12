@@ -9,17 +9,17 @@ from torch.utils.tensorboard import SummaryWriter
 
 from eps_runner.iteration.pong_eps_full import PongFullRunner
 from train_executor.executor import Executor
-from agent.ppg_vae import AgentPpgVae
+from agent.ppg_clr import AgentPpgClr
 from distribution.basic import BasicDiscrete
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
-from loss.other.vae import VAE
+from loss.other.clr import CLR
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg_vae.CnnLSTM import CnnModel, DecoderModel, Policy_Model, Value_Model
+from model.ppg_clr.CnnLstm import CnnModel, ProjectionModel, Policy_Model, Value_Model
 from memory.policy.policy_memory import PolicyMemory
 from memory.aux_ppg.aux_memory import AuxMemory
-from memory.vae.image_timestep_vae_memory import ImageTimestepVaeMemory 
+from memory.clr.image_timestep_clr_memory import ImageTimestepClrMemory 
 
 ############## Hyperparameters ##############
 
@@ -32,21 +32,21 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
-n_memory_vae            = 10000
-n_update                = 256 # How many episode before you update the Policy 
-n_aux_update            = 2 
-n_ae_update             = 2
-n_saved                 = n_update * n_ae_update * n_aux_update
+n_memory_clr            = 10000
+n_update                = 16 # How many episode before you update the Policy 
+n_aux_update            = 2
+n_ppo_update            = 8
+n_saved                 = n_update * n_ppo_update * n_aux_update
 
 policy_kl_range         = 0.0008
 policy_params           = 20
 value_clip              = 4.0
 entropy_coef            = 0.01
 vf_loss_coef            = 1.0
-batch_size              = 32
+batch_size              = 64
 PPO_epochs              = 4
 Aux_epochs              = 4
-Vae_epochs              = 2
+Clr_epochs              = 5
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -61,17 +61,17 @@ max_action          = 1
 Policy_Model        = Policy_Model
 Value_Model         = Value_Model
 Cnn_Model           = CnnModel
-Decoder_Model       = DecoderModel
+ProjectionModel     = ProjectionModel
 Policy_Dist         = BasicDiscrete
 Runner              = PongFullRunner
 Executor            = Executor
 Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
-Vae_loss            = VAE
+Clr_loss            = CLR
 Wrapper             = GymWrapper(env)
 Policy_Memory       = PolicyMemory
 Aux_Memory          = AuxMemory
-Vae_Memory          = ImageTimestepVaeMemory
+Clr_Memory          = ImageTimestepClrMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 
 #####################################################################################################################################################
@@ -99,25 +99,27 @@ advantage_function  = Advantage_Function(gamma)
 aux_memory          = Aux_Memory()
 policy_memory       = Policy_Memory()
 runner_memory       = Policy_Memory()
-vae_memory          = Vae_Memory(n_memory_vae)
+clr_memory          = Clr_Memory(n_memory_clr)
 aux_loss            = Aux_loss(policy_dist)
 policy_loss         = Policy_loss(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
-vae_loss            = Vae_loss()
+clr_loss            = Clr_loss(use_gpu)
 
 """ agent = AgentPPG(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, policy_memory, aux_memory, 
                 PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, policy_params, value_clip, 
                 entropy_coef, vf_loss_coef, batch_size,  learning_rate, folder, use_gpu) """
 
-""" agent = AgentPpgClr(Policy_Model, Value_Model, state_dim, action_dim, distribution, policy_loss, aux_loss, clr_loss, policy_memory, aux_memory, clr_memory, PPO_epochs, Aux_epochs, Clr_epochs, 
-            n_clr_update, n_aux_update, is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  learning_rate, folder, use_gpu) """
-
-agent = AgentPpgVae(Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, policy_dist, policy_loss, aux_loss, vae_loss, 
-                policy_memory, aux_memory, vae_memory, PPO_epochs, Aux_epochs, Vae_epochs, n_ae_update, n_aux_update, 
+agent = AgentPpgClr( Policy_Model, Value_Model, CnnModel, ProjectionModel, state_dim, action_dim, policy_dist, policy_loss, aux_loss, clr_loss, 
+                policy_memory, aux_memory, clr_memory, PPO_epochs, Aux_epochs, Clr_epochs, n_ppo_update, n_aux_update, 
                 is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, 
                 batch_size,  learning_rate, folder, use_gpu)
 
+""" agent = AgentPpgVae(Policy_Model, Value_Model, CnnModel, DecoderModel, state_dim, action_dim, policy_dist, policy_loss, aux_loss, vae_loss, 
+                policy_memory, aux_memory, vae_memory, PPO_epochs, Aux_epochs, Vae_epochs, n_ae_update, n_aux_update, 
+                is_training_mode, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, 
+                batch_size,  learning_rate, folder, use_gpu) """
+
 # ray.init()
-runner      = Runner(agent, Wrapper, policy_memory, is_training_mode, render, n_update, Wrapper.is_discrete, max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = Runner(agent, Wrapper, runner_memory, is_training_mode, render, n_update, Wrapper.is_discrete, max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights)
 
 executor.execute()

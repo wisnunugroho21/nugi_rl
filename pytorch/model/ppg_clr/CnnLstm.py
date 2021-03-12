@@ -34,7 +34,7 @@ class CnnModel(nn.Module):
       ).to(set_device(use_gpu))
         
     def forward(self, states, detach = False):
-      timestep = 1
+      timestep = 1      
       if len(states.shape) == 5:
         batch, timestep, C, H, W = states.shape
         states = states.reshape(batch * timestep, C, H, W)
@@ -46,15 +46,17 @@ class CnnModel(nn.Module):
       out  = self.conv_out(i23)
 
       if timestep > 1:
+        C, H, W = out.shape[-3], out.shape[-2], out.shape[-1]
         if detach:
-          return out.mean([-1, -2]).reshape(batch, timestep, -1).detach()
+          return out.reshape(batch, timestep, C, H, W).detach()
         else:
-          return out.mean([-1, -2]).reshape(batch, timestep, -1)
+          return out.reshape(batch, timestep, C, H, W)
+          
       else:
         if detach:
-          return out.mean([-1, -2]).detach()
+          return out.detach()
         else:
-          return out.mean([-1, -2])
+          return out
 
 class ProjectionModel(nn.Module):
     def __init__(self, use_gpu = True):

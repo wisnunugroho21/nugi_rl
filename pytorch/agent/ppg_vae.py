@@ -59,7 +59,7 @@ class AgentPpgVae():
 
         self.device             = set_device(self.use_gpu)
         self.i_aux_update       = 0
-        self.i_ae_update       = 0
+        self.i_ae_update        = 0
 
         self.ppo_optimizer      = Adam(list(self.policy.parameters()) + list(self.policy_cnn.parameters()) + list(self.value.parameters()) + list(self.value_cnn.parameters()), lr = learning_rate)               
         self.aux_optimizer      = Adam(list(self.policy.parameters()) + list(self.policy_cnn.parameters()), lr = learning_rate)
@@ -195,7 +195,7 @@ class AgentPpgVae():
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.policy_memory.save_all(states, actions, rewards, dones, next_states)            
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states)
 
     def update(self):
         self.__update_ppo()
@@ -208,6 +208,7 @@ class AgentPpgVae():
         
         if self.i_ae_update % self.n_ae_update == 0 and self.i_ae_update != 0:
             self.__update_vae()
+            self.i_ae_update = 0
 
     def save_weights(self):
         torch.save({

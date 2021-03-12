@@ -13,8 +13,7 @@ class ImageTimestepClrMemory(ClrMemory):
 
     def save_eps(self, images):
         for image in images:
-            if len(self.images) < self.capacity:
-                self.images.append(None)
+            if len(self) >= self.capacity:
+                del self.images[0]
 
-            self.images[self.position]  = image
-            self.position               = (self.position + 1) % self.capacity
+            self.images.append(image)

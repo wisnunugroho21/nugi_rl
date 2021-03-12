@@ -4,7 +4,6 @@ from torch.utils.data import Dataset
 class AuxMemory(Dataset):
     def __init__(self, capacity = 100000, datas = None):
         self.capacity       = capacity
-        self.position       = 0
 
         if datas is None:
             self.states         = []
