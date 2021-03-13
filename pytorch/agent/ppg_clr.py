@@ -58,7 +58,7 @@ class AgentPpgClr():
         self.i_aux_update       = 0
         self.i_ppo_update       = 0
 
-        self.ppo_optimizer      = Adam(list(self.policy_cnn.parameters()) + list(self.policy.parameters()) + list(self.value.parameters()) + list(self.value_cnn.parameters()), lr = learning_rate)        
+        self.ppo_optimizer      = Adam(list(self.policy_cnn.parameters()) + list(self.policy.parameters()) + list(self.value_cnn.parameters()) + list(self.value.parameters()), lr = learning_rate)        
         self.aux_optimizer      = Adam(list(self.policy_cnn.parameters()) + list(self.policy.parameters()), lr = learning_rate)
         self.clr_optimizer      = Adam(list(self.policy_cnn.parameters()) + list(self.policy_projection.parameters()) + list(self.value_cnn.parameters()) + list(self.value_projection.parameters()), lr = learning_rate) 
 
@@ -103,7 +103,7 @@ class AgentPpgClr():
         out1                    = self.policy_cnn(states)
         action_datas, values    = self.policy(out1.mean([-1, -2]))
 
-        out2                    = self.value_cnn(states)
+        out2                    = self.value_cnn(states, True)
         returns                 = self.value(out2.mean([-1, -2]), True)
 
         out3                    = self.policy_cnn_old(states, True)
@@ -132,15 +132,15 @@ class AgentPpgClr():
         out1            = self.value_cnn(first_inputs)
         first_encoded   = self.value_projection(out1.mean([-1, -2]))
 
-        out2            = self.policy_cnn(first_inputs)
-        second_encoded  = self.policy_projection(out1.mean([-1, -2]))
+        out2            = self.policy_cnn(second_inputs)
+        second_encoded  = self.policy_projection(out2.mean([-1, -2]))
 
         loss = self.clrLoss.compute_loss(first_encoded, second_encoded)
         loss.backward()
         self.clr_optimizer.step()
 
     def __update_ppo(self):
-        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False, num_workers = 2)
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
@@ -157,7 +157,7 @@ class AgentPpgClr():
         self.value_cnn_old.load_state_dict(self.value_cnn.state_dict())
 
     def __update_aux(self):
-        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 2)
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:
@@ -169,7 +169,7 @@ class AgentPpgClr():
         self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
 
     def __update_clr(self):
-        dataloader  = DataLoader(self.clr_memory, 16, shuffle = True, num_workers = 4)
+        dataloader  = DataLoader(self.clr_memory, self.batch_size, shuffle = True, num_workers = 2)
 
         for _ in range(self.Clr_epochs):
             for first_inputs, second_inputs in dataloader:
@@ -199,13 +199,9 @@ class AgentPpgClr():
         self.clr_memory.save_all(states)
 
     def update(self):
-        self.__update_clr()
-        self.i_ppo_update += 1      
-
-        if self.i_ppo_update % self.n_ppo_update == 0 and self.i_ppo_update != 0:
-            self.__update_ppo()
-            self.i_ppo_update = 0
-            self.i_aux_update += 1
+        self.__update_ppo()
+        self.__update_clr()        
+        self.i_aux_update += 1
 
         if self.i_aux_update % self.n_aux_update == 0 and self.i_aux_update != 0:
             self.__update_aux()

@@ -63,11 +63,11 @@ class ProjectionModel(nn.Module):
       super(ProjectionModel, self).__init__()
 
       self.nn_layer   = nn.Sequential(
-        nn.Linear(256, 256),
+        nn.Linear(256, 128),
         nn.ReLU(),
-        nn.Linear(256, 256),
+        nn.Linear(128, 64),
         nn.ReLU(),
-        nn.Linear(256, 256)
+        nn.Linear(64, 32)
       ).to(set_device(use_gpu))
 
     def forward(self, states, detach = False):
