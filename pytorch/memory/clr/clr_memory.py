@@ -4,22 +4,24 @@ from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
 class ClrMemory(Dataset):
-    def __init__(self, capacity = 10000, trans_crop = None, trans_jitter = None):        
+    def __init__(self, capacity = 10000, first_trans = None, second_trans = None):        
         self.images         = []
         self.capacity       = capacity
-        self.trans_crop     = trans_crop
-        self.trans_jitter   = trans_jitter
+        self.first_trans    = first_trans
+        self.second_trans   = second_trans
 
-        if self.trans_crop is None:
-            self.trans_crop = transforms.Compose([
-                transforms.RandomCrop(128),
+        if self.first_trans is None:
+            self.first_trans = transforms.Compose([
+                transforms.RandomCrop(135),
                 transforms.Resize(160)
             ])
 
-        if self.trans_jitter is None:
-            self.trans_jitter = transforms.Compose([
-                transforms.RandomApply([transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)], p=0.8),
-                transforms.RandomGrayscale(p=0.2)
+        if self.second_trans is None:
+            self.second_trans = transforms.Compose([                
+                # transforms.RandomApply([transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)], p=0.8),
+                # transforms.RandomGrayscale(p=0.2)
+                transforms.RandomCrop(135),
+                transforms.Resize(160)
             ])
 
     def __len__(self):
@@ -28,10 +30,10 @@ class ClrMemory(Dataset):
     def __getitem__(self, idx):
         images          = torch.FloatTensor(self.images[idx])
 
-        crop_inputs     = self.trans_crop(images)
-        jitter_inputs   = self.trans_jitter(images)
+        first_inputs    = self.first_trans(images)
+        second_inputs   = self.second_trans(images)
 
-        return (crop_inputs.detach().cpu().numpy(), jitter_inputs.detach().cpu().numpy())
+        return (first_inputs.detach().cpu().numpy(), second_inputs.detach().cpu().numpy())
 
     def save_eps(self, state):
         if len(self) >= self.capacity:

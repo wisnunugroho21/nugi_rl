@@ -35,7 +35,7 @@ n_iteration             = 1000000 # How many episode you want to run
 n_memory_clr            = 10000
 n_update                = 16 # How many episode before you update the Policy 
 n_aux_update            = 2
-n_ppo_update            = 8
+n_ppo_update            = 16
 n_saved                 = n_update * n_ppo_update * n_aux_update
 
 policy_kl_range         = 0.0008

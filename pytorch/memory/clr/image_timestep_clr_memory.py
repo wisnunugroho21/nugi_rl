@@ -6,10 +6,10 @@ class ImageTimestepClrMemory(ClrMemory):
     def __getitem__(self, idx):
         images          = torch.FloatTensor(self.images[idx])
 
-        crop_inputs     = self.trans_crop(images)
-        jitter_inputs   = self.trans_jitter(images)
+        first_inputs    = self.first_trans(images)
+        second_inputs   = self.second_trans(images)
 
-        return (crop_inputs.unsqueeze(0).detach().cpu().numpy(), jitter_inputs.unsqueeze(0).detach().cpu().numpy())
+        return (first_inputs.unsqueeze(0).detach().cpu().numpy(), second_inputs.unsqueeze(0).detach().cpu().numpy())
 
     def save_eps(self, images):
         for image in images:
