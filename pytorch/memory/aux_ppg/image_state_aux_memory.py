@@ -20,7 +20,7 @@ class ImageStateAuxMemory(AuxMemory):
         return (np.array(self.images[idx], dtype = np.float32), states)
 
     def save_eps(self, data_state):
-        image, state            = data_state
+        image, state    = data_state
 
         if len(self) >= self.capacity:
             del self.images[0]
@@ -35,8 +35,10 @@ class ImageStateAuxMemory(AuxMemory):
             self.save_eps(data_state)
 
     def save_all(self, data_states):
-        for data_state in zip(data_states):
-            self.save_eps(data_state)
+        images, states    = data_states
+
+        for image, state in zip(images, states):
+            self.save_eps((image, state))
 
     def get_all_items(self):
         states = super().get_all_items()

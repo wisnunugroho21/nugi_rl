@@ -45,7 +45,7 @@ class CarlaEnv():
         blueprint_library   = self.world.get_blueprint_library()
 
         self.model_3        = blueprint_library.filter('model3')[0]
-        self.rgb_cam        = blueprint_library.find('sensor.camera.semantic_segmentation')
+        self.rgb_cam        = blueprint_library.find('sensor.camera.rgb')
         self.col_detector   = blueprint_library.find('sensor.other.collision')
         self.crl_detector   = blueprint_library.find('sensor.other.lane_invasion')        
 
@@ -132,7 +132,7 @@ class CarlaEnv():
         del self.collision_hist[:]
         del self.crossed_line_hist[:] 
         
-        return (image, np.array([0, 0]))
+        return image
 
     def step(self, action):
         prev_loc    = self.vehicle.get_location()
@@ -146,7 +146,7 @@ class CarlaEnv():
         self.cur_step   += 1
 
         v       = self.vehicle.get_velocity()
-        kmh     = 3.6 * math.sqrt(v.x ** 2 + v.y ** 2)
+        kmh     = math.sqrt(v.x ** 2 + v.y ** 2)
                 
         loc     = self.vehicle.get_location()
         dif_x   = loc.x - prev_loc.x
@@ -160,4 +160,4 @@ class CarlaEnv():
         if len(self.crossed_line_hist) > 0 or len(self.collision_hist) > 0 or loc.x >= -100 or loc.y >= -10 or self.cur_step >= self.max_step:
             done = True
         
-        return (image, np.array([kmh, float(steer)])), reward, done, None
+        return image, reward, done, None

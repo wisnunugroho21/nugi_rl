@@ -37,13 +37,14 @@ class ImageStatePolicyMemory(PolicyMemory):
 
     def save_replace_all(self, data_states, actions, rewards, dones, next_data_states):
         self.clear_memory()
-
-        for data_state, action, reward, done, next_data_state in zip(data_states, actions, rewards, dones, next_data_states):
-            self.save_eps(data_state, action, reward, done, next_data_state)
+        self.save_all(data_states, actions, rewards, dones, next_data_states)
 
     def save_all(self, data_states, actions, rewards, dones, next_data_states):
-        for data_state, action, reward, done, next_data_state in zip(data_states, actions, rewards, dones, next_data_states):
-            self.save_eps(data_state, action, reward, done, next_data_state)
+        images, states            = data_states
+        next_images, next_states  = next_data_states
+
+        for image, state, action, reward, done, next_image, next_state in zip(images, states, actions, rewards, dones, next_images, next_states):            
+            self.save_eps((image, state), action, reward, done, (next_image, next_state))
 
     def get_all_items(self):
         states, actions, rewards, dones, next_states = super().get_all_items()

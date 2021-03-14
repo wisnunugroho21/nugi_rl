@@ -12,16 +12,14 @@ class ClrMemory(Dataset):
 
         if self.first_trans is None:
             self.first_trans = transforms.Compose([
-                transforms.RandomCrop(135),
-                transforms.Resize(160)
+                transforms.RandomCrop(270),
+                transforms.Resize(320)
             ])
 
         if self.second_trans is None:
             self.second_trans = transforms.Compose([                
-                # transforms.RandomApply([transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)], p=0.8),
-                # transforms.RandomGrayscale(p=0.2)
-                transforms.RandomCrop(135),
-                transforms.Resize(160)
+                transforms.RandomApply([transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)], p = 0.8),
+                transforms.RandomGrayscale(p = 0.2)
             ])
 
     def __len__(self):

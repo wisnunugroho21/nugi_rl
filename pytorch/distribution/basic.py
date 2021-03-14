@@ -37,7 +37,7 @@ class BasicContinous():
 
         distribution    = Normal(0, 1)
         rand            = distribution.sample().float().to(set_device(self.use_gpu))
-        return mean + std * rand
+        return (mean + std * rand).squeeze(0)
         
     def entropy(self, datas):
         mean, std = datas
