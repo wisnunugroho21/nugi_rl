@@ -3,11 +3,11 @@ import torch
 import torch.nn as nn
 
 class SpatialAtrousExtractor(nn.Module):
-    def __init__(self, dim_in, dim_out, rate):
+    def __init__(self, dim, rate):
         super(SpatialAtrousExtractor, self).__init__()        
 
         self.spatial_atrous = nn.Sequential(
-            DepthwiseSeparableConv2d(dim_in, dim_out, kernel_size = 3, stride = 1, padding = rate, dilation = rate, bias = False),            
+            nn.Conv2d(dim, dim, kernel_size = 3, stride = 1, padding = rate, dilation = rate, bias = False, groups = dim),            
             nn.ReLU()
 		)
 
@@ -15,13 +15,13 @@ class SpatialAtrousExtractor(nn.Module):
         x = self.spatial_atrous(x)
         return x
 
-class SpatialEncoder(nn.Module):
-    def __init__(self, dim_in, dim_out, ):
-        super(SpatialEncoder, self).__init__()        
+class AtrousSpatialPyramidConv2d(nn.Module):
+    def __init__(self, dim_in, dim_out):
+        super(AtrousSpatialPyramidConv2d, self).__init__()        
 
-        self.extractor1 = SpatialAtrousExtractor(dim_in, dim_in, 1)
-        self.extractor2 = SpatialAtrousExtractor(dim_in, dim_in, 4)
-        self.extractor3 = SpatialAtrousExtractor(dim_in, dim_in, 8)
+        self.extractor1 = SpatialAtrousExtractor(dim_in, 1)
+        self.extractor2 = SpatialAtrousExtractor(dim_in, 4)
+        self.extractor3 = SpatialAtrousExtractor(dim_in, 8)
 
         self.out = nn.Sequential(
             DepthwiseSeparableConv2d(3 * dim_in, dim_out, kernel_size = 1)

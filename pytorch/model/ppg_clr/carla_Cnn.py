@@ -4,45 +4,49 @@ import torch.nn.functional as F
 
 from utils.pytorch_utils import set_device
 from model.components.SeperableConv2d import DepthwiseSeparableConv2d
-from model.components.SpatialEncoder import SpatialEncoder
+from model.components.ASPP import AtrousSpatialPyramidConv2d
 
 class CnnModel(nn.Module):
     def __init__(self):
       super(CnnModel, self).__init__()   
 
-      self.bn1 = nn.BatchNorm2d(64)
-      self.bn2 = nn.BatchNorm2d(128)
+      self.bn1 = nn.BatchNorm2d(32)
+      self.bn2 = nn.BatchNorm2d(64)
 
       self.conv1 = nn.Sequential(
-        SpatialEncoder(3, 16),
+        AtrousSpatialPyramidConv2d(3, 8),
+        nn.ReLU(),
+        DepthwiseSeparableConv2d(8, 16, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
       )
 
       self.conv2 = nn.Sequential(
+        DepthwiseSeparableConv2d(16, 16, kernel_size = 4, stride = 2, padding = 1, bias = False),
+        nn.ReLU(),
         DepthwiseSeparableConv2d(16, 32, kernel_size = 4, stride = 2, padding = 1, bias = False),
+        nn.ReLU(),
+      )
+
+      self.conv3 = nn.Sequential(
+        DepthwiseSeparableConv2d(16, 32, kernel_size = 8, stride = 4, padding = 2, bias = False),
+        nn.ReLU(),
+      )
+
+      self.conv4 = nn.Sequential(
+        DepthwiseSeparableConv2d(32, 32, kernel_size = 4, stride = 2, padding = 1, bias = False),
         nn.ReLU(),
         DepthwiseSeparableConv2d(32, 64, kernel_size = 4, stride = 2, padding = 1, bias = False),
         nn.ReLU(),
       )
 
-      self.conv3 = nn.Sequential(
-        DepthwiseSeparableConv2d(16, 64, kernel_size = 8, stride = 4, padding = 2, bias = False),
-        nn.ReLU(),
-      )
-
-      self.conv4 = nn.Sequential(
-        DepthwiseSeparableConv2d(64, 128, kernel_size = 4, stride = 2, padding = 1, bias = False),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(128, 128, kernel_size = 4, stride = 2, padding = 1, bias = False),
-        nn.ReLU(),
-      )
-
       self.conv5 = nn.Sequential(
-        DepthwiseSeparableConv2d(64, 128, kernel_size = 8, stride = 4, padding = 2, bias = False),
+        DepthwiseSeparableConv2d(32, 64, kernel_size = 8, stride = 4, padding = 2, bias = False),
         nn.ReLU(),
       )
 
       self.conv_out = nn.Sequential(
+        DepthwiseSeparableConv2d(64, 128, kernel_size = 4, stride = 2, padding = 1),
+        nn.ReLU(),
         DepthwiseSeparableConv2d(128, 256, kernel_size = 4, stride = 2, padding = 1),
         nn.ReLU(),
       )
@@ -87,16 +91,6 @@ class Policy_Model(nn.Module):
 
       self.std                  = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(use_gpu))
 
-      self.conv                 = CnnModel()
-      self.projection_clr       = ProjectionModel(256)
-
-      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() )
-      self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() )
-
-      self.critic_layer         = nn.Sequential( nn.Linear(64, 1) )
-      self.actor_tanh_layer     = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
-      self.actor_sigmoid_layer  = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() )            
-        
       self.nn_layer             = nn.Sequential( nn.Linear(256, 128), nn.ReLU(), nn.Linear(128, 64), nn.ReLU() )
 
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) )

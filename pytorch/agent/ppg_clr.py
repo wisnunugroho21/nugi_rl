@@ -62,6 +62,10 @@ class AgentPpgClr():
         self.aux_optimizer      = Adam(list(self.policy_cnn.parameters()) + list(self.policy.parameters()), lr = learning_rate)
         self.clr_optimizer      = Adam(list(self.policy_cnn.parameters()) + list(self.policy_projection.parameters()) + list(self.value_cnn.parameters()) + list(self.value_projection.parameters()), lr = learning_rate) 
 
+        self.ppo_scaler         = torch.cuda.amp.GradScaler()
+        self.aux_scaler         = torch.cuda.amp.GradScaler()
+        self.clr_scaler         = torch.cuda.amp.GradScaler()
+        
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
         self.policy_cnn_old.load_state_dict(self.policy_cnn.state_dict())
@@ -77,61 +81,68 @@ class AgentPpgClr():
     def __training_ppo(self, states, actions, rewards, dones, next_states):         
         self.ppo_optimizer.zero_grad()
 
-        out1                = self.policy_cnn(states)
-        action_datas, _     = self.policy(out1)
+        with torch.cuda.amp.autocast():
+            out1                = self.policy_cnn(states)
+            action_datas, _     = self.policy(out1)
 
-        out2                = self.value_cnn(states)
-        values              = self.value(out2)
+            out2                = self.value_cnn(states)
+            values              = self.value(out2)
 
-        out3                = self.policy_cnn_old(states, True)
-        old_action_datas, _ = self.policy_old(out3, True)
+            out3                = self.policy_cnn_old(states, True)
+            old_action_datas, _ = self.policy_old(out3, True)
 
-        out4                = self.value_cnn_old(states, True)
-        old_values          = self.value_old(out4, True)
+            out4                = self.value_cnn_old(states, True)
+            old_values          = self.value_old(out4, True)
 
-        out5                = self.value_cnn(next_states, True)
-        next_values         = self.value(out5, True)
+            out5                = self.value_cnn(next_states, True)
+            next_values         = self.value(out5, True)
 
-        loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
-        loss.backward()
-
-        self.ppo_optimizer.step()
+            loss = self.policyLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        
+        self.ppo_scaler.scale(loss).backward()
+        self.ppo_scaler.step(self.ppo_optimizer)
+        self.ppo_scaler.update()
 
     def __training_aux(self, states):        
         self.aux_optimizer.zero_grad()
         
-        out1                    = self.policy_cnn(states)
-        action_datas, values    = self.policy(out1)
+        with torch.cuda.amp.autocast():
+            out1                    = self.policy_cnn(states)
+            action_datas, values    = self.policy(out1)
 
-        out2                    = self.value_cnn(states, True)
-        returns                 = self.value(out2, True)
+            out2                    = self.value_cnn(states, True)
+            returns                 = self.value(out2, True)
 
-        out3                    = self.policy_cnn_old(states, True)
-        old_action_datas, _     = self.policy_old(out3, True)
+            out3                    = self.policy_cnn_old(states, True)
+            old_action_datas, _     = self.policy_old(out3, True)
 
-        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
-        loss.backward()
+            loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
-        self.aux_optimizer.step()
+        self.aux_scaler.scale(loss).backward()
+        self.aux_scaler.step(self.aux_optimizer)
+        self.aux_scaler.update()
 
     def __training_clr(self, first_inputs, second_inputs):
         self.clr_optimizer.zero_grad()
 
-        out1        = self.policy_cnn(first_inputs)
-        encoded1    = self.policy_projection(out1)
+        with torch.cuda.amp.autocast():
+            out1        = self.policy_cnn(first_inputs)
+            encoded1    = self.policy_projection(out1)
 
-        out2        = self.value_cnn(second_inputs)
-        encoded2    = self.value_projection(out2)
+            out2        = self.value_cnn(second_inputs)
+            encoded2    = self.value_projection(out2)
 
-        out3        = self.value_cnn(first_inputs)
-        encoded3    = self.value_projection(out3)
+            out3        = self.value_cnn(first_inputs)
+            encoded3    = self.value_projection(out3)
 
-        out4        = self.policy_cnn(second_inputs)
-        encoded4    = self.policy_projection(out4)
+            out4        = self.policy_cnn(second_inputs)
+            encoded4    = self.policy_projection(out4)
 
-        loss = self.clrLoss.compute_loss(encoded1, encoded2) + self.clrLoss.compute_loss(encoded3, encoded4)
-        loss.backward()
-        self.clr_optimizer.step()
+            loss = self.clrLoss.compute_loss(encoded1, encoded2) + self.clrLoss.compute_loss(encoded3, encoded4)
+
+        self.clr_scaler.scale(loss).backward()
+        self.clr_scaler.step(self.clr_optimizer)
+        self.clr_scaler.update()
 
     def __update_ppo(self):
         dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False, num_workers = 2)
@@ -211,7 +222,10 @@ class AgentPpgClr():
             'value_pro_state_dict': self.value_projection.state_dict(),
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
             'aux_optimizer_state_dict': self.aux_optimizer.state_dict(),
-            'clr_optimizer_state_dict': self.clr_optimizer.state_dict()
+            'clr_optimizer_state_dict': self.clr_optimizer.state_dict(),
+            'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
+            'aux_scaler_state_dict': self.aux_scaler.state_dict(),
+            'clr_scaler_state_dict': self.clr_scaler.state_dict()
             }, self.folder + '/model.tar')
         
     def load_weights(self, device = None):
@@ -227,7 +241,10 @@ class AgentPpgClr():
         self.value_projection.load_state_dict(model_checkpoint['value_pro_state_dict'])
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
         self.aux_optimizer.load_state_dict(model_checkpoint['aux_optimizer_state_dict'])
-        self.aux_optimizer.load_state_dict(model_checkpoint['clr_optimizer_state_dict'])        
+        self.clr_optimizer.load_state_dict(model_checkpoint['clr_optimizer_state_dict'])   
+        self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
+        self.aux_scaler.load_state_dict(model_checkpoint['aux_scaler_state_dict'])
+        self.clr_scaler.load_state_dict(model_checkpoint['clr_scaler_state_dict'])     
 
         if self.is_training_mode:
             self.policy.train()
