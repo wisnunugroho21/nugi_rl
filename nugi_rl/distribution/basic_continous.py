@@ -9,12 +9,18 @@ class BasicContinous():
     def __init__(self, use_gpu):
         self.use_gpu = use_gpu
 
+    # def sample(self, datas):
+    #     mean, std = datas
+
+    #     distribution    = Normal(0, 1)
+    #     rand            = distribution.sample().float().to(set_device(self.use_gpu))
+    #     return (mean + std * rand).squeeze(0)
+
     def sample(self, datas):
         mean, std = datas
 
-        distribution    = Normal(0, 1)
-        rand            = distribution.sample().float().to(set_device(self.use_gpu))
-        return (mean + std * rand).squeeze(0)
+        distribution = Normal(mean, std)
+        return distribution.sample().float().to(set_device(self.use_gpu)).squeeze(0)
         
     def entropy(self, datas):
         mean, std = datas

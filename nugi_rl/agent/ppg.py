@@ -2,7 +2,6 @@ import copy
 
 import torch
 from torch.utils.data import DataLoader
-from torch.optim import Adam
 
 from helpers.pytorch_utils import set_device, to_numpy, to_tensor
 
@@ -45,6 +44,9 @@ class AgentPPG():
         self.ppo_optimizer      = ppo_optimizer
         self.aux_ppg_optimizer  = aux_ppg_optimizer
 
+        self.ppo_scaler         = torch.cuda.amp.GradScaler()
+        self.auxppg_scaler      = torch.cuda.amp.GradScaler()
+
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
@@ -55,36 +57,40 @@ class AgentPPG():
           self.policy.eval()
           self.value.eval()
 
-    def __training_ppo(self, states, actions, rewards, dones, next_states):         
+    def _training_ppo(self, states, actions, rewards, dones, next_states):         
         self.ppo_optimizer.zero_grad()
 
-        action_datas, _     = self.policy(states)
-        values              = self.value(states)
+        with torch.cuda.amp.autocast():
+            action_datas, _     = self.policy(states)
+            values              = self.value(states)
 
-        old_action_datas, _ = self.policy_old(states, True)
-        old_values          = self.value_old(states, True)
-        next_values         = self.value(next_states, True)
+            old_action_datas, _ = self.policy_old(states, True)
+            old_values          = self.value_old(states, True)
+            next_values         = self.value(next_states, True)
 
-        loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
-        loss.backward()
+            loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
 
-        self.ppo_optimizer.step()
+        self.ppo_scaler.scale(loss).backward()
+        self.ppo_scaler.step(self.ppo_optimizer)
+        self.ppo_scaler.update()
 
-    def __training_aux_ppg(self, states):        
+    def _training_aux_ppg(self, states):        
         self.aux_ppg_optimizer.zero_grad()
         
-        action_datas, values    = self.policy(states)
+        with torch.cuda.amp.autocast():
+            action_datas, values    = self.policy(states)
 
-        returns                 = self.value(states, True)
-        old_action_datas, _     = self.policy_old(states, True)
+            returns                 = self.value(states, True)
+            old_action_datas, _     = self.policy_old(states, True)
 
-        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
-        loss.backward()
+            loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
-        self.aux_ppg_optimizer.step()
+        self.auxppg_scaler.scale(loss).backward()
+        self.auxppg_scaler.step(self.aux_ppg_optimizer)
+        self.auxppg_scaler.update()
 
     def _update_policy(self):
-        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 2)
+        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.PPO_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
@@ -99,7 +105,7 @@ class AgentPPG():
         self.value_old.load_state_dict(self.value.state_dict())    
 
     def _update_aux_ppg(self):
-        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 2)
+        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.Aux_epochs):       
             for states in dataloader:

@@ -7,17 +7,19 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.iteration.iter_runner import IterRunner
+from eps_runner.iteration.carla import CarlaRunner
 from train_executor.executor import Executor
-from agent.ppg import AgentPPG
+from agent.image_state.ppg import AgentImageStatePPG
 from distribution.basic_continous import BasicContinous
-from environment.wrapper.gym_wrapper import GymWrapper
+from environment.custom.carla import CarlaEnv
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg.TanhNN import Policy_Model, Value_Model
-from memory.policy.policy_memory import PolicyMemory
-from memory.aux_ppg.aux_ppg_memory import AuxPpgMemory
+from model.ppg.CarlaSharedCnn.cnn_model import CnnModel
+from model.ppg.CarlaSharedCnn.policy_model import PolicyModel
+from model.ppg.CarlaSharedCnn.value_model import ValueModel
+from memory.policy.image_state.image_state_policy_memory import ImageStatePolicyMemory
+from memory.aux_ppg.image_state.image_state_aux_ppg_memory import ImageStateAuxMemory
 
 from helpers.pytorch_utils import set_device
 
@@ -56,18 +58,19 @@ state_dim           = None
 action_dim          = None
 max_action          = 1
 
-Policy_Model        = Policy_Model
-Value_Model         = Value_Model
+Cnn_Model           = CnnModel
+Policy_Model        = PolicyModel
+Value_Model         = ValueModel
 Policy_Dist         = BasicContinous
-Runner              = IterRunner
+Runner              = CarlaRunner
 Executor            = Executor
 Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
-Wrapper             = GymWrapper
-Policy_Memory       = PolicyMemory
-Aux_Memory          = AuxPpgMemory
+Wrapper             = CarlaEnv
+Policy_Memory       = ImageStatePolicyMemory
+Aux_Memory          = ImageStateAuxMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
-Agent               = AgentPPG
+Agent               = AgentImageStatePPG
 
 #####################################################################################################################################################
 
@@ -76,7 +79,7 @@ np.random.seed(20)
 torch.manual_seed(20)
 os.environ['PYTHONHASHSEED'] = str(20)
 
-environment = Wrapper(env)
+environment = Wrapper(im_height = 240, im_width = 240, im_preview = False, max_step = 512)
 
 if state_dim is None:
     state_dim = environment.get_obs_dim()
@@ -99,13 +102,13 @@ runner_memory       = Policy_Memory()
 aux_ppg_loss        = Aux_loss(policy_dist)
 ppo_loss            = Policy_loss(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
 
+cnn                 = Cnn_Model().float().to(set_device(use_gpu))
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
 value               = Value_Model(state_dim).float().to(set_device(use_gpu))
-ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)        
+ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()) + list(cnn.parameters()), lr = learning_rate)        
 aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
 
-
-agent = Agent( policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
+agent = Agent( cnn, policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 

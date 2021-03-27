@@ -1,9 +1,7 @@
 import numpy as np
-from torch.utils.data import Dataset
+from memory.aux_ppg.aux_ppg_memory import AuxPpgMemory
 
-from memory.aux_ppg.aux_memory import AuxMemory
-
-class ImageStateAuxMemory(AuxMemory):
+class ImageStateAuxMemory(AuxPpgMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.images         = []

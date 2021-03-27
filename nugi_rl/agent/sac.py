@@ -87,7 +87,7 @@ class AgentSAC():
     def _update_sac(self):
         if len(self.memory) > self.batch_size:
             for _ in range(self.epochs):
-                dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 2)
+                dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
                 states, actions, rewards, dones, next_states = next(iter(dataloader))
 
                 self._training_q(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
