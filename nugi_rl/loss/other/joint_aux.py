@@ -1,6 +1,3 @@
-import torch
-
-
 class JointAux():
     def __init__(self, distribution):
         self.distribution       = distribution
