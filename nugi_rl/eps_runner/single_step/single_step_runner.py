@@ -1,6 +1,6 @@
 import numpy as np
 
-class IterRunner():
+class SingleStepRunner():
     def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.agent              = agent
         self.env                = env

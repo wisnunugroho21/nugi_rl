@@ -1,5 +1,5 @@
 import numpy as np
-from utils.math_function import prepo_crop
+from helpers.pytorch_utils import prepo_crop
 from eps_runner.iteration.iter_runner import IterRunner
 
 class PongFullRunner(IterRunner):

@@ -1,3 +1,5 @@
+import copy
+
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import Adam
@@ -5,7 +7,7 @@ from torch.optim import Adam
 from helpers.pytorch_utils import set_device, to_numpy, to_tensor
 
 class AgentPPG():  
-    def __init__(self, policy_Model, value_Model, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
+    def __init__(self, policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
                 ppo_optimizer, aux_ppg_optimizer, PPO_epochs = 10, Aux_epochs = 10, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
                 policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32,  folder = 'model', use_gpu = True):   
 
@@ -24,11 +26,11 @@ class AgentPPG():
         self.use_gpu            = use_gpu
         self.n_aux_update       = n_aux_update
 
-        self.policy             = policy_Model
-        self.policy_old         = policy_Model
+        self.policy             = policy
+        self.policy_old         = copy.deepcopy(self.policy)
 
-        self.value              = value_Model
-        self.value_old          = value_Model
+        self.value              = value
+        self.value_old          = copy.deepcopy(self.value)
 
         self.distribution       = distribution
         self.ppo_memory         = ppo_memory
@@ -41,7 +43,7 @@ class AgentPPG():
         self.i_update           = 0
 
         self.ppo_optimizer      = ppo_optimizer
-        self.aux_ppg_optimizer      = aux_ppg_optimizer
+        self.aux_ppg_optimizer  = aux_ppg_optimizer
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
