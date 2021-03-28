@@ -47,10 +47,10 @@ class AgentImageStatePPG(AgentPPG):
         with torch.cuda.amp.autocast():
             res                     = self.cnn(images, True)
 
-            action_datas, values    = self.policy(res, states)
-
             returns                 = self.value(res, states, True)
             old_action_datas, _     = self.policy_old(res, states, True)
+
+            action_datas, values    = self.policy(res, states)            
 
             loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 

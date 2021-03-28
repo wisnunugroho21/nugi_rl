@@ -161,7 +161,7 @@ class CarlaEnv():
         dif_loc = math.sqrt(dif_x ** 2 + dif_y ** 2)
 
         done    = False
-        reward  = (dif_loc * 10)
+        reward  = (dif_loc * 10) - 0.1
         
         image   = self._process_image(self.cam_queue.get())
         if len(self.crossed_line_hist) > 0 or len(self.collision_hist) > 0 or loc.x >= -100 or loc.y >= -10 or self.cur_step >= self.max_step:
