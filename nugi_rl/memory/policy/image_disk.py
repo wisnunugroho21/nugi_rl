@@ -5,9 +5,9 @@ import string
 import os
 
 import numpy as np
-from torch.utils.data import Dataset
+from memory.policy.standard import PolicyMemory
 
-class ImagePolicyMemory(Dataset):
+class ImagePolicyMemory(PolicyMemory):
     def __init__(self, capacity = 100000, datas = None, folder_img = '/temp/'):
         self.capacity       = capacity
         self.position       = 0

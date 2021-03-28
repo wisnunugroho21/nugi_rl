@@ -1,6 +1,6 @@
 import numpy as np
 
-from memory.policy.policy_memory import PolicyMemory
+from memory.policy.standard import PolicyMemory
 
 class EmbeddingPolicyMemory(PolicyMemory):
     def __init__(self, datas):

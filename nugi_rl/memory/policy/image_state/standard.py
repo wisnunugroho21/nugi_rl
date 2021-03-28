@@ -1,6 +1,6 @@
 import numpy as np
 import torchvision.transforms as transforms
-from memory.policy.policy_memory import PolicyMemory
+from memory.policy.standard import PolicyMemory
 
 class ImageStatePolicyMemory(PolicyMemory):
     def __init__(self, datas = None):

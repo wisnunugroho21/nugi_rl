@@ -5,9 +5,9 @@ import string
 import os
 
 import numpy as np
-from torch.utils.data import Dataset
+from memory.aux_ppg.standard import AuxPpgMemory
 
-class ImageAuxPPGMemory(Dataset):
+class ImageAuxPPGMemory(AuxPpgMemory):
     def __init__(self, capacity = 100000, datas = None, folder_img = '/temp/auxppg/'):
         self.capacity       = capacity
         self.folder_img     = folder_img
