@@ -9,13 +9,14 @@ class Executor():
         self.n_iteration        = n_iteration
         self.save_weights       = save_weights
         self.n_saved            = n_saved
-        self.is_training_mode   = is_training_mode
+        self.is_training_mode   = is_training_mode 
+        self.load_weights       = load_weights       
 
-        if load_weights:
+    def execute(self):
+        if self.load_weights:
             self.agent.load_weights()
             print('Weight Loaded')  
 
-    def execute(self):
         start = time.time()
         print('Running the training!!')
 

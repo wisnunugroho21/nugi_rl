@@ -18,15 +18,16 @@ class SyncExecutor():
         self.n_plot_batch       = n_plot_batch
         self.max_action         = max_action
         self.n_aux_update       = n_aux_update
+        self.load_weights       = load_weights
 
         self.t_updates          = 0
         self.t_aux_updates      = 0
         
-        if load_weights:
+    def execute(self):
+        if self.load_weights:
             self.agent.load_weights()
             print('Weight Loaded')  
-        
-    def execute(self):
+
         start = time.time()
         print('Running the training!!')
         
