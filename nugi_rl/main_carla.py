@@ -19,13 +19,13 @@ from model.ppg.CarlaSharedCnn.cnn_model import CnnModel
 from model.ppg.CarlaSharedCnn.policy_model import PolicyModel
 from model.ppg.CarlaSharedCnn.value_model import ValueModel
 from memory.policy.image_state.standard import ImageStatePolicyMemory
-from memory.aux_ppg.image_state.standard import ImageStateAuxMemory
+from memory.aux_ppg.image_state.standard import ImageStateAuxPpgMemory
 
 from helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
-load_weights            = False # If you want to load the agent, set this to True
+load_weights            = True # If you want to load the agent, set this to True
 save_weights            = True # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
@@ -68,7 +68,7 @@ Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
 Wrapper             = CarlaEnv
 Policy_Memory       = ImageStatePolicyMemory
-Aux_Memory          = ImageStateAuxMemory
+Aux_Memory          = ImageStateAuxPpgMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentImageStatePPG
 
