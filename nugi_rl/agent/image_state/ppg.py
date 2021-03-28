@@ -58,34 +58,34 @@ class AgentImageStatePPG(AgentPPG):
         self.auxppg_scaler.step(self.aux_ppg_optimizer)
         self.auxppg_scaler.update()
 
-    def _update_ppo(self):
+    def _update_policy(self):
         dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 4)
 
         for _ in range(self.ppo_epochs):       
-            for states, images, actions, rewards, dones, next_states, next_images in dataloader: 
-                self._training_ppo(states.float().to(self.device), images.float().to(self.device), actions.float().to(self.device), 
-                    rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device), next_images.float().to(self.device))
+            for images, states, actions, rewards, dones, next_images, next_states in dataloader: 
+                self._training_ppo(images.float().to(self.device), states.float().to(self.device), actions.float().to(self.device), 
+                    rewards.float().to(self.device), dones.float().to(self.device), next_images.float().to(self.device), next_states.float().to(self.device))
 
-        states, images, _, _, _, _, _ = self.ppo_memory.get_all_items()
-        self.aux_ppg_memory.save_all(states, images)
+        images, states, _, _, _, _, _ = self.ppo_memory.get_all_items()
+        self.aux_ppg_memory.save_all(images, states)
         self.ppo_memory.clear_memory()
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
-    def _update_auxppg(self):
+    def _update_aux_ppg(self):
         dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 4)
 
         for _ in range(self.aux_ppg_epochs):       
-            for states, images in dataloader:
-                self._training_aux_ppg(states.float().to(self.device), images.float().to(self.device))
+            for images, states in dataloader:
+                self._training_aux_ppg(images.float().to(self.device), states.float().to(self.device))
 
         self.aux_ppg_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())
 
     def save_memory(self, policy_memory):
-        states, images, actions, rewards, dones, next_states, next_images = policy_memory.get_all_items()
-        self.ppo_memory.save_all(states, images, actions, rewards, dones, next_states, next_images)
+        images, states, actions, rewards, dones, next_images, next_states = policy_memory.get_all_items()
+        self.ppo_memory.save_all(images, states, actions, rewards, dones, next_images, next_states)
 
     def act(self, image, state):
         image, state        = torch.FloatTensor(self.trans(image)).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)

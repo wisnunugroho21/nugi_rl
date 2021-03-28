@@ -1,4 +1,5 @@
 import numpy as np
+import torchvision.transforms as transforms
 from memory.aux_ppg.aux_ppg_memory import AuxPpgMemory
 
 class ImageStateAuxMemory(AuxPpgMemory):
@@ -13,9 +14,16 @@ class ImageStateAuxMemory(AuxPpgMemory):
             
             super().__init__((states))
 
+        self.trans  = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+
     def __getitem__(self, idx):
+        images  = self.trans(self.images[idx])
+
         states = super().__getitem__(idx)
-        return np.array(self.images[idx], dtype = np.float32), states
+        return images, states
 
     def save_eps(self, image, state):
         if len(self) >= self.capacity:

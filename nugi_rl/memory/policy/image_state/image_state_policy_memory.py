@@ -1,5 +1,5 @@
 import numpy as np
-
+import torchvision.transforms as transforms
 from memory.policy.policy_memory import PolicyMemory
 
 class ImageStatePolicyMemory(PolicyMemory):
@@ -19,9 +19,17 @@ class ImageStatePolicyMemory(PolicyMemory):
             
             super().__init__((states, actions, rewards, dones, next_states))
 
+        self.trans  = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+
     def __getitem__(self, idx):
+        images      = self.trans(self.images[idx])
+        next_images = self.trans(self.next_images[idx])
+
         states, actions, rewards, dones, next_states = super().__getitem__(idx)
-        return np.array(self.images[idx], dtype = np.float32), states, actions, rewards, dones, np.array(self.next_images[idx], dtype = np.float32), next_states
+        return images, states, actions, rewards, dones, next_images, next_states
 
     def save_eps(self, image, state, action, reward, done, next_image, next_state):
         if len(self) >= self.capacity:
