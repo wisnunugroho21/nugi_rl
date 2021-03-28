@@ -11,7 +11,7 @@ from eps_runner.iteration.carla import CarlaRunner
 from train_executor.executor import Executor
 from agent.image_state.ppg import AgentImageStatePPG
 from distribution.basic_continous import BasicContinous
-from environment.custom.carla import CarlaEnv
+from environment.custom.carla.carla_rgb import CarlaEnv
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
