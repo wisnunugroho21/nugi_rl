@@ -21,12 +21,9 @@ class ImageStatePolicyMemory(PolicyMemory):
 
     def __getitem__(self, idx):
         states, actions, rewards, dones, next_states = super().__getitem__(idx)
-        return (np.array(self.images[idx], dtype = np.float32), states), actions, rewards, dones, (np.array(self.next_images[idx], dtype = np.float32), next_states)
+        return np.array(self.images[idx], dtype = np.float32), states, actions, rewards, dones, np.array(self.next_images[idx], dtype = np.float32), next_states
 
-    def save_eps(self, data_state, action, reward, done, next_data_state):
-        image, state            = data_state
-        next_image, next_state  = next_data_state
-
+    def save_eps(self, image, state, action, reward, done, next_image, next_state):
         if len(self) >= self.capacity:
             del self.images[0]
             del self.next_images[0]
@@ -35,20 +32,17 @@ class ImageStatePolicyMemory(PolicyMemory):
         self.images.append(image)
         self.next_images.append(next_image)
 
-    def save_replace_all(self, data_states, actions, rewards, dones, next_data_states):
+    def save_replace_all(self, images, states, actions, rewards, dones, next_images, next_states):
         self.clear_memory()
-        self.save_all(data_states, actions, rewards, dones, next_data_states)
+        self.save_all(images, states, actions, rewards, dones, next_images, next_states)
 
-    def save_all(self, data_states, actions, rewards, dones, next_data_states):
-        images, states            = data_states
-        next_images, next_states  = next_data_states
-
+    def save_all(self, images, states, actions, rewards, dones, next_images, next_states):
         for image, state, action, reward, done, next_image, next_state in zip(images, states, actions, rewards, dones, next_images, next_states):            
-            self.save_eps((image, state), action, reward, done, (next_image, next_state))
+            self.save_eps(image, state, action, reward, done, next_image, next_state)
 
     def get_all_items(self):
         states, actions, rewards, dones, next_states = super().get_all_items()
-        return (self.images, states), actions, rewards, dones, (self.next_images, next_states)
+        return self.images, states, actions, rewards, dones, self.next_images, next_states
 
     def clear_memory(self):
         super().clear_memory()

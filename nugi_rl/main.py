@@ -109,7 +109,7 @@ agent = Agent( policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete, max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

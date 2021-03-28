@@ -7,7 +7,7 @@ from helpers.pytorch_utils import set_device, to_numpy, to_tensor
 
 class AgentPPG():  
     def __init__(self, policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
-                ppo_optimizer, aux_ppg_optimizer, PPO_epochs = 10, Aux_epochs = 10, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
+                ppo_optimizer, aux_ppg_optimizer, ppo_epochs = 10, aux_ppg_epochs = 10, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
                 policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32,  folder = 'model', use_gpu = True):   
 
         self.policy_kl_range    = policy_kl_range 
@@ -16,8 +16,8 @@ class AgentPPG():
         self.entropy_coef       = entropy_coef
         self.vf_loss_coef       = vf_loss_coef
         self.batch_size         = batch_size  
-        self.PPO_epochs         = PPO_epochs
-        self.Aux_epochs         = Aux_epochs
+        self.ppo_epochs         = ppo_epochs
+        self.aux_ppg_epochs         = aux_ppg_epochs
         self.is_training_mode   = is_training_mode
         self.action_dim         = action_dim
         self.state_dim          = state_dim
@@ -33,7 +33,7 @@ class AgentPPG():
 
         self.distribution       = distribution
         self.ppo_memory         = ppo_memory
-        self.aux_memory         = aux_ppg_memory
+        self.aux_ppg_memory         = aux_ppg_memory
         
         self.ppoLoss            = ppo_loss
         self.auxLoss            = aux_ppg_loss      
@@ -92,26 +92,26 @@ class AgentPPG():
     def _update_policy(self):
         dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
-        for _ in range(self.PPO_epochs):       
+        for _ in range(self.ppo_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
                 self.__training_ppo(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
                     dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu))
 
         states, _, _, _, _ = self.ppo_memory.get_all_items()
-        self.aux_memory.save_all(states)
+        self.aux_ppg_memory.save_all(states)
         self.ppo_memory.clear_memory()
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())    
 
     def _update_aux_ppg(self):
-        dataloader  = DataLoader(self.aux_memory, self.batch_size, shuffle = False, num_workers = 8)
+        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)
 
-        for _ in range(self.Aux_epochs):       
+        for _ in range(self.aux_ppg_epochs):       
             for states in dataloader:
                 self.__training_aux_ppg(to_tensor(states, use_gpu = self.use_gpu))
 
-        self.aux_memory.clear_memory()
+        self.aux_ppg_memory.clear_memory()
         self.policy_old.load_state_dict(self.policy.state_dict())    
 
     def update(self):

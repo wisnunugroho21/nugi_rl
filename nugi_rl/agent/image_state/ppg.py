@@ -1,8 +1,8 @@
 import copy
 
 import torch
+import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-from torch.optim import Adam
 
 from helpers.pytorch_utils import set_device, to_numpy, to_tensor
 from agent.ppg import AgentPPG
@@ -18,10 +18,12 @@ class AgentImageStatePPG(AgentPPG):
 
         self.cnn = cnn
 
-    def _training_ppo(self, data_states, actions, rewards, dones, data_next_states):  
-        images, states              = data_states
-        next_images, next_states    = data_next_states
+        self.trans  = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
 
+    def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
         self.ppo_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
             res                 = self.cnn(images)
@@ -40,9 +42,7 @@ class AgentImageStatePPG(AgentPPG):
         self.ppo_scaler.step(self.ppo_optimizer)
         self.ppo_scaler.update()
 
-    def _training_aux_ppg(self, data_states):
-        images, states  = data_states
-
+    def _training_aux_ppg(self, images, states):
         self.aux_ppg_optimizer.zero_grad()        
         with torch.cuda.amp.autocast():
             res                     = self.cnn(images, True)
@@ -58,8 +58,36 @@ class AgentImageStatePPG(AgentPPG):
         self.auxppg_scaler.step(self.aux_ppg_optimizer)
         self.auxppg_scaler.update()
 
-    def act(self, data_state):
-        image, state        = data_state
+    def _update_ppo(self):
+        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 4)
+
+        for _ in range(self.ppo_epochs):       
+            for states, images, actions, rewards, dones, next_states, next_images in dataloader: 
+                self._training_ppo(states.float().to(self.device), images.float().to(self.device), actions.float().to(self.device), 
+                    rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device), next_images.float().to(self.device))
+
+        states, images, _, _, _, _, _ = self.ppo_memory.get_all_items()
+        self.aux_ppg_memory.save_all(states, images)
+        self.ppo_memory.clear_memory()
+
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.value_old.load_state_dict(self.value.state_dict())
+
+    def _update_auxppg(self):
+        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 4)
+
+        for _ in range(self.aux_ppg_epochs):       
+            for states, images in dataloader:
+                self._training_aux_ppg(states.float().to(self.device), images.float().to(self.device))
+
+        self.aux_ppg_memory.clear_memory()
+        self.policy_old.load_state_dict(self.policy.state_dict())
+
+    def save_memory(self, policy_memory):
+        states, images, actions, rewards, dones, next_states, next_images = policy_memory.get_all_items()
+        self.ppo_memory.save_all(states, images, actions, rewards, dones, next_states, next_images)
+
+    def act(self, image, state):
         image, state        = torch.FloatTensor(self.trans(image)).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
         
         res                 = self.cnn(image)
@@ -71,3 +99,37 @@ class AgentImageStatePPG(AgentPPG):
             action = self.distribution.deterministic(action_datas)
               
         return to_numpy(action, self.use_gpu)
+
+    def save_weights(self):
+        torch.save({
+            'policy_state_dict': self.policy.state_dict(),
+            'value_state_dict': self.value.state_dict(),
+            'cnn_state_dict': self.cnn.state_dict(),
+            'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
+            'auxppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
+            'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
+            'auxppg_scaler_state_dict': self.auxppg_scaler.state_dict(),
+        }, self.folder + '/ppg.tar')
+        
+    def load_weights(self, device = None):
+        if device == None:
+            device = self.device
+
+        model_checkpoint = torch.load(self.folder + '/ppg.tar', map_location = device)
+        self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
+        self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        self.cnn.load_state_dict(model_checkpoint['cnn_state_dict'])
+        self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
+        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['auxppg_optimizer_state_dict'])   
+        self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
+        self.auxppg_scaler.load_state_dict(model_checkpoint['auxppg_scaler_state_dict'])  
+
+        if self.is_training_mode:
+            self.policy.train()
+            self.value.train()
+            print('Model is training...')
+
+        else:
+            self.policy.eval()
+            self.value.eval()
+            print('Model is evaluating...')

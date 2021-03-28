@@ -17,22 +17,21 @@ class CarlaRunner(IterRunner):
         self.total_reward       = 0
         self.eps_time           = 0
         
-        self.images     = self.env.reset()
-        self.images     = np.transpose(self.images, (2, 0, 1)).reshape(3, 320, 320)
-        self.memories   = memory        
+        self.images, self.states    = self.env.reset()
+        self.memories               = memory  
 
     def run(self):
         self.memories.clear_memory()       
 
         for _ in range(self.n_update):
-            action                          = self.agent.act(self.images)
-            next_image, reward, done, _     = self.env.step(action)
-            next_image                      = np.transpose(next_image, (2, 0, 1)).reshape(3, 320, 320)
+            action                                  = self.agent.act(self.images, self.states)
+            next_image, next_state, reward, done, _ = self.env.step(action)
             
             if self.training_mode:
-                self.memories.save_eps(self.images.tolist(), action, reward, float(done), next_image.tolist())
+                self.memories.save_eps(self.images, self.states.tolist(), action, reward, float(done), next_state.tolist(), next_image)
                 
             self.images         = next_image
+            self.states         = next_state
             self.eps_time       += 1 
             self.total_reward   += reward
                     
@@ -41,16 +40,11 @@ class CarlaRunner(IterRunner):
 
             if done:                
                 self.i_episode  += 1
-                print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
+                self.__print_result(self.i_episode, self.total_reward, self.eps_time, self.tag)               
 
-                if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
-                    self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
-                    self.writer.add_scalar('Times', self.eps_time, self.i_episode)
-
-                self.images         = self.env.reset()
-                self.images         = np.transpose(self.images, (2, 0, 1)).reshape(3, 320, 320)
-                self.total_reward   = 0
-                self.eps_time       = 0
+                self.images, self.states    = self.env.reset()
+                self.total_reward           = 0
+                self.eps_time               = 0
 
         # print('Updating agent..')
         return self.memories
