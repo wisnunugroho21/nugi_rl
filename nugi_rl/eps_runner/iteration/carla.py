@@ -21,6 +21,8 @@ class CarlaRunner(IterRunner):
         self.memories               = memory  
 
     def _print_result(self, i_episode, total_reward, eps_time):
+        print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
+        
         if self.writer is not None:
             self.writer.add_scalar('Rewards', total_reward, i_episode)
             self.writer.add_scalar('Times', eps_time, i_episode)
