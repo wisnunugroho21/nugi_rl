@@ -17,7 +17,7 @@ class AgentPPG():
         self.vf_loss_coef       = vf_loss_coef
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
-        self.aux_ppg_epochs         = aux_ppg_epochs
+        self.aux_ppg_epochs     = aux_ppg_epochs
         self.is_training_mode   = is_training_mode
         self.action_dim         = action_dim
         self.state_dim          = state_dim
@@ -33,7 +33,7 @@ class AgentPPG():
 
         self.distribution       = distribution
         self.ppo_memory         = ppo_memory
-        self.aux_ppg_memory         = aux_ppg_memory
+        self.aux_ppg_memory     = aux_ppg_memory
         
         self.ppoLoss            = ppo_loss
         self.auxLoss            = aux_ppg_loss      
@@ -127,7 +127,7 @@ class AgentPPG():
         self.ppo_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):
-        state           = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
+        state           = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action_datas, _ = self.policy(state)
         
         if self.is_training_mode:

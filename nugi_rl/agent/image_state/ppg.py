@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
 from helpers.pytorch_utils import set_device, to_numpy, to_tensor
-from agent.ppg import AgentPPG
+from agent.standard.ppg import AgentPPG
 
 class AgentImageStatePPG(AgentPPG):
     def __init__(self, cnn, policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
@@ -88,7 +88,7 @@ class AgentImageStatePPG(AgentPPG):
         self.ppo_memory.save_all(images, states, actions, rewards, dones, next_images, next_states)
 
     def act(self, image, state):
-        image, state        = torch.FloatTensor(self.trans(image)).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        image, state        = self.trans(image).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
         
         res                 = self.cnn(image)
         action_datas, _     = self.policy(res, state)

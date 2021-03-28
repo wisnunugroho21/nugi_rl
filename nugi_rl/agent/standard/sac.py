@@ -1,11 +1,11 @@
 import torch
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+import copy
 
 from helpers.pytorch_utils import set_device, to_numpy, to_tensor
 
 class AgentSAC():
-    def __init__(self, q_model, value_model, policy_model, state_dim, action_dim, distribution, q_loss, v_loss, policy_loss, memory, 
+    def __init__(self, soft_q, value, policy, state_dim, action_dim, distribution, q_loss, v_loss, policy_loss, memory, 
         soft_q_optimizer, value_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
 
@@ -18,11 +18,11 @@ class AgentSAC():
         self.epochs             = epochs
         self.soft_tau           = soft_tau
 
-        self.value              = value_model
-        self.target_value       = value_model
-        self.soft_q1            = q_model
-        self.soft_q2            = q_model
-        self.policy             = policy_model
+        self.value              = value
+        self.target_value       = copy.deepcopy(self.value)
+        self.soft_q1            = soft_q
+        self.soft_q2            = copy.deepcopy(self.soft_q1)
+        self.policy             = policy
 
         self.distribution       = distribution
         self.memory             = memory
@@ -110,7 +110,7 @@ class AgentSAC():
         self.memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
-        state               = to_tensor(state, use_gpu = self.use_gpu, first_unsqueeze = True, detach = True)
+        state               = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action_datas        = self.policy(state)
         
         if self.is_training_mode:
