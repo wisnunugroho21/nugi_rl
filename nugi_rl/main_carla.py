@@ -18,8 +18,8 @@ from policy_function.advantage_function.generalized_advantage_estimation import 
 from model.ppg.CarlaSharedCnn.cnn_model import CnnModel
 from model.ppg.CarlaSharedCnn.policy_model import PolicyModel
 from model.ppg.CarlaSharedCnn.value_model import ValueModel
-from memory.policy.image_state.image_state_policy_memory import ImageStatePolicyMemory
-from memory.aux_ppg.image_state.image_state_aux_ppg_memory import ImageStateAuxMemory
+from memory.policy.image_state.standard import ImageStatePolicyMemory
+from memory.aux_ppg.image_state.standard import ImageStateAuxMemory
 
 from helpers.pytorch_utils import set_device
 

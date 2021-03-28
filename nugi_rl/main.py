@@ -9,15 +9,15 @@ from torch.optim.adam import Adam
 
 from eps_runner.iteration.iter_runner import IterRunner
 from train_executor.executor import Executor
-from agent.ppg import AgentPPG
+from agent.standard.ppg import AgentPPG
 from distribution.basic_continous import BasicContinous
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
 from model.ppg.TanhNN import Policy_Model, Value_Model
-from memory.policy.policy_memory import PolicyMemory
-from memory.aux_ppg.aux_ppg_memory import AuxPpgMemory
+from memory.policy.standard import PolicyMemory
+from memory.aux_ppg.standard import AuxPpgMemory
 
 from helpers.pytorch_utils import set_device
 
