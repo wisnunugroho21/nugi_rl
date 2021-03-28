@@ -10,8 +10,7 @@ class PolicyModel(nn.Module):
       self.std                  = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(use_gpu))
 
       self.state_extractor      = nn.Sequential( nn.Linear(2, 32), nn.ReLU() )
-      self.image_extractor      = nn.Sequential( nn.Linear(128, 128), nn.ReLU() )
-      self.nn_layer             = nn.Sequential( nn.Linear(160, 160), nn.ReLU(), nn.Linear(160, 128), nn.ReLU() )
+      self.nn_layer             = nn.Sequential( nn.Linear(160, 320), nn.ReLU(), nn.Linear(320, 128), nn.ReLU() )
       
       self.actor_steer_layer    = nn.Sequential( nn.Linear(32, 1), nn.Tanh() )
       self.actor_gas_layer      = nn.Sequential( nn.Linear(32, 1), nn.Sigmoid() )
@@ -19,9 +18,8 @@ class PolicyModel(nn.Module):
       self.critic_layer         = nn.Sequential( nn.Linear(32, 1) )       
         
     def forward(self, res, state, detach = False):
-      i   = self.image_extractor(res) 
       s   = self.state_extractor(state)
-      x   = torch.cat([i, s], -1)
+      x   = torch.cat([res, s], -1)
       x   = self.nn_layer(x)
 
       action_steer  = self.actor_steer_layer(x[:, :32])
