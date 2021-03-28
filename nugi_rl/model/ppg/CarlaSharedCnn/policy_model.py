@@ -9,7 +9,7 @@ class PolicyModel(nn.Module):
 
       self.std                  = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(use_gpu))
 
-      self.state_extractor      = nn.Sequential( nn.Linear(1, 32), nn.ReLU() )
+      self.state_extractor      = nn.Sequential( nn.Linear(2, 32), nn.ReLU() )
       self.nn_layer             = nn.Sequential( nn.Linear(160, 320), nn.ReLU(), nn.Linear(320, 128), nn.ReLU() )
       
       self.actor_steer_layer    = nn.Sequential( nn.Linear(32, 1), nn.Tanh() )
