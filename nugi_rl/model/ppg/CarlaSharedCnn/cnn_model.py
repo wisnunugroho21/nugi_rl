@@ -16,6 +16,8 @@ class CnnModel(nn.Module):
         nn.ReLU(),        
         DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1),
         nn.ReLU(),
+        DepthwiseSeparableConv2d(16, 16, kernel_size = 3, stride = 1, padding = 1),
+        nn.ReLU(),
       )
 
       self.conv2 = nn.Sequential(
@@ -33,6 +35,8 @@ class CnnModel(nn.Module):
       self.conv4 = nn.Sequential(
         DepthwiseSeparableConv2d(16, 32, kernel_size = 3, stride = 1, padding = 1),
         nn.ReLU(),
+        DepthwiseSeparableConv2d(32, 32, kernel_size = 3, stride = 1, padding = 1),
+        nn.ReLU(),
       )
 
       self.conv5 = nn.Sequential(
@@ -49,6 +53,8 @@ class CnnModel(nn.Module):
 
       self.conv7 = nn.Sequential(
         DepthwiseSeparableConv2d(32, 64, kernel_size = 3, stride = 1, padding = 1),
+        nn.ReLU(),
+        DepthwiseSeparableConv2d(64, 64, kernel_size = 3, stride = 1, padding = 1),
         nn.ReLU(),
       )
 

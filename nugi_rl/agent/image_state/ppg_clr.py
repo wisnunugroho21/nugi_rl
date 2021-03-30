@@ -33,15 +33,16 @@ class AgentImageStatePPGClr(AgentPPG):
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
         self.ppo_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            res                 = self.cnn(images)
-            action_datas, _     = self.policy(res, states)
-            values              = self.value(res, states)
+            res                 = self.cnn(images, True)
+            next_res            = self.cnn(next_images, True)
 
             old_action_datas, _ = self.policy_old(res, states, True)
             old_values          = self.value_old(res, states, True)
 
-            next_res            = self.cnn(next_images, True)
             next_values         = self.value(next_res, next_states, True)
+
+            action_datas, _     = self.policy(res, states)
+            values              = self.value(res, states)
 
             loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
         

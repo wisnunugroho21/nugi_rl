@@ -7,8 +7,6 @@ class ProjectionModel(nn.Module):
       self.nn_layer   = nn.Sequential(
         nn.Linear(128, 128),
         nn.ReLU(),
-        nn.Linear(128, 128),
-        nn.ReLU(),
         nn.Linear(128, 128)
       )
 
