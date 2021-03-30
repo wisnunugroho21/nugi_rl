@@ -68,7 +68,6 @@ class AgentImageStatePPGClr(AgentPPG):
 
     def _training_aux_clr(self, first_images, second_images):
         self.aux_clr_optimizer.zero_grad()
-
         with torch.cuda.amp.autocast():
             out1        = self.cnn(first_images)
             encoded1    = self.projector(out1)
@@ -83,7 +82,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_clr_scaler.update()
 
     def _update_policy(self):
-        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.ppo_epochs):       
             for images, states, actions, rewards, dones, next_images, next_states in dataloader: 
@@ -98,7 +97,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.value_old.load_state_dict(self.value.state_dict())
 
     def _update_aux_ppg(self):
-        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.aux_ppg_epochs):       
             for images, states in dataloader:
@@ -111,7 +110,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.policy_old.load_state_dict(self.policy.state_dict())
 
     def _update_aux_clr(self):
-        dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 4)
+        dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 8)
 
         for _ in range(self.aux_clr_epochs):
             for first_images, second_images in dataloader:
