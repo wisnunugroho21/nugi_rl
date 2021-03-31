@@ -45,12 +45,11 @@ class AgentImageStatePPG(AgentPPG):
     def _training_aux_ppg(self, images, states):
         self.aux_ppg_optimizer.zero_grad()        
         with torch.cuda.amp.autocast():
-            res                     = self.cnn(images, True)
+            res                     = self.cnn(images)
+            action_datas, values    = self.policy(res, states)
 
             returns                 = self.value(res, states, True)
-            old_action_datas, _     = self.policy_old(res, states, True)
-
-            action_datas, values    = self.policy(res, states)            
+            old_action_datas, _     = self.policy_old(res, states, True)                        
 
             loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
@@ -59,7 +58,7 @@ class AgentImageStatePPG(AgentPPG):
         self.auxppg_scaler.update()
 
     def _update_policy(self):
-        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.ppo_epochs):       
             for images, states, actions, rewards, dones, next_images, next_states in dataloader: 
@@ -74,7 +73,7 @@ class AgentImageStatePPG(AgentPPG):
         self.value_old.load_state_dict(self.value.state_dict())
 
     def _update_aux_ppg(self):
-        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.aux_ppg_epochs):       
             for images, states in dataloader:

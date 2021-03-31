@@ -45,8 +45,8 @@ value_clip              = 10.0
 entropy_coef            = 0.0
 vf_loss_coef            = 1.0
 batch_size              = 32
-PPO_epochs              = 5
-Aux_epochs              = 5
+PPO_epochs              = 10
+Aux_epochs              = 10
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -106,7 +106,7 @@ cnn                 = Cnn_Model().float().to(set_device(use_gpu))
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
 value               = Value_Model(state_dim).float().to(set_device(use_gpu))
 ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()) + list(cnn.parameters()), lr = learning_rate)        
-aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
+aux_ppg_optimizer   = Adam(list(policy.parameters()) + list(cnn.parameters()), lr = learning_rate)
 
 agent = Agent( cnn, policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
