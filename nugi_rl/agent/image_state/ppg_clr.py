@@ -22,7 +22,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_clrLoss        = aux_clr_loss
         self.aux_clr_memory     = aux_clr_memory
         self.aux_clr_optimizer  = aux_clr_optimizer
-        self.auxclr_scaler      = torch.cuda.amp.GradScaler()
+        self.aux_clr_scaler      = torch.cuda.amp.GradScaler()
         self.aux_clr_epochs     = aux_clr_epochs
 
         self.trans  = transforms.Compose([
@@ -62,9 +62,9 @@ class AgentImageStatePPGClr(AgentPPG):
 
             loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
-        self.auxppg_scaler.scale(loss).backward()
-        self.auxppg_scaler.step(self.aux_ppg_optimizer)
-        self.auxppg_scaler.update()
+        self.aux_ppg_scaler.scale(loss).backward()
+        self.aux_ppg_scaler.step(self.aux_ppg_optimizer)
+        self.aux_ppg_scaler.update()
 
     def _training_aux_clr(self, first_images, second_images):
         self.aux_clr_optimizer.zero_grad()
@@ -77,11 +77,11 @@ class AgentImageStatePPGClr(AgentPPG):
 
             loss = (self.aux_clrLoss.compute_loss(encoded1, encoded2) + self.aux_clrLoss.compute_loss(encoded2, encoded1)) / 2.0
 
-        self.auxclr_scaler.scale(loss).backward()
-        self.auxclr_scaler.step(self.aux_clr_optimizer)
-        self.auxclr_scaler.update()
+        self.aux_clr_scaler.scale(loss).backward()
+        self.aux_clr_scaler.step(self.aux_clr_optimizer)
+        self.aux_clr_scaler.update()
 
-    def _update_policy(self):
+    def _update_ppo(self):
         dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.ppo_epochs):       
@@ -119,7 +119,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_clr_memory.clear_memory()
 
     def update(self):
-        self._update_policy()
+        self._update_ppo()
         self.i_update += 1
 
         if self.i_update % self.n_aux_update == 0:
@@ -151,11 +151,11 @@ class AgentImageStatePPGClr(AgentPPG):
             'cnn_state_dict': self.cnn.state_dict(),
             'projector_state_dict': self.projector.state_dict(),
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
-            'auxppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
-            'auxclr_optimizer_state_dict': self.aux_clr_optimizer.state_dict(),
+            'aux_ppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
+            'aux_clr_optimizer_state_dict': self.aux_clr_optimizer.state_dict(),
             'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
-            'auxppg_scaler_state_dict': self.auxppg_scaler.state_dict(),
-            'auxclr_scaler_state_dict': self.auxclr_scaler.state_dict(),
+            'aux_ppg_scaler_state_dict': self.aux_ppg_scaler.state_dict(),
+            'aux_clr_scaler_state_dict': self.aux_clr_scaler.state_dict(),
         }, self.folder + '/ppg.tar')
         
     def load_weights(self, device = None):
@@ -168,11 +168,11 @@ class AgentImageStatePPGClr(AgentPPG):
         self.cnn.load_state_dict(model_checkpoint['cnn_state_dict'])
         self.projector.load_state_dict(model_checkpoint['projector_state_dict'])
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
-        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['auxppg_optimizer_state_dict'])   
-        self.aux_clr_optimizer.load_state_dict(model_checkpoint['auxclr_optimizer_state_dict'])
+        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])   
+        self.aux_clr_optimizer.load_state_dict(model_checkpoint['aux_clr_optimizer_state_dict'])
         self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
-        self.auxppg_scaler.load_state_dict(model_checkpoint['auxppg_scaler_state_dict'])  
-        self.auxclr_scaler.load_state_dict(model_checkpoint['auxclr_scaler_state_dict'])
+        self.aux_ppg_scaler.load_state_dict(model_checkpoint['aux_ppg_scaler_state_dict'])  
+        self.aux_clr_scaler.load_state_dict(model_checkpoint['aux_clr_scaler_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()

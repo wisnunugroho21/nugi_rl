@@ -1,8 +1,8 @@
 import numpy as np
 import torchvision.transforms as transforms
-from memory.aux_ppg.standard import AuxPpgMemory
+from memory.aux_ppg.standard import aux_ppgMemory
 
-class ImageStateAuxPpgMemory(AuxPpgMemory):
+class ImageStateaux_ppgMemory(aux_ppgMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.images         = []

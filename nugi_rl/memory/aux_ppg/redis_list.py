@@ -1,6 +1,6 @@
-from memory.aux_ppg.standard import AuxPpgMemory
+from memory.aux_ppg.standard import aux_ppgMemory
 
-class AuxPpgRedisListMemory(AuxPpgMemory):
+class aux_ppgRedisListMemory(aux_ppgMemory):
     def __init__(self, redis, capacity = 100000, datas = None):
         super().__init__(capacity, datas)
         self.redis = redis

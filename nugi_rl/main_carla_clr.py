@@ -21,8 +21,8 @@ from model.ppg.CarlaSharedCnn.policy_model import PolicyModel
 from model.ppg.CarlaSharedCnn.value_model import ValueModel
 from model.ppg.CarlaSharedCnn.projection_model import ProjectionModel
 from memory.policy.image_state.standard import ImageStatePolicyMemory
-from memory.aux_ppg.image_state.standard import ImageStateAuxPpgMemory
-from memory.aux_clr.standard import AuxClrMemory
+from memory.aux_ppg.image_state.standard import ImageStateaux_ppgMemory
+from memory.aux_clr.standard import aux_clrMemory
 
 from helpers.pytorch_utils import set_device
 
@@ -49,8 +49,8 @@ entropy_coef            = 0.0
 vf_loss_coef            = 1.0
 batch_size              = 32
 ppo_epochs              = 5
-auxppg_epochs           = 5
-auxclr_epochs           = 5
+aux_ppg_epochs           = 5
+aux_clr_epochs           = 5
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -74,8 +74,8 @@ Aux_loss            = JointAux
 Clr_loss            = SimCLR
 Wrapper             = CarlaEnv
 Policy_Memory       = ImageStatePolicyMemory
-Aux_Memory          = ImageStateAuxPpgMemory
-Clr_Memory          = AuxClrMemory
+Aux_Memory          = ImageStateaux_ppgMemory
+Clr_Memory          = aux_clrMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentImageStatePPGClr
 
@@ -120,7 +120,7 @@ aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
 aux_clr_optimizer   = Adam(list(cnn.parameters()) + list(projector.parameters()), lr = learning_rate)
 
 agent = Agent(projector, cnn, policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, aux_clr_loss, ppo_memory, aux_ppg_memory, aux_clr_memory,
-            ppo_optimizer, aux_ppg_optimizer, aux_clr_optimizer, ppo_epochs, auxppg_epochs, auxclr_epochs, n_aux_update, is_training_mode, policy_kl_range, 
+            ppo_optimizer, aux_ppg_optimizer, aux_clr_optimizer, ppo_epochs, aux_ppg_epochs, aux_clr_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu)
 
 runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]

@@ -5,10 +5,10 @@ import string
 import os
 
 import numpy as np
-from memory.aux_ppg.standard import AuxPpgMemory
+from memory.aux_ppg.standard import aux_ppgMemory
 
-class ImageAuxPPGMemory(AuxPpgMemory):
-    def __init__(self, capacity = 100000, datas = None, folder_img = '/temp/auxppg/'):
+class Imageaux_ppgMemory(aux_ppgMemory):
+    def __init__(self, capacity = 100000, datas = None, folder_img = '/temp/aux_ppg/'):
         self.capacity       = capacity
         self.folder_img     = folder_img
 

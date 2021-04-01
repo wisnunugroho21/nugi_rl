@@ -19,7 +19,7 @@ from model.ppg.CarlaSharedCnn.cnn_model import CnnModel
 from model.ppg.CarlaSharedCnn.policy_model import PolicyModel
 from model.ppg.CarlaSharedCnn.value_model import ValueModel
 from memory.policy.image_state.standard import ImageStatePolicyMemory
-from memory.aux_ppg.image_state.standard import ImageStateAuxPpgMemory
+from memory.aux_ppg.image_state.standard import ImageStateaux_ppgMemory
 
 from helpers.pytorch_utils import set_device
 
@@ -68,7 +68,7 @@ Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
 Wrapper             = CarlaEnv
 Policy_Memory       = ImageStatePolicyMemory
-Aux_Memory          = ImageStateAuxPpgMemory
+Aux_Memory          = ImageStateaux_ppgMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentImageStatePPG
 

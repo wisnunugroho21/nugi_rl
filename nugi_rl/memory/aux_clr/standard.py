@@ -2,7 +2,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 import numpy as np
 
-class AuxClrMemory(Dataset):
+class aux_clrMemory(Dataset):
     def __init__(self, capacity = 10000, first_trans = None, second_trans = None):        
         self.images         = []
         self.capacity       = capacity

@@ -53,11 +53,11 @@ class AgentImageStatePPG(AgentPPG):
 
             loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
-        self.auxppg_scaler.scale(loss).backward()
-        self.auxppg_scaler.step(self.aux_ppg_optimizer)
-        self.auxppg_scaler.update()
+        self.aux_ppg_scaler.scale(loss).backward()
+        self.aux_ppg_scaler.step(self.aux_ppg_optimizer)
+        self.aux_ppg_scaler.update()
 
-    def _update_policy(self):
+    def _update_ppo(self):
         dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.ppo_epochs):       
@@ -105,9 +105,9 @@ class AgentImageStatePPG(AgentPPG):
             'value_state_dict': self.value.state_dict(),
             'cnn_state_dict': self.cnn.state_dict(),
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
-            'auxppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
+            'aux_ppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
             'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
-            'auxppg_scaler_state_dict': self.auxppg_scaler.state_dict(),
+            'aux_ppg_scaler_state_dict': self.aux_ppg_scaler.state_dict(),
         }, self.folder + '/ppg.tar')
         
     def load_weights(self, device = None):
@@ -119,9 +119,9 @@ class AgentImageStatePPG(AgentPPG):
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.cnn.load_state_dict(model_checkpoint['cnn_state_dict'])
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
-        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['auxppg_optimizer_state_dict'])   
+        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])   
         self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
-        self.auxppg_scaler.load_state_dict(model_checkpoint['auxppg_scaler_state_dict'])  
+        self.aux_ppg_scaler.load_state_dict(model_checkpoint['aux_ppg_scaler_state_dict'])  
 
         if self.is_training_mode:
             self.policy.train()

@@ -17,7 +17,7 @@ from loss.ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
 from model.ppg.TanhNN import Policy_Model, Value_Model
 from memory.policy.standard import PolicyMemory
-from memory.aux_ppg.standard import AuxPpgMemory
+from memory.aux_ppg.standard import aux_ppgMemory
 
 from helpers.pytorch_utils import set_device
 
@@ -65,7 +65,7 @@ Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyMemory
-Aux_Memory          = AuxPpgMemory
+Aux_Memory          = aux_ppgMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentPPG
 
