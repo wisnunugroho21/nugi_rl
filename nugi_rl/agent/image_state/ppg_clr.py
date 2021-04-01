@@ -22,7 +22,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_clrLoss        = aux_clr_loss
         self.aux_clr_memory     = aux_clr_memory
         self.aux_clr_optimizer  = aux_clr_optimizer
-        self.aux_clr_scaler     = torch.cuda.amp.GradScaler()
+        self.auxclr_scaler     = torch.cuda.amp.GradScaler()
         self.aux_clr_epochs     = aux_clr_epochs
 
         self.trans  = transforms.Compose([
@@ -78,12 +78,12 @@ class AgentImageStatePPGClr(AgentPPG):
 
             loss = (self.aux_clrLoss.compute_loss(encoded1, encoded2) + self.aux_clrLoss.compute_loss(encoded2, encoded1)) / 2.0
 
-        self.aux_clr_scaler.scale(loss).backward()
-        self.aux_clr_scaler.step(self.aux_clr_optimizer)
-        self.aux_clr_scaler.update()
+        self.auxclr_scaler.scale(loss).backward()
+        self.auxclr_scaler.step(self.aux_clr_optimizer)
+        self.auxclr_scaler.update()
 
     def _update_policy(self):
-        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.ppo_epochs):       
             for images, states, actions, rewards, dones, next_images, next_states in dataloader: 
@@ -98,7 +98,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.value_old.load_state_dict(self.value.state_dict())
 
     def _update_aux_ppg(self):
-        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 4)
+        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.aux_ppg_epochs):       
             for images, states in dataloader:
@@ -111,7 +111,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.policy_old.load_state_dict(self.policy.state_dict())
 
     def _update_aux_clr(self):
-        dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 4)
+        dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 8)
 
         for _ in range(self.aux_clr_epochs):
             for first_images, second_images in dataloader:
@@ -150,10 +150,13 @@ class AgentImageStatePPGClr(AgentPPG):
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'cnn_state_dict': self.cnn.state_dict(),
+            'projector_state_dict': self.projector.state_dict(),
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
             'auxppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
+            'auxclr_optimizer_state_dict': self.aux_clr_optimizer.state_dict(),
             'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
             'auxppg_scaler_state_dict': self.auxppg_scaler.state_dict(),
+            'auxclr_scaler_state_dict': self.auxclr_scaler.state_dict(),
         }, self.folder + '/ppg.tar')
         
     def load_weights(self, device = None):
@@ -164,10 +167,13 @@ class AgentImageStatePPGClr(AgentPPG):
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.cnn.load_state_dict(model_checkpoint['cnn_state_dict'])
+        self.projector.load_state_dict(model_checkpoint['projector_state_dict'])
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
         self.aux_ppg_optimizer.load_state_dict(model_checkpoint['auxppg_optimizer_state_dict'])   
+        self.aux_clr_optimizer.load_state_dict(model_checkpoint['auxclr_optimizer_state_dict'])
         self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
         self.auxppg_scaler.load_state_dict(model_checkpoint['auxppg_scaler_state_dict'])  
+        self.auxclr_scaler.load_state_dict(model_checkpoint['auxclr_scaler_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()

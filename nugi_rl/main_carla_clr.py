@@ -115,7 +115,7 @@ cnn                 = Cnn_Model().float().to(set_device(use_gpu))
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
 value               = Value_Model(state_dim).float().to(set_device(use_gpu))
 projector           = Projection_Model().float().to(set_device(use_gpu))
-ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()) + list(cnn.parameters()), lr = learning_rate)        
+ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)        
 aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
 aux_clr_optimizer   = Adam(list(cnn.parameters()) + list(projector.parameters()), lr = learning_rate)
 
