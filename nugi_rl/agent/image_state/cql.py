@@ -22,7 +22,6 @@ class AgentImageStateCql(AgentCql):
 
     def _training_q(self, images, states, actions, rewards, dones, next_images, next_states):
         self.soft_q_optimizer.zero_grad()
-
         with torch.cuda.amp.autocast():
             res                         = self.cnn(images)
             next_res                    = self.cnn(next_images, True)
@@ -41,7 +40,6 @@ class AgentImageStateCql(AgentCql):
 
     def _training_values(self, images, states):
         self.value_optimizer.zero_grad()
-
         with torch.cuda.amp.autocast():
             res                 = self.cnn(images, True)
 
@@ -58,7 +56,6 @@ class AgentImageStateCql(AgentCql):
 
     def _training_policy(self, images, states):
         self.policy_optimizer.zero_grad()
-
         with torch.cuda.amp.autocast():
             res                 = self.cnn(images, True)
 

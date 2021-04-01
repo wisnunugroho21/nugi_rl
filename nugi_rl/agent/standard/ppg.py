@@ -45,7 +45,7 @@ class AgentPPG():
         self.aux_ppg_optimizer  = aux_ppg_optimizer
 
         self.ppo_scaler         = torch.cuda.amp.GradScaler()
-        self.aux_ppg_scaler      = torch.cuda.amp.GradScaler()
+        self.aux_ppg_scaler     = torch.cuda.amp.GradScaler()
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
@@ -59,7 +59,6 @@ class AgentPPG():
 
     def _training_ppo(self, states, actions, rewards, dones, next_states):         
         self.ppo_optimizer.zero_grad()
-
         with torch.cuda.amp.autocast():
             action_datas, _     = self.policy(states)
             values              = self.value(states)
@@ -75,8 +74,7 @@ class AgentPPG():
         self.ppo_scaler.update()
 
     def _training_aux_ppg(self, states):        
-        self.aux_ppg_optimizer.zero_grad()
-        
+        self.aux_ppg_optimizer.zero_grad()        
         with torch.cuda.amp.autocast():
             action_datas, values    = self.policy(states)
 

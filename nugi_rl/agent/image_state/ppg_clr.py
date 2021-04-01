@@ -22,7 +22,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_clrLoss        = aux_clr_loss
         self.aux_clr_memory     = aux_clr_memory
         self.aux_clr_optimizer  = aux_clr_optimizer
-        self.aux_clr_scaler      = torch.cuda.amp.GradScaler()
+        self.aux_clr_scaler     = torch.cuda.amp.GradScaler()
         self.aux_clr_epochs     = aux_clr_epochs
 
         self.trans  = transforms.Compose([
