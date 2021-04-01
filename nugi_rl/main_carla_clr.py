@@ -28,7 +28,7 @@ from helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
-load_weights            = False # If you want to load the agent, set this to True
+load_weights            = True # If you want to load the agent, set this to True
 save_weights            = True # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
@@ -55,7 +55,7 @@ action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
 
-folder                  = 'weights/carla'
+folder                  = 'weights/carla1'
 # env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 
 state_dim           = None

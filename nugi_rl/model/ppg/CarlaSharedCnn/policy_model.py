@@ -19,7 +19,7 @@ class PolicyModel(nn.Module):
       self.critic_layer         = nn.Sequential( nn.Linear(32, 1) )       
         
     def forward(self, res, state, detach = False):
-      i   = self.state_extractor(res)
+      i   = self.image_extractor(res)
       s   = self.state_extractor(state)
       x   = torch.cat([i, s], -1)
       x   = self.nn_layer(x)
