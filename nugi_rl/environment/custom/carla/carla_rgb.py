@@ -57,7 +57,7 @@ class CarlaEnv():
 
         settings                        = self.world.get_settings()
         settings.synchronous_mode       = True
-        settings.fixed_delta_seconds    = 0.05
+        settings.fixed_delta_seconds    = 0.0333
         self.world.apply_settings(settings)
 
         self.cam_queue  = queue.Queue()         
@@ -94,7 +94,7 @@ class CarlaEnv():
 
     def _tick_env(self):
         self.world.tick()
-        time.sleep(0.05)
+        time.sleep(0.0333)
 
     def is_discrete(self):
         return False
@@ -156,8 +156,8 @@ class CarlaEnv():
         kmh     = math.sqrt(v.x ** 2 + v.y ** 2)
                 
         loc     = self.vehicle.get_location()
-        dif_x   = loc.x - prev_loc.x if loc.x - prev_loc.x >= 0.03 else 0
-        dif_y   = loc.y - prev_loc.y if loc.y - prev_loc.y >= 0.03 else 0
+        dif_x   = loc.x - prev_loc.x if loc.x - prev_loc.x >= 0.08 else 0
+        dif_y   = loc.y - prev_loc.y if loc.y - prev_loc.y >= 0.08 else 0
         dif_loc = math.sqrt(dif_x ** 2 + dif_y ** 2)
 
         done    = False
