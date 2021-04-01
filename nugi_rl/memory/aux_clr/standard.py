@@ -20,10 +20,10 @@ class AuxClrMemory(Dataset):
             ])
 
         if self.second_trans is None:
-            self.second_trans = transforms.Compose([     
-                transforms.RandomResizedCrop(320),                           
+            self.second_trans = transforms.Compose([ 
                 transforms.RandomApply([transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)], p = 0.8),
                 transforms.RandomGrayscale(p = 0.2),
+                transforms.RandomResizedCrop(320),
                 transforms.GaussianBlur(33),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
