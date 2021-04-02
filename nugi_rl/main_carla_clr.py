@@ -117,7 +117,7 @@ value               = Value_Model(state_dim).float().to(set_device(use_gpu))
 projector           = Projection_Model().float().to(set_device(use_gpu))
 ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)        
 aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
-aux_clr_optimizer   = Adam(list(cnn.parameters()) + list(projector.parameters()), lr = learning_rate)
+aux_clr_optimizer   = Adam(list(cnn.parameters()) + list(projector.parameters()), lr = 1e-3)
 
 agent = Agent(projector, cnn, policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, aux_clr_loss, ppo_memory, aux_ppg_memory, aux_clr_memory,
             ppo_optimizer, aux_ppg_optimizer, aux_clr_optimizer, ppo_epochs, aux_ppg_epochs, aux_clr_epochs, n_aux_update, is_training_mode, policy_kl_range, 

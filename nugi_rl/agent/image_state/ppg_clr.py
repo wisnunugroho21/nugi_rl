@@ -35,6 +35,8 @@ class AgentImageStatePPGClr(AgentPPG):
 
         self.cnn_target.load_state_dict(self.cnn.state_dict())
         self.projector_target.load_state_dict(self.projector.state_dict())
+        
+        self.soft_tau = 0.95
 
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
         self.ppo_optimizer.zero_grad()
@@ -124,8 +126,11 @@ class AgentImageStatePPGClr(AgentPPG):
 
         self.aux_clr_memory.clear_memory()
 
-        self.cnn_target.load_state_dict(self.cnn.state_dict())
-        self.projector_target.load_state_dict(self.projector.state_dict())
+        for target_param, param in zip(self.cnn_target.parameters(), self.cnn.parameters()):
+            target_param.data.copy_(target_param.data * self.soft_tau + param.data * (1.0 - self.soft_tau))
+
+        for target_param, param in zip(self.projector_target.parameters(), self.projector.parameters()):
+            target_param.data.copy_(target_param.data * self.soft_tau + param.data * (1.0 - self.soft_tau))
 
     def update(self):
         self._update_ppo()
