@@ -80,8 +80,8 @@ class AgentImageStatePPGClr(AgentPPG):
             out1        = self.cnn(input_images)
             encoded1    = self.projector(out1)
 
-            out2        = self.cnn_target(target_images)
-            encoded2    = self.projector_target(out2)
+            out2        = self.cnn_target(target_images, True)
+            encoded2    = self.projector_target(out2, True)
 
             loss = self.aux_clrLoss.compute_loss(encoded1, encoded2)
 
