@@ -1,7 +1,7 @@
 import numpy as np
 from torch.utils.data import Dataset
 
-class aux_ppgMemory(Dataset):
+class auxPpgMemory(Dataset):
     def __init__(self, capacity = 100000, datas = None):
         self.capacity       = capacity
 
