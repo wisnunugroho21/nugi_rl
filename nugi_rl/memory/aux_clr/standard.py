@@ -3,14 +3,14 @@ from torch.utils.data import Dataset
 import numpy as np
 
 class auxClrMemory(Dataset):
-    def __init__(self, capacity = 10000, first_trans = None, second_trans = None):        
+    def __init__(self, capacity = 10000, input_trans = None, target_trans = None):        
         self.images         = []
         self.capacity       = capacity
-        self.first_trans    = first_trans
-        self.second_trans   = second_trans
+        self.input_trans    = input_trans
+        self.target_trans   = target_trans
 
-        if self.first_trans is None:
-            self.first_trans = transforms.Compose([
+        if self.input_trans is None:
+            self.input_trans = transforms.Compose([
                 transforms.RandomResizedCrop(320),                           
                 transforms.RandomApply([transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)], p = 0.8),
                 transforms.RandomGrayscale(p = 0.2),
@@ -19,12 +19,8 @@ class auxClrMemory(Dataset):
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
             ])
 
-        if self.second_trans is None:
-            self.second_trans = transforms.Compose([ 
-                transforms.RandomApply([transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)], p = 0.8),
-                transforms.RandomGrayscale(p = 0.2),
-                transforms.RandomResizedCrop(320),
-                transforms.GaussianBlur(33),
+        if self.target_trans is None:
+            self.target_trans = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
             ])
@@ -35,10 +31,10 @@ class auxClrMemory(Dataset):
     def __getitem__(self, idx):
         images          = self.images[idx]
 
-        first_inputs    = self.first_trans(images)
-        second_inputs   = self.second_trans(images)
+        input_images    = self.input_trans(images)
+        target_images   = self.target_trans(images)
 
-        return first_inputs.detach().cpu().numpy(), second_inputs.detach().cpu().numpy()
+        return input_images.detach().cpu().numpy(), target_images.detach().cpu().numpy()
 
     def save_eps(self, image):
         if len(self) >= self.capacity:

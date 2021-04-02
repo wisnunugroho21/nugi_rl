@@ -19,6 +19,9 @@ class AgentImageStatePPGClr(AgentPPG):
         self.cnn                = cnn
         self.projector          = projector
 
+        self.cnn_target         = copy.deepcopy(self.cnn)
+        self.projector_target   = copy.deepcopy(self.projector)
+
         self.aux_clrLoss        = aux_clr_loss
         self.aux_clr_memory     = aux_clr_memory
         self.aux_clr_optimizer  = aux_clr_optimizer
@@ -29,6 +32,9 @@ class AgentImageStatePPGClr(AgentPPG):
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
+
+        self.cnn_target.load_state_dict(self.cnn.state_dict())
+        self.projector_target.load_state_dict(self.projector.state_dict())
 
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
         self.ppo_optimizer.zero_grad()
@@ -66,16 +72,16 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_ppg_scaler.step(self.aux_ppg_optimizer)
         self.aux_ppg_scaler.update()
 
-    def _training_aux_clr(self, first_images, second_images):
+    def _training_aux_clr(self, input_images, target_images):
         self.aux_clr_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            out1        = self.cnn(first_images)
+            out1        = self.cnn(input_images)
             encoded1    = self.projector(out1)
 
-            out2        = self.cnn(second_images)
-            encoded2    = self.projector(out2)
+            out2        = self.cnn_target(target_images)
+            encoded2    = self.projector_target(out2)
 
-            loss = (self.aux_clrLoss.compute_loss(encoded1, encoded2) + self.aux_clrLoss.compute_loss(encoded2, encoded1)) / 2.0
+            loss = self.aux_clrLoss.compute_loss(encoded1, encoded2)
 
         self.aux_clr_scaler.scale(loss).backward()
         self.aux_clr_scaler.step(self.aux_clr_optimizer)
@@ -113,10 +119,13 @@ class AgentImageStatePPGClr(AgentPPG):
         dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 8)
 
         for _ in range(self.aux_clr_epochs):
-            for first_images, second_images in dataloader:
-                self._training_aux_clr(first_images.float().to(self.device), second_images.float().to(self.device))
+            for input_images, target_images in dataloader:
+                self._training_aux_clr(input_images.float().to(self.device), target_images.float().to(self.device))
 
         self.aux_clr_memory.clear_memory()
+
+        self.cnn_target.load_state_dict(self.cnn.state_dict())
+        self.projector_target.load_state_dict(self.projector.state_dict())
 
     def update(self):
         self._update_ppo()
