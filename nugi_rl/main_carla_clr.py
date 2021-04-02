@@ -21,14 +21,14 @@ from model.ppg.CarlaSharedCnn.policy_model import PolicyModel
 from model.ppg.CarlaSharedCnn.value_model import ValueModel
 from model.ppg.CarlaSharedCnn.projection_model import ProjectionModel
 from memory.policy.image_state.standard import ImageStatePolicyMemory
-from memory.aux_ppg.image_state.standard import ImageStateaux_ppgMemory
-from memory.aux_clr.standard import aux_clrMemory
+from memory.aux_ppg.image_state.standard import auxPpgImageStateMemory
+from memory.aux_clr.standard import auxClrMemory
 
 from helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
-load_weights            = True # If you want to load the agent, set this to True
+load_weights            = False # If you want to load the agent, set this to True
 save_weights            = True # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
@@ -74,8 +74,8 @@ Aux_loss            = JointAux
 Clr_loss            = SimCLR
 Wrapper             = CarlaEnv
 Policy_Memory       = ImageStatePolicyMemory
-Aux_Memory          = ImageStateaux_ppgMemory
-Clr_Memory          = aux_clrMemory
+Aux_Memory          = auxPpgImageStateMemory
+Clr_Memory          = auxClrMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentImageStatePPGClr
 
