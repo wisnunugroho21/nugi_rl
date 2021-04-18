@@ -1,10 +1,10 @@
-import numpy as np
+import torch
 from PIL import Image
 import random
 import string
 import os
+import torchvision.transforms as transforms
 
-import numpy as np
 from memory.aux_ppg.standard import auxPpgMemory
 
 class auxPpgImageDiskMemory(auxPpgMemory):
@@ -21,12 +21,17 @@ class auxPpgImageDiskMemory(auxPpgMemory):
             if len(self.states) >= self.capacity:
                 raise Exception('datas cannot be longer than capacity')
 
+        self.trans  = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+
     def __len__(self):
         return len(self.states)
 
     def __getitem__(self, idx):
         states  = self.__get_image_tens(self.states[idx])
-        return np.array(states, dtype = np.float32)
+        return self.trans(states)
 
     def __save_tensor_as_image(self, tensor):
         image_name  = self.folder_img + ''.join(random.choices(string.ascii_uppercase + string.digits, k = 12))

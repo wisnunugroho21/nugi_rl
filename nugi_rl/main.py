@@ -15,16 +15,16 @@ from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg.TanhNN import Policy_Model, Value_Model
+from model.ppg.TanhStdNN import Policy_Model, Value_Model
 from memory.policy.standard import PolicyMemory
-from memory.aux_ppg.standard import aux_ppgMemory
+from memory.aux_ppg.standard import auxPpgMemory
 
 from helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = True # If you want to save the agent, set this to True
+save_weights            = False # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
@@ -32,7 +32,6 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
-n_memory_clr            = 10000
 n_update                = 1024 # How many episode before you update the Policy 
 n_aux_update            = 5
 n_saved                 = n_aux_update
@@ -40,7 +39,7 @@ n_saved                 = n_aux_update
 policy_kl_range         = 0.03
 policy_params           = 5
 value_clip              = 10.0
-entropy_coef            = 0.0
+entropy_coef            = 1.0
 vf_loss_coef            = 1.0
 batch_size              = 32
 PPO_epochs              = 10
@@ -65,7 +64,7 @@ Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyMemory
-Aux_Memory          = aux_ppgMemory
+Aux_Memory          = auxPpgMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentPPG
 

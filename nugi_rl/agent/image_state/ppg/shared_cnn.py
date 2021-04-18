@@ -16,22 +16,31 @@ class AgentImageStatePPG(AgentPPG):
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu)
 
-        self.cnn = cnn
+        self.cnn        = cnn
+        self.cnn_old    = copy.deepcopy(self.cnn)
 
         self.trans  = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
+        if self.is_training_mode:
+            self.cnn.train()
+        else:
+            self.cnn.eval()
+
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
         self.ppo_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
             res                 = self.cnn(images)
+
             action_datas, _     = self.policy(res, states)
             values              = self.value(res, states)
+            
+            res_old             = self.cnn_old(images, True)
 
-            old_action_datas, _ = self.policy_old(res, states, True)
-            old_values          = self.value_old(res, states, True)
+            old_action_datas, _ = self.policy_old(res_old, states, True)
+            old_values          = self.value_old(res_old, states, True)
 
             next_res            = self.cnn(next_images, True)
             next_values         = self.value(next_res, next_states, True)
@@ -48,9 +57,9 @@ class AgentImageStatePPG(AgentPPG):
             res                     = self.cnn(images, True)
 
             returns                 = self.value(res, states, True)
-            old_action_datas, _     = self.policy_old(res, states, True) 
-
-            action_datas, values    = self.policy(res, states)                       
+            old_action_datas, _     = self.policy_old(res, states, True)
+            
+            action_datas, values    = self.policy(res, states)            
 
             loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
@@ -59,6 +68,10 @@ class AgentImageStatePPG(AgentPPG):
         self.aux_ppg_scaler.update()
 
     def _update_ppo(self):
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.value_old.load_state_dict(self.value.state_dict())
+        self.cnn_old.load_state_dict(self.cnn.state_dict())
+
         dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.ppo_epochs):       
@@ -69,19 +82,17 @@ class AgentImageStatePPG(AgentPPG):
         images, states, _, _, _, _, _ = self.ppo_memory.get_all_items()
         self.aux_ppg_memory.save_all(images, states)
         self.ppo_memory.clear_memory()
-
-        self.policy_old.load_state_dict(self.policy.state_dict())
-        self.value_old.load_state_dict(self.value.state_dict())
-
+        
     def _update_aux_ppg(self):
+        self.policy_old.load_state_dict(self.policy.state_dict())
+
         dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.aux_ppg_epochs):       
             for images, states in dataloader:
                 self._training_aux_ppg(images.float().to(self.device), states.float().to(self.device))
 
-        self.aux_ppg_memory.clear_memory()
-        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.aux_ppg_memory.clear_memory()        
 
     def save_memory(self, policy_memory):
         images, states, actions, rewards, dones, next_images, next_states = policy_memory.get_all_items()
@@ -127,9 +138,9 @@ class AgentImageStatePPG(AgentPPG):
         if self.is_training_mode:
             self.policy.train()
             self.value.train()
-            print('Model is training...')
+            self.cnn.train()
 
         else:
             self.policy.eval()
             self.value.eval()
-            print('Model is evaluating...')
+            self.cnn.eval()
