@@ -4,7 +4,7 @@ import torch
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-from helpers.pytorch_utils import set_device, to_numpy, to_tensor
+from helpers.pytorch_utils import copy_parameters, to_numpy
 from agent.standard.ppg import AgentPPG
 
 class AgentImageStatePPGClr(AgentPPG):
@@ -38,11 +38,6 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_clr_memory         = aux_clr_memory
         self.aux_clr_epochs         = aux_clr_epochs
 
-        self.trans  = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
-        
         if self.is_training_mode:
             self.cnn_policy.train()
             self.cnn_value.train()
@@ -105,8 +100,7 @@ class AgentImageStatePPGClr(AgentPPG):
             res_target        = self.cnn_policy_old(target_images, True)
             encoded_target    = self.projector_policy_old(res_target, True)
 
-            encoded = self.projector_policy.compute_logits(encoded_anchor, encoded_target)
-            loss    = self.aux_clrLoss.compute_loss(encoded)
+            loss    = self.aux_clrLoss.compute_loss(encoded_anchor, encoded_target)
 
         self.aux_policy_clr_scaler.scale(loss).backward()
         self.aux_policy_clr_scaler.step(self.aux_policy_clr_optim)
@@ -120,8 +114,7 @@ class AgentImageStatePPGClr(AgentPPG):
             res_target        = self.cnn_value_old(target_images, True)
             encoded_target    = self.projector_value_old(res_target, True)
 
-            encoded = self.projector_value.compute_logits(encoded_anchor, encoded_target)
-            loss    = self.aux_clrLoss.compute_loss(encoded)
+            loss    = self.aux_clrLoss.compute_loss(encoded_anchor, encoded_target)
 
         self.aux_value_clr_scaler.scale(loss).backward()
         self.aux_value_clr_scaler.step(self.aux_value_clr_optim)
@@ -186,7 +179,7 @@ class AgentImageStatePPGClr(AgentPPG):
         self.ppo_memory.save_all(images, states, actions, rewards, dones, next_images, next_states)
 
     def act(self, image, state):
-        image, state        = self.trans(image).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        image, state        = self.ppo_memory.transform(image).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
         
         res                 = self.cnn_policy(image)
         action_datas, _     = self.policy(res, state)

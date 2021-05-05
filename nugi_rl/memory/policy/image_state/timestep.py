@@ -1,8 +1,8 @@
-import numpy as np
+import torch
 import torchvision.transforms as transforms
 from memory.policy.standard import PolicyMemory
 
-class ImageStatePolicyMemory(PolicyMemory):
+class TimeImageStatePolicyMemory(PolicyMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.images         = []
@@ -25,8 +25,8 @@ class ImageStatePolicyMemory(PolicyMemory):
         ])
 
     def __getitem__(self, idx):
-        images      = self.trans(self.images[idx])
-        next_images = self.trans(self.next_images[idx])
+        images      = torch.stack([self.trans(image) for image in self.images[idx]])
+        next_images = torch.stack([self.trans(next_image) for next_image in self.next_images[idx]])
 
         states, actions, rewards, dones, next_states = super().__getitem__(idx)
         return images, states, actions, rewards, dones, next_images, next_states
@@ -57,5 +57,5 @@ class ImageStatePolicyMemory(PolicyMemory):
         del self.images[:]
         del self.next_images[:]
 
-    def transform(self, image):
-        return self.trans(image)
+    def transform(self, images):
+        return torch.stack([self.trans(image) for image in images])

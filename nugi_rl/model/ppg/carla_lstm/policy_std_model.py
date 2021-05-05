@@ -8,7 +8,8 @@ class PolicyModel(nn.Module):
       super(PolicyModel, self).__init__()
 
       self.state_extractor  = nn.Sequential( nn.Linear(2, 32), nn.ReLU() )
-      self.image_extractor  = nn.Sequential( nn.Linear(128, 128), nn.ReLU() )
+      self.image_extractor  = nn.LSTM(128, 128)
+      
       self.nn_layer         = nn.Sequential( nn.Linear(160, 192), nn.ReLU() )
       
       self.actor_steer      = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
@@ -20,7 +21,9 @@ class PolicyModel(nn.Module):
       self.critic_layer     = nn.Sequential( nn.Linear(64, 1) )
         
     def forward(self, res, state, detach = False):
-      i   = self.image_extractor(res)
+      out_i, _ = self.image_extractor(res)
+      i = out_i[-1]
+
       s   = self.state_extractor(state)
       x   = torch.cat([i, s], -1)
       x   = self.nn_layer(x)

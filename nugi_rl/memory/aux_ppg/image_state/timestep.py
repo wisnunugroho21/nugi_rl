@@ -1,8 +1,8 @@
-import numpy as np
+import torch
 import torchvision.transforms as transforms
 from memory.aux_ppg.standard import AuxPpgMemory
 
-class ImageStateAuxPpgMemory(AuxPpgMemory):
+class TimeImageStateAuxPpgMemory(AuxPpgMemory):
     def __init__(self, datas = None):
         if datas is None :
             self.images         = []
@@ -20,7 +20,7 @@ class ImageStateAuxPpgMemory(AuxPpgMemory):
         ])
 
     def __getitem__(self, idx):
-        images  = self.trans(self.images[idx])
+        images  = torch.stack([self.trans(image) for image in self.images[idx]])
 
         states = super().__getitem__(idx)
         return images, states
@@ -50,5 +50,5 @@ class ImageStateAuxPpgMemory(AuxPpgMemory):
         super().clear_memory()
         del self.images[:]
 
-    def transform(self, image):
-        return self.trans(image)
+    def transform(self, images):
+        return torch.stack([self.trans(image) for image in images])
