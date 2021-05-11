@@ -9,5 +9,9 @@ class Moco():
         indexes     = torch.arange(first_encoded.shape[0]).long().to(set_device(self.use_gpu))   
         
         similarity  = torch.mm(first_encoded, second_encoded.t())
-        return torch.nn.functional.cross_entropy(similarity, indexes)
+        
+        loss1       = torch.nn.functional.cross_entropy(similarity, indexes)
+        loss2       = torch.nn.functional.cross_entropy(similarity.t(), indexes)
+
+        return (loss1 + loss2) / 2.0
         
