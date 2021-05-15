@@ -1,14 +1,13 @@
 import numpy as np
 
 class SingleStepRunner():
-    def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+    def __init__(self, agent, env, memory, training_mode, render, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.agent              = agent
         self.env                = env
         self.memories           = memory
 
         self.render             = render
         self.training_mode      = training_mode
-        self.n_update           = n_update
         self.max_action         = max_action
         self.writer             = writer
         self.n_plot_batch       = n_plot_batch

@@ -92,8 +92,8 @@ class AgentPPG():
 
         for _ in range(self.ppo_epochs):       
             for states, actions, rewards, dones, next_states in dataloader:
-                self._training_ppo(to_tensor(states, use_gpu = self.use_gpu), actions.float().to(self.device), rewards.float().to(self.device), 
-                    dones.float().to(self.device), to_tensor(next_states, use_gpu = self.use_gpu))
+                self._training_ppo(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), 
+                    dones.float().to(self.device), next_states.float().to(self.device))
 
         states, _, _, _, _ = self.ppo_memory.get_all_items()
         self.aux_ppg_memory.save_all(states)
@@ -106,7 +106,7 @@ class AgentPPG():
 
         for _ in range(self.aux_ppg_epochs):       
             for states in dataloader:
-                self._training_aux_ppg(to_tensor(states, use_gpu = self.use_gpu))
+                self._training_aux_ppg(states.float().to(self.device))
 
         self.aux_ppg_memory.clear_memory()
 
@@ -123,7 +123,7 @@ class AgentPPG():
         self.ppo_memory.save_all(states, actions, rewards, dones, next_states)
 
     def act(self, state):
-        state           = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
         action_datas, _ = self.policy(state)
         
         if self.is_training_mode:

@@ -10,11 +10,11 @@ class BasicContinous():
         self.use_gpu = use_gpu
 
     # def sample(self, datas):
-    #     mean, std = datas
+        # mean, std = datas
 
-    #     distribution    = Normal(0, 1)
-    #     rand            = distribution.sample().float().to(set_device(self.use_gpu))
-    #     return (mean + std * rand).squeeze(0)
+        # distribution    = Normal(torch.zeros_like(mean), torch.ones_like(std))
+        # rand            = distribution.sample().float().to(set_device(self.use_gpu))
+        # return (mean + std.squeeze() * rand).squeeze(0)
 
     def sample(self, datas):
         mean, std = datas
