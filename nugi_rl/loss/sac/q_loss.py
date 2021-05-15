@@ -6,14 +6,12 @@ class QLoss():
         self.gamma          = gamma
         self.distribution   = distribution
 
-    def compute_loss(self, predicted_q_value1, predicted_q_value2, target_q_value1, target_q_value2, action_datas, action, reward, done):
+    def compute_loss(self, predicted_q_value, target_q_value1, target_q_value2, action_datas, action, reward, done):
         log_prob                = self.distribution.logprob(action_datas, action)
         next_value              = (torch.min(target_q_value1, target_q_value2) - log_prob).detach()
 
         target_q_value          = reward + (1 - done) * self.gamma * next_value
         target_q_value          = target_q_value.detach()
 
-        q_value_loss1           = ((target_q_value - predicted_q_value1).pow(2) * 0.5).mean()
-        q_value_loss2           = ((target_q_value - predicted_q_value2).pow(2) * 0.5).mean()
-
-        return q_value_loss1 + q_value_loss2
+        q_value_loss            = ((target_q_value - predicted_q_value).pow(2) * 0.5).mean()
+        return q_value_loss
