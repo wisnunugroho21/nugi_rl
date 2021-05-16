@@ -46,15 +46,15 @@ class AgentSAC():
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer1.zero_grad()
         with torch.cuda.amp.autocast():
-            action_datas        = self.policy(states, True)
-            predicted_actions   = self.distribution.sample(action_datas).detach()
+            next_action_datas   = self.policy(next_states, True)
+            next_actions        = self.distribution.sample(next_action_datas).detach()
 
-            target_q_value1     = self.target_soft_q1(next_states, predicted_actions, True)
-            target_q_value2     = self.target_soft_q2(next_states, predicted_actions, True)
+            target_q_value1     = self.target_soft_q1(next_states, next_actions, True)
+            target_q_value2     = self.target_soft_q2(next_states, next_actions, True)
 
             predicted_q_value1  = self.soft_q1(states, actions)
 
-            loss = self.qLoss.compute_loss(predicted_q_value1, target_q_value1, target_q_value2, action_datas, actions, rewards, dones)
+            loss = self.qLoss.compute_loss(predicted_q_value1, target_q_value1, target_q_value2, next_action_datas, next_actions, rewards, dones)
 
         self.soft_q_scaler1.scale(loss).backward()
         self.soft_q_scaler1.step(self.soft_q_optimizer1)
@@ -62,15 +62,15 @@ class AgentSAC():
 
         self.soft_q_optimizer2.zero_grad()
         with torch.cuda.amp.autocast():
-            action_datas        = self.policy(states, True)
-            predicted_actions   = self.distribution.sample(action_datas).detach()
+            next_action_datas   = self.policy(next_states, True)
+            next_actions        = self.distribution.sample(next_action_datas).detach()
 
-            target_q_value1     = self.target_soft_q1(next_states, predicted_actions, True)
-            target_q_value2     = self.target_soft_q2(next_states, predicted_actions, True)
+            target_q_value1     = self.target_soft_q1(next_states, next_actions, True)
+            target_q_value2     = self.target_soft_q2(next_states, next_actions, True)
 
             predicted_q_value2  = self.soft_q2(states, actions)
 
-            loss = self.qLoss.compute_loss(predicted_q_value2, target_q_value1, target_q_value2, action_datas, actions, rewards, dones)
+            loss = self.qLoss.compute_loss(predicted_q_value2, target_q_value1, target_q_value2, next_action_datas, next_actions, rewards, dones)
 
         self.soft_q_scaler2.scale(loss).backward()
         self.soft_q_scaler2.step(self.soft_q_optimizer2)
