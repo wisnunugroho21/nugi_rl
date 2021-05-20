@@ -7,40 +7,40 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 128),
           nn.ReLU(),
-          nn.Linear(256, 256),
+          nn.Linear(128, 64),
           nn.ReLU(),
         ).float().to(set_device(use_gpu))
 
         self.actor_layer = nn.Sequential(
-          nn.Linear(256, action_dim),
+          nn.Linear(32, action_dim),
           nn.Tanh()
         ).float().to(set_device(use_gpu))
 
         self.actor_std_layer = nn.Sequential(
-          nn.Linear(256, action_dim),
-          nn.Softplus()
+          nn.Linear(32, action_dim),
+          nn.Sigmoid()
         ).float().to(set_device(use_gpu))
         
     def forward(self, states, detach = False):
       x = self.nn_layer(states)
 
       if detach:
-        return (self.actor_layer(x).detach(), self.actor_std_layer(x).detach())
+        return (self.actor_layer(x[:, :32]).detach(), self.actor_std_layer(x[:, 32:64]).detach())
       else:
-        return (self.actor_layer(x), self.actor_std_layer(x))
+        return (self.actor_layer(x[:, :32]), self.actor_std_layer(x[:, 32:64]))
       
 class Q_Model(nn.Module):
     def __init__(self, state_dim, action_dim, use_gpu = True):
         super(Q_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim + action_dim, 256),
+          nn.Linear(state_dim + action_dim, 128),
           nn.ReLU(),
-          nn.Linear(256, 256),
+          nn.Linear(128, 32),
           nn.ReLU(),
-          nn.Linear(256, 1)
+          nn.Linear(32, 1)
         ).float().to(set_device(use_gpu))
         
     def forward(self, states, actions, detach = False):

@@ -87,11 +87,10 @@ policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(se
 soft_q1             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
 soft_q2             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
 policy_optimizer    = Adam(list(policy.parameters()), lr = learning_rate)        
-soft_q_optimizer1   = Adam(list(soft_q1.parameters()), lr = learning_rate)
-soft_q_optimizer2   = Adam(list(soft_q2.parameters()), lr = learning_rate)
+soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
 
 agent = Agent(soft_q1, soft_q2, policy, state_dim, action_dim, policy_dist, q_loss, policy_loss, sac_memory, 
-        soft_q_optimizer1, soft_q_optimizer2, policy_optimizer, is_training_mode, batch_size, epochs, 
+        soft_q_optimizer, policy_optimizer, is_training_mode, batch_size, epochs, 
         soft_tau, folder, use_gpu)
                     
 runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
