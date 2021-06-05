@@ -131,7 +131,7 @@ class AgentPPG():
         else:
             action = self.distribution.deterministic(action_datas)
               
-        return to_numpy(action, self.use_gpu)
+        return to_numpy(action.squeeze(), self.use_gpu)
 
     def save_weights(self, folder = None):
         if folder == None:

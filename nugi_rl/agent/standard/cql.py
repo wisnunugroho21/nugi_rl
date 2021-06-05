@@ -47,8 +47,11 @@ class AgentCql():
             action_datas                = self.policy(states, True)
             predicted_actions           = self.distribution.sample(action_datas).detach()
 
-            target_next_q1              = self.target_soft_q1(next_states, predicted_actions, True)
-            target_next_q2              = self.target_soft_q2(next_states, predicted_actions, True)
+            next_action_datas           = self.policy(next_states, True)
+            predicted_next_actions      = self.distribution.sample(next_action_datas).detach()
+
+            target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
+            target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
 
             naive_predicted_q_value1    = self.soft_q1(states, predicted_actions)
             predicted_q_value1          = self.target_soft_q1(states, actions)
@@ -81,11 +84,11 @@ class AgentCql():
         dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
 
         for _ in range(self.epochs):
-            for states, images, actions, rewards, dones, next_states, next_images in dataloader:
-                self._training_q(states.float().to(self.device), images.float().to(self.device), actions.float().to(self.device), 
-                    rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device), next_images.float().to(self.device))
+            for states, actions, rewards, dones, next_states in dataloader:
+                self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
+                    dones.to(self.device), next_states.to(self.device))
 
-                self._training_policy(states.float().to(self.device), images.float().to(self.device))
+                self._training_policy(states.to(self.device))
 
             self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
             self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
@@ -100,7 +103,7 @@ class AgentCql():
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action  = self.policy(state)
                       
-        return to_numpy(action, self.use_gpu)
+        return to_numpy(action.squeeze(), self.use_gpu)
 
     def update(self):
         self._update_offpolicy()

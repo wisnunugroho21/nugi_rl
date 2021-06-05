@@ -77,12 +77,12 @@ class AgentSAC():
     def _update_sac(self):
         if len(self.memory) > self.batch_size:
             for _ in range(self.epochs):
-                dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 2)
+                dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
                 states, actions, rewards, dones, next_states = next(iter(dataloader))
 
-                self._training_q(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), 
-                    dones.float().to(self.device), next_states.float().to(self.device))
-                self._training_policy(states.float().to(self.device))
+                self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
+                    dones.to(self.device), next_states.to(self.device))
+                self._training_policy(states.to(self.device))
 
             self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
             self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
@@ -103,7 +103,7 @@ class AgentSAC():
         else:
             action = self.distribution.act_deterministic(action_datas)
               
-        return to_numpy(action, self.use_gpu)    
+        return to_numpy(action.squeeze(), self.use_gpu)
 
     def save_weights(self):
         torch.save({

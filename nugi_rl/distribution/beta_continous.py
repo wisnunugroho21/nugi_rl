@@ -5,11 +5,15 @@ from distribution.basic_continous import BasicContinous
 from helpers.pytorch_utils import set_device, to_numpy
 
 class BetaContinous(BasicContinous):
+    def __init__(self, use_gpu):
+        self.use_gpu = use_gpu
+        
     def sample(self, datas):
         alpha, beta = datas
 
         distribution    = Beta(alpha, beta)
-        action          = distribution.sample().squeeze(0).float().to(set_device(self.use_gpu))
+        action          = distribution.sample().float().to(set_device(self.use_gpu))
+
         return action
         
     def entropy(self, datas):

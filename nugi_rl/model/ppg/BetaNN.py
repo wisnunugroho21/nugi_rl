@@ -9,34 +9,35 @@ class Policy_Model(nn.Module):
         self.nn_layer = nn.Sequential(
           nn.Linear(state_dim, 128),
           nn.ReLU(),
-          nn.Linear(128, 64),
+          nn.Linear(128, 96),
           nn.ReLU(),
         ).float().to(set_device(use_gpu))
 
         self.actor_alpha_layer = nn.Sequential(
-          nn.Linear(64, action_dim),
+          nn.Linear(32, action_dim),
           nn.Softplus()
         ).float().to(set_device(use_gpu))
 
         self.actor_beta_layer = nn.Sequential(
-          nn.Linear(64, action_dim),
+          nn.Linear(32, action_dim),
           nn.Softplus()
         ).float().to(set_device(use_gpu))
 
         self.critic_layer = nn.Sequential(
-          nn.Linear(64, 1)
+          nn.Linear(32, 1)
         ).float().to(set_device(use_gpu))
         
     def forward(self, states, detach = False):
-      x     = self.nn_layer(states)
+      x       = self.nn_layer(states)
       
-      alpha = self.actor_alpha_layer(x) + 1.0
-      beta  = self.actor_beta_layer(x) + 1.0
+      alpha   = self.actor_alpha_layer(x[:, :32])
+      beta    = self.actor_beta_layer(x[:, 32:64])
+      critic  = self.critic_layer(x[:, 64:96])
 
       if detach:
-        return (alpha.detach(), beta.detach()), self.critic_layer(x).detach()
+        return (alpha.detach(), beta.detach()), critic.detach()
       else:
-        return (alpha, beta), self.critic_layer(x)
+        return (alpha, beta), critic
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim, use_gpu = True):
@@ -45,9 +46,9 @@ class Value_Model(nn.Module):
         self.nn_layer = nn.Sequential(
           nn.Linear(state_dim, 128),
           nn.ReLU(),
-          nn.Linear(128, 64),
+          nn.Linear(128, 32),
           nn.ReLU(),
-          nn.Linear(64, 1)
+          nn.Linear(32, 1)
         ).float().to(set_device(use_gpu))
         
     def forward(self, states, detach = False):
