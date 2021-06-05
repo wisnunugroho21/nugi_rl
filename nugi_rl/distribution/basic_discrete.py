@@ -1,4 +1,4 @@
-from torch.distributions import Categorical, Normal
+from torch.distributions import Categorical
 from torch.distributions.kl import kl_divergence
 import torch
 
