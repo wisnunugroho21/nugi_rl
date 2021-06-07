@@ -3,21 +3,33 @@ import random
 import numpy as np
 import torch
 import os
+import redis
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.iteration.iter_runner import IterRunner
-from train_executor.executor import Executor
-from agent.standard.ppg import AgentPPG
 from distribution.clipped_continous import ClippedContinous
 from environment.wrapper.gym_wrapper import GymWrapper
+
+from memory.aux_ppg.standard import AuxPpgMemory
+from memory.policy.redis_list import PolicyRedisListMemory
+
+from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
-from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
+from loss.cql.cql import Cql
+from loss.cql.policy import OffPolicyLoss
+
 from model.ppg.TanhStdNN import Policy_Model, Value_Model
-from memory.policy.standard import PolicyMemory
-from memory.aux_ppg.standard import AuxPpgMemory
+from model.sac.TanhStdNN import Policy_Model as QPolicyModel, Q_Model
+
+from agent.standard.ppg import AgentPPG
+from agent.standard.cql import AgentCql
+
+from eps_runner.single_step.single_step_runner import SingleStepRunner
+from eps_runner.iteration.iter_runner import IterRunner
+from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
+from train_executor.multi_agent_central_learner.multi_process.child import ChildExecutor 
 
 from helpers.pytorch_utils import set_device
 
@@ -42,8 +54,8 @@ value_clip              = 10.0
 entropy_coef            = 0.2
 vf_loss_coef            = 1.0
 batch_size              = 32
-PPO_epochs              = 5
-Aux_epochs              = 5
+PPO_epochs              = 10
+Aux_epochs              = 10
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -55,18 +67,26 @@ state_dim           = None
 action_dim          = None
 max_action          = 1
 
+ChildRunner         = IterRunner
+ChildExecutor       = ChildExecutor
+CentralRunner       = SingleStepRunner
+CentralExecutor     = CentralLearnerExecutor
+
 Policy_Model        = Policy_Model
 Value_Model         = Value_Model
+Q_Model             = Q_Model
+QPolicyModel        = QPolicyModel
 Policy_Dist         = ClippedContinous
-Runner              = IterRunner
-Executor            = Executor
 Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
+Cql_loss            = Cql
+OffPolicy_loss      = OffPolicyLoss
 Wrapper             = GymWrapper
-Policy_Memory       = PolicyMemory
+Policy_Memory       = PolicyRedisListMemory
 Aux_Memory          = AuxPpgMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
-Agent               = AgentPPG
+AgentChild          = AgentPPG
+AgentCentral        = AgentCql
 
 #####################################################################################################################################################
 
@@ -90,25 +110,43 @@ if action_dim is None:
     action_dim = environment.get_action_dim()
 print('action_dim: ', action_dim)
 
+redis_obj           = redis.Redis()
 policy_dist         = Policy_Dist(use_gpu)
+
 advantage_function  = Advantage_Function(gamma)
-aux_ppg_memory      = Aux_Memory()
-ppo_memory          = Policy_Memory()
-runner_memory       = Policy_Memory()
 aux_ppg_loss        = Aux_loss(policy_dist)
+aux_ppg_memory      = Aux_Memory()
 ppo_loss            = Policy_loss(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
+ppo_memory          = Policy_Memory()
+child_runner_memory = Policy_Memory()
 
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
 value               = Value_Model(state_dim).float().to(set_device(use_gpu))
 ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)        
 aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
 
+child_agent         = AgentChild(policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
+                        ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
+                        policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
-agent = Agent( policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
-            ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
-            policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
+cql_memory          = Policy_Memory()
+cql_loss            = Cql_loss()
+offpolicy_loss      = OffPolicy_loss()
+central_runner_memory   = Policy_Memory()
 
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
+offpolicy           = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
+soft_q1             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+soft_q2             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+offpolicy_optimizer = Adam(list(offpolicy.parameters()), lr = learning_rate)        
+soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
+
+central_agent       = AgentCentral(soft_q1, soft_q2, offpolicy, state_dim, action_dim, policy_dist, cql_loss, offpolicy_loss, cql_memory, 
+                        soft_q_optimizer, offpolicy_optimizer, is_training_mode, batch_size, PPO_epochs, folder, use_gpu)
+
+child_runner    = ChildRunner(child_agent, environment, child_runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch)
+central_runner  = CentralRunner(central_agent, environment, central_runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch)
+
+child_executor  = ChildExecutor(child_agent, n_update, child_runner, redis_obj, save_weights, n_saved, load_weights, is_training_mode)
+central_executor = CentralExecutor(central_agent, n_update, redis_obj, )
 
 executor.execute()

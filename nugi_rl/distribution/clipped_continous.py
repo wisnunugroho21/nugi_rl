@@ -5,10 +5,8 @@ import torch
 from helpers.pytorch_utils import set_device, to_numpy
 
 class ClippedContinous():
-    def __init__(self, use_gpu, min = -1.0, max = 1.0):
+    def __init__(self, use_gpu):
         self.use_gpu    = use_gpu
-        self.min        = torch.FloatTensor([min]).to(set_device(self.use_gpu))
-        self.max        = torch.FloatTensor([max]).to(set_device(self.use_gpu))
 
     def sample(self, datas):
         mean, std = datas
@@ -29,7 +27,7 @@ class ClippedContinous():
         distribution = Normal(mean, std)
         old_logprob = distribution.log_prob(value_data).float().to(set_device(self.use_gpu))
 
-        return old_logprob - (1.0 - value_data.tanh().pow(2))
+        return old_logprob - (1.0 - value_data.tanh().pow(2)).log()
 
     def kldivergence(self, datas1, datas2):
         mean1, std1 = datas1

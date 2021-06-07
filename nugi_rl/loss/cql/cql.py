@@ -11,10 +11,10 @@ class Cql():
         next_value          = torch.min(target_next_q1, target_next_q2).detach()
         target_q_value      = (reward + (1 - done) * self.gamma * next_value).detach()
 
-        td_error1           = ((target_q_value - predicted_q_value1).pow(2) * 0.5).mean()
-        td_error2           = ((target_q_value - predicted_q_value2).pow(2) * 0.5).mean()
+        td_error1           = ((target_q_value - predicted_q_value1).pow(2) * 0.5)
+        td_error2           = ((target_q_value - predicted_q_value2).pow(2) * 0.5)
 
-        q_value_loss1       = td_error1 + cql_regularizer1
-        q_value_loss2       = td_error2 + cql_regularizer2
+        q_value_loss1       = (td_error1 + cql_regularizer1).mean()
+        q_value_loss2       = (td_error2 + cql_regularizer2).mean()
 
-        return q_value_loss1 + q_value_loss2
+        return (q_value_loss1 + q_value_loss2) / 2.0

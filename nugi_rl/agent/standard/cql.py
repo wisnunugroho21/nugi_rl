@@ -5,9 +5,8 @@ import copy
 from helpers.pytorch_utils import set_device, copy_parameters, to_numpy
 
 class AgentCql():
-    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, distribution, q_loss, policy_loss, memory, 
-        soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, soft_tau = 0.95, 
-        folder = 'model', use_gpu = True):
+    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, soft_q_optimizer, 
+        policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, folder = 'model', use_gpu = True):
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
@@ -16,19 +15,13 @@ class AgentCql():
         self.folder             = folder
         self.use_gpu            = use_gpu
         self.epochs             = epochs
-        self.soft_tau           = soft_tau
 
         self.policy             = policy
 
         self.soft_q1            = soft_q1
-        self.target_soft_q1     = copy.deepcopy(self.soft_q1)
-
         self.soft_q2            = soft_q2
-        self.target_soft_q2     = copy.deepcopy(self.soft_q2)       
 
-        self.distribution       = distribution
-        self.memory             = memory
-        
+        self.memory             = memory        
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
@@ -44,22 +37,19 @@ class AgentCql():
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            action_datas                = self.policy(states, True)
-            predicted_actions           = self.distribution.sample(action_datas).detach()
+            predicted_actions           = self.policy(states, True)
+            predicted_next_actions      = self.policy(next_states, True)
 
-            next_action_datas           = self.policy(next_states, True)
-            predicted_next_actions      = self.distribution.sample(next_action_datas).detach()
-
-            target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
-            target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
+            target_next_q1              = self.soft_q1(next_states, predicted_next_actions, True)
+            target_next_q2              = self.soft_q2(next_states, predicted_next_actions, True)
 
             naive_predicted_q_value1    = self.soft_q1(states, predicted_actions)
-            predicted_q_value1          = self.target_soft_q1(states, actions)
+            predicted_q_value1          = self.soft_q1(states, actions)
 
             naive_predicted_q_value2    = self.soft_q2(states, predicted_actions)
-            predicted_q_value2          = self.target_soft_q2(states, actions)
+            predicted_q_value2          = self.soft_q2(states, actions)
 
-            loss = self.qLoss.compute_loss(self, predicted_q_value1, naive_predicted_q_value1, predicted_q_value2, naive_predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
+            loss = self.qLoss.compute_loss(predicted_q_value1, naive_predicted_q_value1, predicted_q_value2, naive_predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
         
         self.soft_q_scaler.scale(loss).backward()
         self.soft_q_scaler.step(self.soft_q_optimizer)
@@ -68,8 +58,7 @@ class AgentCql():
     def _training_policy(self, states):
         self.policy_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            action_datas        = self.policy(states)
-            actions             = self.distribution.sample(action_datas)
+            actions             = self.policy(states)
 
             predicted_q_value1  = self.soft_q1(states, actions)
             predicted_q_value2  = self.soft_q2(states, actions)
@@ -81,7 +70,7 @@ class AgentCql():
         self.policy_scaler.update()
 
     def _update_offpolicy(self):
-        dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
+        dataloader  = DataLoader(self.memory, self.batch_size, shuffle = False, num_workers = 8)
 
         for _ in range(self.epochs):
             for states, actions, rewards, dones, next_states in dataloader:
@@ -90,10 +79,7 @@ class AgentCql():
 
                 self._training_policy(states.to(self.device))
 
-            self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-            self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
-
-        self.memory.clear_memory(delete_img = False)
+        self.memory.clear_memory()
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()

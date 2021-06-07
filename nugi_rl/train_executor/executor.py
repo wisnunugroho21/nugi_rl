@@ -22,10 +22,10 @@ class Executor():
 
         try:
             for i_iteration in range(1, self.n_iteration, 1):
-                memories  = self.runner.run()
-                self.agent.save_memory(memories)
+                memories  = self.runner.run()                
 
                 if self.is_training_mode:
+                    self.agent.save_memory(memories)
                     self.agent.update()
 
                     if self.save_weights:

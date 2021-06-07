@@ -1,4 +1,5 @@
 from memory.policy.standard import PolicyMemory
+import json
 
 class PolicyRedisListMemory(PolicyMemory):
     def __init__(self, redis, capacity = 100000, datas = None):
@@ -6,18 +7,19 @@ class PolicyRedisListMemory(PolicyMemory):
         self.redis = redis
 
     def save_redis(self):
-        self.redis.append('states', self.states)
-        self.redis.append('actions', self.actions)
-        self.redis.append('rewards', self.rewards)
-        self.redis.append('dones', self.dones)
-        self.redis.append('next_states', self.next_states)
+        for state, action, reward, done, next_state in zip(self.states, self.actions, self.rewards, self.dones, self.next_states):
+            self.redis.rpush('states', json.dumps(state))
+            self.redis.rpush('actions', json.dumps(action))
+            self.redis.rpush('rewards', json.dumps(reward))
+            self.redis.rpush('dones', json.dumps(done))
+            self.redis.rpush('next_states', json.dumps(next_state))
 
     def load_redis(self):
-        self.states         = self.redis.lrange('states', 0, -1)
-        self.actions        = self.redis.lrange('actions', 0, -1)
-        self.rewards        = self.redis.lrange('rewards', 0, -1)
-        self.dones          = self.redis.lrange('dones', 0, -1)
-        self.next_states    = self.redis.lrange('next_states', 0, -1)
+        self.states         = list(map(lambda e: json.loads(e), self.redis.lrange('states', 0, -1)))
+        self.actions        = list(map(lambda e: json.loads(e), self.redis.lrange('actions', 0, -1)))
+        self.rewards        = list(map(lambda e: json.loads(e), self.redis.lrange('rewards', 0, -1)))
+        self.dones          = list(map(lambda e: json.loads(e), self.redis.lrange('dones', 0, -1)))
+        self.next_states    = list(map(lambda e: json.loads(e), self.redis.lrange('next_states', 0, -1)))
 
     def delete_redis(self):
         self.redis.delete('states')
@@ -27,5 +29,9 @@ class PolicyRedisListMemory(PolicyMemory):
         self.redis.delete('next_states')
 
     def check_if_exists_redis(self):
-        return bool(self.redis.exists('states')) and bool(self.redis.delete('actions')) and bool(self.redis.delete('rewards')) and bool(self.redis.delete('dones')) and bool(self.redis.delete('next_states'))
+        if bool(self.redis.exists('dones')):
+            if self.redis.llen('dones') > 1024:
+                return True
+
+        return False
         
