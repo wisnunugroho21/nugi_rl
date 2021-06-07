@@ -7,13 +7,13 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 128),
+          nn.Linear(state_dim, 256),
           nn.ReLU(),
-          nn.Linear(128, 128),
+          nn.Linear(256, 192),
           nn.ReLU(),
         ).float().to(set_device(use_gpu))
 
-        self.actor_layer = nn.Sequential(
+        self.actor_mean_layer = nn.Sequential(
           nn.Linear(64, action_dim),
           nn.Tanh()
         ).float().to(set_device(use_gpu))
@@ -30,19 +30,23 @@ class Policy_Model(nn.Module):
     def forward(self, states, detach = False):
       x = self.nn_layer(states)
 
+      mean    = self.actor_mean_layer(x[:, :64])
+      std     = self.actor_std_layer(x[:, 64:128])
+      critic  = self.critic_layer(x[:, 128:192])
+
       if detach:
-        return (self.actor_layer(x[:, :64]).detach(), self.actor_std_layer(x[:, :64]).detach()), self.critic_layer(x[:, 64:128]).detach()
+        return (mean.detach(), std.detach()), critic.detach()
       else:
-        return (self.actor_layer(x[:, :64]), self.actor_std_layer(x[:, :64])), self.critic_layer(x[:, 64:128])
+        return (mean, std), critic
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim, use_gpu = True):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 128),
+          nn.Linear(state_dim, 256),
           nn.ReLU(),
-          nn.Linear(128, 64),
+          nn.Linear(256, 64),
           nn.ReLU(),
           nn.Linear(64, 1)
         ).float().to(set_device(use_gpu))

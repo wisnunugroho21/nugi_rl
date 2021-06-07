@@ -13,11 +13,11 @@ def set_device(use_gpu = True):
 def to_numpy(datas, use_gpu = True):
     if use_gpu:
         if torch.cuda.is_available():
-            return datas.detach().cpu().numpy()
+            return datas.detach().cpu().tolist()
         else:
-            return datas.detach().numpy()
+            return datas.detach().tolist()
     else:
-        return datas.detach().numpy()
+        return datas.detach().tolist()
 
 def to_tensor(datas, use_gpu = True, first_unsqueeze = False, last_unsqueeze = False, detach = False):
     if isinstance(datas, tuple):
