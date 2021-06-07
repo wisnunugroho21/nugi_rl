@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 import copy
 
-from helpers.pytorch_utils import set_device, copy_parameters, to_numpy
+from helpers.pytorch_utils import set_device, copy_parameters, to_list
 
 class AgentCql():
     def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, soft_q_optimizer, 
@@ -89,7 +89,7 @@ class AgentCql():
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action  = self.policy(state)
                       
-        return to_numpy(action.squeeze(), self.use_gpu)
+        return to_list(action.squeeze(), self.use_gpu)
 
     def update(self):
         self._update_offpolicy()

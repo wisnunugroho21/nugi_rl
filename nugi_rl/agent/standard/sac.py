@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 import copy
 
-from helpers.pytorch_utils import set_device, to_numpy, copy_parameters
+from helpers.pytorch_utils import set_device, to_list, copy_parameters
 
 class AgentSAC():
     def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, distribution, q_loss, policy_loss, memory, 
@@ -103,7 +103,7 @@ class AgentSAC():
         else:
             action = self.distribution.act_deterministic(action_datas)
               
-        return to_numpy(action.squeeze(), self.use_gpu)
+        return to_list(action.squeeze(), self.use_gpu)
 
     def save_weights(self):
         torch.save({

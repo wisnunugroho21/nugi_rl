@@ -2,7 +2,7 @@ from torch.distributions import Normal
 from torch.distributions.kl import kl_divergence
 import torch
 
-from helpers.pytorch_utils import set_device, to_numpy
+from helpers.pytorch_utils import set_device, to_list
 
 class BasicContinous():
     def __init__(self, use_gpu):

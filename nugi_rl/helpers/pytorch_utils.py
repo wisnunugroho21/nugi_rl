@@ -10,7 +10,7 @@ def set_device(use_gpu = True):
     else:
         return torch.device('cpu')
 
-def to_numpy(datas, use_gpu = True):
+def to_list(datas, use_gpu = True):
     if use_gpu:
         if torch.cuda.is_available():
             return datas.detach().cpu().tolist()

@@ -4,7 +4,7 @@ import torch
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-from helpers.pytorch_utils import copy_parameters, to_numpy
+from helpers.pytorch_utils import copy_parameters, to_list
 from agent.standard.ppg import AgentPPG
 
 class AgentImageStatePPGClr(AgentPPG):
@@ -189,7 +189,7 @@ class AgentImageStatePPGClr(AgentPPG):
         else:
             action = self.distribution.deterministic(action_datas)
               
-        return to_numpy(action, self.use_gpu)
+        return to_list(action, self.use_gpu)
 
     def save_weights(self):
         torch.save({

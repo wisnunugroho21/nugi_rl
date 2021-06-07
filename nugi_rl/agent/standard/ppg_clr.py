@@ -3,7 +3,7 @@ import copy
 import torch
 from torch.utils.data import DataLoader
 
-from helpers.pytorch_utils import set_device, to_numpy, to_tensor
+from helpers.pytorch_utils import set_device, to_list, to_tensor
 
 class AgentPPGClr():  
     def __init__(self, projector, cnn, policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, aux_clr_loss, ppo_memory, aux_ppg_memory, aux_clr_memory,
@@ -183,7 +183,7 @@ class AgentPPGClr():
         else:
             action = self.distribution.deterministic(action_datas)
               
-        return to_numpy(action, self.use_gpu)
+        return to_list(action, self.use_gpu)
 
     def save_weights(self, folder = None):
         if folder == None:

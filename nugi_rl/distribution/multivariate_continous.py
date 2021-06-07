@@ -2,7 +2,7 @@ from torch.distributions import MultivariateNormal
 from torch.distributions.kl import kl_divergence
 
 from distribution.basic_continous import BasicContinous
-from helpers.pytorch_utils import set_device, to_numpy
+from helpers.pytorch_utils import set_device, to_list
 
 class MultivariateContinous(BasicContinous):
     def sample(self, datas):
