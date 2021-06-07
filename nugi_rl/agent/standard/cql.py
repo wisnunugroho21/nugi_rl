@@ -19,7 +19,10 @@ class AgentCql():
         self.policy             = policy
 
         self.soft_q1            = soft_q1
+        self.target_soft_q1     = copy.deepcopy(self.soft_q1)
+
         self.soft_q2            = soft_q2
+        self.target_soft_q2     = copy.deepcopy(self.soft_q2)
 
         self.memory             = memory        
         self.qLoss              = q_loss
@@ -40,8 +43,8 @@ class AgentCql():
             predicted_actions           = self.policy(states, True)
             predicted_next_actions      = self.policy(next_states, True)
 
-            target_next_q1              = self.soft_q1(next_states, predicted_next_actions, True)
-            target_next_q2              = self.soft_q2(next_states, predicted_next_actions, True)
+            target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
+            target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
 
             naive_predicted_q_value1    = self.soft_q1(states, predicted_actions)
             predicted_q_value1          = self.soft_q1(states, actions)
@@ -70,16 +73,17 @@ class AgentCql():
         self.policy_scaler.update()
 
     def _update_offpolicy(self):
-        dataloader  = DataLoader(self.memory, self.batch_size, shuffle = False, num_workers = 8)
+        if len(self.memory) > self.batch_size:
+            for _ in range(self.epochs):
+                dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
+                states, actions, rewards, dones, next_states = next(iter(dataloader))
 
-        for _ in range(self.epochs):
-            for states, actions, rewards, dones, next_states in dataloader:
                 self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
                     dones.to(self.device), next_states.to(self.device))
-
                 self._training_policy(states.to(self.device))
 
-        self.memory.clear_memory()
+            self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1)
+            self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2)
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()

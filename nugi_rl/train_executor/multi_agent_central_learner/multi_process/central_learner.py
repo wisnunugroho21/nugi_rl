@@ -2,7 +2,7 @@ import datetime
 import time
 
 class CentralLearnerExecutor():
-    def __init__(self, agent, n_iteration, memory, runner = None, save_weights = False, n_saved = 10):
+    def __init__(self, agent, n_iteration, memory, runner, save_weights = False, n_saved = 10):
         self.agent  = agent
         self.memory = memory
         self.runner = runner
@@ -17,17 +17,12 @@ class CentralLearnerExecutor():
 
         try:
             for i_iteration in range(1, self.n_iteration, 1):
-                if self.runner is not None:
-                    self.runner.run()
-
                 if self.memory.check_if_exists_redis():
                     self.memory.load_redis()
-                    self.memory.delete_redis()
-
-                    print('update: ', len(self.memory))
-
                     self.agent.save_memory(self.memory)
-                    self.agent.update()
+
+                self.runner.run()
+                self.agent.update()
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
