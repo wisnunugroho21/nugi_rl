@@ -29,6 +29,7 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
+n_update                = 1024
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.99
@@ -81,9 +82,9 @@ print('action_dim: ', action_dim)
 redis_obj           = redis.Redis()
 
 policy_dist         = Policy_Dist(use_gpu)
-agent_memory        = Policy_Memory(redis_obj)
-runner_memory       = Policy_Memory(redis_obj)
-executor_memory     = Policy_Memory(redis_obj)
+agent_memory        = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
+runner_memory       = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
+executor_memory     = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
 q_loss              = Q_loss()
 policy_loss         = Policy_loss()
 
