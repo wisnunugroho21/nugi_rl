@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 import copy
 
 from helpers.pytorch_utils import set_device, copy_parameters, to_list
@@ -76,10 +76,11 @@ class AgentCql():
         if len(self.memory) > self.batch_size:
             first_probs = torch.ones(len(self.memory) - 1024)
             last_probs  = torch.ones(1024) * 1.5
-            probs = torch.cat([first_probs, last_probs], dim = 0)
+            probs       = torch.cat([first_probs, last_probs], dim = 0)
+            samplerr = WeightedRandomSampler(probs, len(self.memory))
 
             for _ in range(self.epochs):
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = probs, num_workers = 8)
+                dataloader  = DataLoader(self.memory, self.batch_size, sampler = samplerr, num_workers = 8)
                 states, actions, rewards, dones, next_states = next(iter(dataloader))
 
                 self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
