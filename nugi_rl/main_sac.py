@@ -30,7 +30,7 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 
 n_iteration             = 1000000
 n_plot_batch            = 1
-soft_tau                = 0.99
+soft_tau                = 0.95
 n_saved                 = 1
 epochs                  = 1
 batch_size              = 32
@@ -46,7 +46,7 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
-Policy_Dist         = BasicContinous
+Policy_Dist         = ClippedContinous
 Runner              = SingleStepRunner
 Executor            = Executor
 Policy_loss         = PolicyLoss

@@ -31,9 +31,7 @@ class AgentSAC():
         
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
-
         self.device             = set_device(self.use_gpu)
-        self.i_update           = 0
         
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
@@ -84,8 +82,8 @@ class AgentSAC():
                     dones.to(self.device), next_states.to(self.device))
                 self._training_policy(states.to(self.device))
 
-            self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-            self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
+            self.target_soft_q1 = copy_parameters(self.target_soft_q1, self.soft_q1, self.soft_tau)
+            self.target_soft_q2 = copy_parameters(self.target_soft_q2, self.soft_q2, self.soft_tau)
 
     def update(self):
         self._update_sac()
