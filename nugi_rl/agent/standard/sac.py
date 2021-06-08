@@ -47,11 +47,11 @@ class AgentSAC():
             next_action_datas   = self.policy(next_states, True)
             next_actions        = self.distribution.sample(next_action_datas).detach()
 
-            target_q_value1     = self.target_soft_q1(next_states, next_actions, True)
-            target_q_value2     = self.target_soft_q2(next_states, next_actions, True)
+            target_q_value1     = self.target_soft_q1(next_states, torch.tanh(next_actions), True)
+            target_q_value2     = self.target_soft_q2(next_states, torch.tanh(next_actions), True)
 
-            predicted_q_value1  = self.soft_q1(states, actions)
-            predicted_q_value2  = self.soft_q2(states, actions)
+            predicted_q_value1  = self.soft_q1(states, torch.tanh(actions))
+            predicted_q_value2  = self.soft_q2(states, torch.tanh(actions))
 
             loss  = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_q_value1, target_q_value2, next_action_datas, next_actions, rewards, dones)
 
@@ -65,8 +65,8 @@ class AgentSAC():
             action_datas        = self.policy(states)
             actions             = self.distribution.sample(action_datas)
 
-            predicted_q_value1  = self.soft_q1(states, actions)
-            predicted_q_value2  = self.soft_q2(states, actions)
+            predicted_q_value1  = self.soft_q1(states, torch.tanh(actions))
+            predicted_q_value2  = self.soft_q2(states, torch.tanh(actions))
 
             loss = self.policyLoss.compute_loss(action_datas, actions, predicted_q_value1, predicted_q_value2)
 

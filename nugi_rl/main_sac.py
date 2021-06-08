@@ -10,7 +10,7 @@ from torch.optim.adam import Adam
 from eps_runner.single_step.single_step_runner import SingleStepRunner
 from train_executor.executor import Executor
 from agent.standard.sac import AgentSAC
-from distribution.basic_continous import BasicContinous
+from distribution.clipped_continous import ClippedContinous
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.sac.q_loss import QLoss
 from loss.sac.policy_loss import PolicyLoss
