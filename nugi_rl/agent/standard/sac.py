@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, SubsetRandomSampler
 import copy
 
 from helpers.pytorch_utils import set_device, to_list, copy_parameters
@@ -74,13 +74,14 @@ class AgentSAC():
 
     def _update_sac(self):
         if len(self.memory) > self.batch_size:
-            for _ in range(self.epochs):
-                dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
-                states, actions, rewards, dones, next_states = next(iter(dataloader))
+            indices     = torch.randperm(len(self.memory))[:32]
+            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
 
-                self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
-                    dones.to(self.device), next_states.to(self.device))
-                self._training_policy(states.to(self.device))
+            for _ in range(self.epochs):
+                for states, actions, rewards, dones, next_states in dataloader:
+                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
+                        dones.to(self.device), next_states.to(self.device))
+                    self._training_policy(states.to(self.device))
 
             self.target_soft_q1 = copy_parameters(self.target_soft_q1, self.soft_q1, self.soft_tau)
             self.target_soft_q2 = copy_parameters(self.target_soft_q2, self.soft_q2, self.soft_tau)

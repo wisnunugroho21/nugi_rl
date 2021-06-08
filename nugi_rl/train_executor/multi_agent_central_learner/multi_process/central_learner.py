@@ -20,6 +20,7 @@ class CentralLearnerExecutor():
                 if self.memory.check_if_exists_redis():
                     self.memory.load_redis()
                     self.agent.save_memory(self.memory)
+                    self.memory.delete_redis()
 
                 self.runner.run()
                 self.agent.update()
