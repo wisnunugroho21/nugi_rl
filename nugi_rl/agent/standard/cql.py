@@ -74,8 +74,12 @@ class AgentCql():
 
     def _update_offpolicy(self):
         if len(self.memory) > self.batch_size:
+            first_probs = torch.ones(len(self.memory) - 1024)
+            last_probs  = torch.ones(1024) * 1.5
+            probs = torch.cat([first_probs, last_probs], dim = 0)
+
             for _ in range(self.epochs):
-                dataloader  = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
+                dataloader  = DataLoader(self.memory, self.batch_size, sampler = probs, num_workers = 8)
                 states, actions, rewards, dones, next_states = next(iter(dataloader))
 
                 self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
