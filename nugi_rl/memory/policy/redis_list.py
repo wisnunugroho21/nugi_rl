@@ -22,7 +22,7 @@ class PolicyRedisListMemory(PolicyMemory):
         dones          = list(map(lambda e: json.loads(e), self.redis.lrange('dones', 0, -1)))
         next_states    = list(map(lambda e: json.loads(e), self.redis.lrange('next_states', 0, -1)))
 
-        self.save_all(self, states, actions, rewards, dones, next_states)
+        self.save_all(states, actions, rewards, dones, next_states)
 
     def delete_redis(self):
         self.redis.delete('states')

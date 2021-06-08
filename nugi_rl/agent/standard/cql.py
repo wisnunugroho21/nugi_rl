@@ -56,15 +56,15 @@ class AgentCql():
         
         self.soft_q_scaler.scale(loss).backward()
         self.soft_q_scaler.step(self.soft_q_optimizer)
-        self.soft_q_scaler.update()       
+        self.soft_q_scaler.update()
 
     def _training_policy(self, states):
         self.policy_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            actions             = self.policy(states)
+            predicted_actions   = self.policy(states)
 
-            predicted_q_value1  = self.soft_q1(states, actions)
-            predicted_q_value2  = self.soft_q2(states, actions)
+            predicted_q_value1  = self.soft_q1(states, predicted_actions)
+            predicted_q_value2  = self.soft_q2(states, predicted_actions)
 
             loss = self.policyLoss.compute_loss(predicted_q_value1, predicted_q_value2)
 

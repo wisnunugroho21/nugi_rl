@@ -17,4 +17,4 @@ class Cql():
         q_value_loss1       = (td_error1 + cql_regularizer1).mean()
         q_value_loss2       = (td_error2 + cql_regularizer2).mean()
 
-        return (q_value_loss1 + q_value_loss2) / 2.0
+        return q_value_loss1 + q_value_loss2
