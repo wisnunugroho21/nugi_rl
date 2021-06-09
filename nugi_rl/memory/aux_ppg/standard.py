@@ -1,3 +1,4 @@
+from copy import deepcopy
 import torch
 from torch.utils.data import Dataset
 
@@ -22,7 +23,7 @@ class AuxPpgMemory(Dataset):
         if len(self) >= self.capacity:
             del self.states[0]
 
-        self.states.append(state)
+        self.states.append(deepcopy(state))
 
     def save_replace_all(self, states):
         self.clear_memory()
@@ -37,3 +38,6 @@ class AuxPpgMemory(Dataset):
 
     def clear_memory(self):
         del self.states[:]
+
+    def clear_idx(self, idx):
+        del self.states[idx]

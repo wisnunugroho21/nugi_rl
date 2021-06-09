@@ -1,4 +1,4 @@
-import numpy as np
+from copy import deepcopy
 import torch
 from torch.utils.data import Dataset
 
@@ -33,11 +33,11 @@ class PolicyMemory(Dataset):
             del self.dones[0]
             del self.next_states[0]
 
-        self.states.append(state)
-        self.actions.append(action)
+        self.states.append(deepcopy(state))
+        self.actions.append(deepcopy(action))
         self.rewards.append(reward)
         self.dones.append(done)
-        self.next_states.append(next_state)
+        self.next_states.append(deepcopy(next_state))
 
     def save_replace_all(self, states, actions, rewards, dones, next_states):
         self.clear_memory()
@@ -56,3 +56,10 @@ class PolicyMemory(Dataset):
         del self.rewards[:]
         del self.dones[:]
         del self.next_states[:]
+
+    def clear_idx(self, idx):
+        del self.states[idx]
+        del self.actions[idx]
+        del self.rewards[idx]
+        del self.dones[idx]
+        del self.next_states[idx]

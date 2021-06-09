@@ -1,5 +1,5 @@
-import copy
 
+from copy import deepcopy
 import torch
 from torch.utils.data import DataLoader
 
@@ -26,10 +26,10 @@ class AgentPPG():
         self.n_aux_update       = n_aux_update
 
         self.policy             = policy
-        self.policy_old         = copy.deepcopy(self.policy)
+        self.policy_old         = deepcopy(self.policy)
 
         self.value              = value
-        self.value_old          = copy.deepcopy(self.value)
+        self.value_old          = deepcopy(self.value)
 
         self.distribution       = distribution
         self.ppo_memory         = ppo_memory

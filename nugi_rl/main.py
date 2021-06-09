@@ -93,7 +93,7 @@ print('action_dim: ', action_dim)
 policy_dist         = Policy_Dist(use_gpu)
 advantage_function  = Advantage_Function(gamma)
 aux_ppg_memory      = Aux_Memory()
-ppo_memory          = Policy_Memory()
+agent_memory        = Policy_Memory()
 runner_memory       = Policy_Memory()
 aux_ppg_loss        = Aux_loss(policy_dist)
 ppo_loss            = Policy_loss(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
@@ -103,8 +103,7 @@ value               = Value_Model(state_dim).float().to(set_device(use_gpu))
 ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)        
 aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
 
-
-agent = Agent( policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
+agent = Agent( policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, agent_memory, aux_ppg_memory, 
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
