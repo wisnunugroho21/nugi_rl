@@ -5,8 +5,9 @@ import copy
 from helpers.pytorch_utils import set_device, copy_parameters, to_list
 
 class AgentCql():
-    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, soft_q_optimizer, 
-        policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, folder = 'model', use_gpu = True):
+    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
+        soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
+        soft_tau = 0.95, folder = 'model', use_gpu = True):
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
@@ -15,6 +16,7 @@ class AgentCql():
         self.folder             = folder
         self.use_gpu            = use_gpu
         self.epochs             = epochs
+        self.soft_tau           = soft_tau
 
         self.policy             = policy
 
@@ -83,8 +85,8 @@ class AgentCql():
                         dones.to(self.device), next_states.to(self.device))
                     self._training_policy(states.to(self.device))
 
-            self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1)
-            self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2)
+                self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
+                self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()

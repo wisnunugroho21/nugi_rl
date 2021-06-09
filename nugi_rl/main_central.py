@@ -8,7 +8,7 @@ import redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.single_step.single_step_runner import SingleStepRunner
+from eps_runner.episodic.episodic_runner import EpisodicRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
 from agent.standard.cql import AgentCql
 from distribution.basic_continous import BasicContinous
@@ -29,10 +29,10 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-n_update                = 1024
+n_update                = 5
 n_iteration             = 1000000
 n_plot_batch            = 1
-soft_tau                = 0.99
+soft_tau                = 0.95
 n_saved                 = 1
 epochs                  = 1
 batch_size              = 32
@@ -49,7 +49,7 @@ max_action          = 1
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
 Policy_Dist         = BasicContinous
-Runner              = SingleStepRunner
+Runner              = EpisodicRunner
 Executor            = CentralLearnerExecutor
 Policy_loss         = OffPolicyLoss
 Q_loss              = Cql
@@ -84,7 +84,6 @@ redis_obj           = redis.Redis()
 policy_dist         = Policy_Dist(use_gpu)
 agent_memory        = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
 runner_memory       = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
-executor_memory     = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
 q_loss              = Q_loss()
 policy_loss         = Policy_loss()
 
@@ -95,9 +94,9 @@ policy_optimizer    = Adam(list(policy.parameters()), lr = learning_rate)
 soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
 
 agent = Agent(soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, agent_memory, soft_q_optimizer, 
-        policy_optimizer, is_training_mode, batch_size, epochs, folder, use_gpu)
+        policy_optimizer, is_training_mode, batch_size, epochs, soft_tau, folder, use_gpu)
                     
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-executor    = Executor(agent, n_iteration, executor_memory, runner, save_weights, n_saved) 
+runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+executor    = Executor(agent, n_iteration, runner, save_weights, n_saved) 
 
 executor.execute()

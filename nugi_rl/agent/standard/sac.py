@@ -83,8 +83,8 @@ class AgentSAC():
                         dones.to(self.device), next_states.to(self.device))
                     self._training_policy(states.to(self.device))
 
-            self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-            self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2,  self.soft_tau)
+                self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
+                self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)            
 
     def update(self):
         self._update_sac()
