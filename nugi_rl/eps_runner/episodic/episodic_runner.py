@@ -18,39 +18,40 @@ class EpisodicRunner():
 
     def run(self):
         self.memories.clear_memory()
-        state = self.env.reset() 
 
-        done            = False
-        total_reward    = 0
-        eps_time        = 0
-        ############################################ 
-        while not done:
-            action = self.agent.act(state) 
+        for _ in range(self.n_update):            
+            state           = self.env.reset()
+            done            = False
+            total_reward    = 0
+            eps_time        = 0
 
-            if self.is_discrete:
-                action = int(action)
+            while not done:
+                action = self.agent.act(state) 
 
-            if self.max_action is not None and not self.is_discrete:
-                action_gym  =  np.tanh(action) * self.max_action
-                next_state, reward, done, _ = self.env.step(action_gym)
-            else:
-                next_state, reward, done, _ = self.env.step(action)
-            
-            if self.training_mode:
-                self.memories.save_eps(state.tolist(), action, reward, float(done), next_state.tolist())
+                if self.is_discrete:
+                    action = int(action)
+
+                if self.max_action is not None and not self.is_discrete:
+                    action_gym  =  np.tanh(action) * self.max_action
+                    next_state, reward, done, _ = self.env.step(action_gym)
+                else:
+                    next_state, reward, done, _ = self.env.step(action)
                 
-            state = next_state
-            eps_time       += 1 
-            total_reward   += reward
+                if self.training_mode:
+                    self.memories.save_eps(state.tolist(), action, reward, float(done), next_state.tolist())
                     
-            if self.render:
-                self.env.render()
-                    
-        self.i_episode  += 1
-        print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, total_reward, eps_time))
+                state           = next_state
+                eps_time        += 1 
+                total_reward    += reward
+                        
+                if self.render:
+                    self.env.render()
+                        
+            self.i_episode  += 1
+            print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, total_reward, eps_time))
 
-        if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
-            self.writer.add_scalar('Rewards', total_reward, self.i_episode)
-            self.writer.add_scalar('Times', eps_time, self.i_episode)
+            if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
+                self.writer.add_scalar('Rewards', total_reward, self.i_episode)
+                self.writer.add_scalar('Times', eps_time, self.i_episode)
         
         return self.memories
