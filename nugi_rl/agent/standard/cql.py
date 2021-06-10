@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader, SubsetRandomSampler
-import copy
+from copy import deepcopy
 
 from helpers.pytorch_utils import set_device, copy_parameters, to_list
 
@@ -19,12 +19,12 @@ class AgentCql():
         self.soft_tau           = soft_tau
 
         self.policy             = policy
-
         self.soft_q1            = soft_q1
-        self.target_soft_q1     = copy.deepcopy(self.soft_q1)
-
         self.soft_q2            = soft_q2
-        self.target_soft_q2     = copy.deepcopy(self.soft_q2)
+
+        self.target_policy      = deepcopy(self.policy)
+        self.target_soft_q2     = deepcopy(self.soft_q2)
+        self.target_soft_q1     = deepcopy(self.soft_q1)
 
         self.memory             = memory        
         self.qLoss              = q_loss
@@ -41,17 +41,16 @@ class AgentCql():
 
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            predicted_actions           = self.policy(states, True)
-            predicted_next_actions      = self.policy(next_states, True)
-
+        with torch.cuda.amp.autocast():            
+            predicted_next_actions      = self.target_policy(next_states, True)
             target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
             target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
 
+            predicted_actions           = self.policy(states, True)
             naive_predicted_q_value1    = self.soft_q1(states, predicted_actions)
-            predicted_q_value1          = self.soft_q1(states, actions)
-
             naive_predicted_q_value2    = self.soft_q2(states, predicted_actions)
+
+            predicted_q_value1          = self.soft_q1(states, actions)
             predicted_q_value2          = self.soft_q2(states, actions)
 
             loss = self.qLoss.compute_loss(predicted_q_value1, naive_predicted_q_value1, predicted_q_value2, naive_predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
@@ -87,6 +86,7 @@ class AgentCql():
 
                 self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
                 self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
+                self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()

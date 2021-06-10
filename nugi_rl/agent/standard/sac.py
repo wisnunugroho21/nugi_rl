@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader, SubsetRandomSampler
-import copy
+from copy import deepcopy
 
 from helpers.pytorch_utils import set_device, to_list, copy_parameters
 
@@ -19,12 +19,12 @@ class AgentSAC():
         self.soft_tau           = soft_tau
 
         self.policy             = policy
-
         self.soft_q1            = soft_q1
-        self.target_soft_q1     = copy.deepcopy(self.soft_q1)
-
         self.soft_q2            = soft_q2
-        self.target_soft_q2     = copy.deepcopy(self.soft_q2)             
+
+        self.target_policy      = deepcopy(self.policy)
+        self.target_soft_q2     = deepcopy(self.soft_q2)
+        self.target_soft_q1     = deepcopy(self.soft_q1)             
 
         self.distribution       = distribution
         self.memory             = memory
@@ -42,7 +42,7 @@ class AgentSAC():
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            next_action_datas   = self.policy(next_states, True)
+            next_action_datas   = self.target_policy(next_states, True)
             next_actions        = self.distribution.sample(next_action_datas).detach()
 
             target_q_value1     = self.target_soft_q1(next_states, torch.tanh(next_actions), True)
@@ -84,7 +84,8 @@ class AgentSAC():
                     self._training_policy(states.to(self.device))
 
                 self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)            
+                self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
+                self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)         
 
     def update(self):
         self._update_sac()
