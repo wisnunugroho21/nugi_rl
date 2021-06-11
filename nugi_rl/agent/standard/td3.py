@@ -2,10 +2,10 @@ import torch
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from copy import deepcopy
 
-from helpers.pytorch_utils import set_device, to_list, copy_parameters
+from helpers.pytorch_utils import set_device, copy_parameters, to_list
 
-class AgentSAC():
-    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, distribution, q_loss, policy_loss, memory, 
+class AgentTD3():
+    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
         soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
 
@@ -24,11 +24,9 @@ class AgentSAC():
 
         self.target_policy      = deepcopy(self.policy)
         self.target_soft_q2     = deepcopy(self.soft_q2)
-        self.target_soft_q1     = deepcopy(self.soft_q1)             
+        self.target_soft_q1     = deepcopy(self.soft_q1)
 
-        self.distribution       = distribution
-        self.memory             = memory
-        
+        self.memory             = memory        
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
@@ -43,18 +41,16 @@ class AgentSAC():
 
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            next_action_datas   = self.target_policy(next_states, True)
-            next_actions        = self.distribution.sample(next_action_datas).detach()
+        with torch.cuda.amp.autocast():            
+            predicted_next_actions      = self.target_policy(next_states, True)
+            target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
+            target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
 
-            target_q_value1     = self.target_soft_q1(next_states, torch.tanh(next_actions), True)
-            target_q_value2     = self.target_soft_q2(next_states, torch.tanh(next_actions), True)
+            predicted_q_value1          = self.soft_q1(states, actions)
+            predicted_q_value2          = self.soft_q2(states, actions)
 
-            predicted_q_value1  = self.soft_q1(states, torch.tanh(actions))
-            predicted_q_value2  = self.soft_q2(states, torch.tanh(actions))
-
-            loss  = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_q_value1, target_q_value2, next_action_datas, next_actions, rewards, dones)
-
+            loss = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
+        
         self.soft_q_scaler.scale(loss).backward()
         self.soft_q_scaler.step(self.soft_q_optimizer)
         self.soft_q_scaler.update()
@@ -62,19 +58,18 @@ class AgentSAC():
     def _training_policy(self, states):
         self.policy_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            action_datas        = self.policy(states)
-            actions             = self.distribution.sample(action_datas)
+            predicted_actions   = self.policy(states)
 
-            predicted_q_value1  = self.soft_q1(states, torch.tanh(actions))
-            predicted_q_value2  = self.soft_q2(states, torch.tanh(actions))
+            predicted_q_value1  = self.soft_q1(states, predicted_actions)
+            predicted_q_value2  = self.soft_q2(states, predicted_actions)
 
-            loss = self.policyLoss.compute_loss(action_datas, actions, predicted_q_value1, predicted_q_value2)
+            loss = self.policyLoss.compute_loss(predicted_q_value1, predicted_q_value2)
 
         self.policy_scaler.scale(loss).backward()
         self.policy_scaler.step(self.policy_optimizer)
         self.policy_scaler.update()
 
-    def _update_sac(self):
+    def _update_offpolicy(self):
         if len(self.memory) > self.batch_size:
             indices     = torch.randperm(len(self.memory))[:self.batch_size]
             dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
@@ -95,34 +90,31 @@ class AgentSAC():
                     else:
                         self.q_update += 1
 
-    def update(self):
-        self._update_sac()
-
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
         self.memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
-        state               = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        action_datas        = self.policy(state)
-        
-        if self.is_training_mode:
-            action = self.distribution.sample(action_datas)
-        else:
-            action = self.distribution.act_deterministic(action_datas)
-              
+        state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        action  = self.policy(state)
+                      
         return to_list(action.squeeze(), self.use_gpu)
 
+    def update(self):
+        self._update_offpolicy()
+        
     def save_weights(self):
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
-            'soft_q1_state_dict': self.soft_q1.state_dict(),
-            'soft_q2_state_dict': self.soft_q2.state_dict(),
+            'value_state_dict': self.value.state_dict(),
+            'soft_q_state_dict': self.soft_q.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
+            'value_optimizer_state_dict': self.value_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
             'policy_scaler_state_dict': self.policy_scaler.state_dict(),
+            'value_scaler_state_dict': self.value_scaler.state_dict(),
             'soft_q_scaler_state_dict': self.soft_q_scaler.state_dict(),
-        }, self.folder + '/sac.tar')
+        }, self.folder + '/cql.tar')
         
     def load_weights(self, device = None):
         if device == None:
@@ -130,10 +122,22 @@ class AgentSAC():
 
         model_checkpoint = torch.load(self.folder + '/cql.tar', map_location = device)
         
-        self.policy.load_state_dict(model_checkpoint['policy_state_dict'])
-        self.soft_q1.load_state_dict(model_checkpoint['soft_q1_state_dict'])
-        self.soft_q2.load_state_dict(model_checkpoint['soft_q2_state_dict'])
+        self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
+        self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        self.soft_q.load_state_dict(model_checkpoint['soft_q_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
+        self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])
+        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])        
+        self.value_scaler.load_state_dict(model_checkpoint['value_scaler_state_dict'])
         self.soft_q_scaler.load_state_dict(model_checkpoint['soft_q_scaler_state_dict'])
+
+        if self.is_training_mode:
+            self.policy.train()
+            self.value.train()
+            print('Model is training...')
+
+        else:
+            self.policy.eval()
+            self.value.eval()
+            print('Model is evaluating...')

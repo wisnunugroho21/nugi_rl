@@ -1,6 +1,6 @@
 import torch
 
-class Cql():
+class QLoss():
     def __init__(self, gamma = 0.99):
         self.gamma = gamma
 
