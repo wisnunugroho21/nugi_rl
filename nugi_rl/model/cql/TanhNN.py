@@ -7,11 +7,11 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 128),
+          nn.Linear(state_dim, 256),
           nn.ReLU(),
-          nn.Linear(128, 32),
+          nn.Linear(256, 64),
           nn.ReLU(),
-          nn.Linear(32, action_dim),
+          nn.Linear(64, action_dim),
           nn.Tanh()
         ).float().to(set_device(use_gpu))
         
@@ -28,11 +28,11 @@ class Q_Model(nn.Module):
         super(Q_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim + action_dim, 128),
+          nn.Linear(state_dim + action_dim, 256),
           nn.ReLU(),
-          nn.Linear(128, 32),
+          nn.Linear(256, 64),
           nn.ReLU(),
-          nn.Linear(32, 1)
+          nn.Linear(64, 1)
         ).float().to(set_device(use_gpu))
         
     def forward(self, states, actions, detach = False):

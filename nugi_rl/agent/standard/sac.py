@@ -81,19 +81,12 @@ class AgentSAC():
 
             for _ in range(self.epochs):
                 for states, actions, rewards, dones, next_states in dataloader:
-                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), 
-                        dones.to(self.device), next_states.to(self.device))
-                    
-                    if self.q_update >= 2:
-                        self.q_update = 1
-                        self._training_policy(states.to(self.device))
+                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+                    self._training_policy(states.to(self.device))
 
-                        self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                        self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
-                        self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
-
-                    else:
-                        self.q_update += 1
+                    self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
+                    self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
+                    self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
 
     def update(self):
         self._update_sac()
