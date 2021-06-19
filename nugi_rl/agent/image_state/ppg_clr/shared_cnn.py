@@ -93,12 +93,10 @@ class AgentImageStatePPGClr(AgentPPG):
         self.value_old.load_state_dict(self.value.state_dict())
         self.cnn_old.load_state_dict(self.cnn.state_dict())
 
-        dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
-
-        for _ in range(self.ppo_epochs):       
+        for _ in range(self.ppo_epochs):
+            dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)       
             for images, states, actions, rewards, dones, next_images, next_states in dataloader: 
-                self._training_ppo(images.to(self.device), states.to(self.device), actions.to(self.device), 
-                    rewards.to(self.device), dones.to(self.device), next_images.to(self.device), next_states.to(self.device))
+                self._training_ppo(images.to(self.device), states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_images.to(self.device), next_states.to(self.device))
 
         images, states, _, _, _, _, _ = self.ppo_memory.get_all_items()
         self.aux_ppg_memory.save_all(images, states)
@@ -107,9 +105,8 @@ class AgentImageStatePPGClr(AgentPPG):
     def _update_aux_ppg(self):
         self.policy_old.load_state_dict(self.policy.state_dict())
 
-        dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)
-
-        for _ in range(self.aux_ppg_epochs):       
+        for _ in range(self.aux_ppg_epochs):
+            dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)       
             for images, states in dataloader:
                 self._training_aux_ppg(images.to(self.device), states.to(self.device))
 
@@ -121,9 +118,8 @@ class AgentImageStatePPGClr(AgentPPG):
         self.cnn_old.load_state_dict(self.cnn.state_dict())
         self.projector_old.load_state_dict(self.projector.state_dict())
 
-        dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 8)
-
         for _ in range(self.aux_clr_epochs):
+            dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 8)
             for input_images, target_images in dataloader:
                 self._training_aux_clr(input_images.to(self.device), target_images.to(self.device))            
 
@@ -153,7 +149,7 @@ class AgentImageStatePPGClr(AgentPPG):
         else:
             action = self.distribution.deterministic(action_datas)
               
-        return to_list(action, self.use_gpu)
+        return to_list(action.squeeze(), self.use_gpu)
 
     def save_weights(self):
         torch.save({

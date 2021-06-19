@@ -8,12 +8,12 @@ import redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.episodic.episodic_runner import EpisodicRunner
+from eps_runner.iteration.iter_runner import IterRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
-from agent.standard.td3 import AgentTD3
+from agent.standard.cql import AgentCql
 from environment.wrapper.gym_wrapper import GymWrapper
-from loss.td3.q_loss import QLoss
-from loss.td3.policy_loss import OffPolicyLoss
+from loss.cql.q_loss import QLoss
+from loss.cql.policy_loss import OffPolicyLoss
 from model.cql.TanhNN import Policy_Model, Q_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 
@@ -28,7 +28,7 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-n_update                = 1
+n_update                = 1024
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.95
@@ -48,13 +48,13 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
-Runner              = EpisodicRunner
+Runner              = IterRunner
 Executor            = CentralLearnerExecutor
 Policy_loss         = OffPolicyLoss
 Q_loss              = QLoss
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyRedisListMemory
-Agent               = AgentTD3
+Agent               = AgentCql
 
 #####################################################################################################################################################
 
