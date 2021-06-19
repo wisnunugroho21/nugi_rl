@@ -8,13 +8,12 @@ import redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.episodic.episodic_runner import EpisodicRunner
+from eps_runner.iteration.iter_runner import IterRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
 from agent.standard.cql import AgentCql
-from distribution.basic_continous import BasicContinous
 from environment.wrapper.gym_wrapper import GymWrapper
-from loss.cql.cql import Cql
-from loss.cql.policy import OffPolicyLoss
+from loss.cql.q_loss import QLoss
+from loss.cql.policy_loss import OffPolicyLoss
 from model.cql.TanhNN import Policy_Model, Q_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 
@@ -29,15 +28,16 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-n_update                = 5
+n_update                = 1024
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.95
 n_saved                 = 1
-epochs                  = 1
+epochs                  = 20
 batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
+capacity                = 10240
 
 folder                  = 'weights/carla'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
@@ -48,11 +48,10 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
-Policy_Dist         = BasicContinous
-Runner              = EpisodicRunner
+Runner              = IterRunner
 Executor            = CentralLearnerExecutor
 Policy_loss         = OffPolicyLoss
-Q_loss              = Cql
+Q_loss              = QLoss
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyRedisListMemory
 Agent               = AgentCql
@@ -81,9 +80,8 @@ print('action_dim: ', action_dim)
 
 redis_obj           = redis.Redis()
 
-policy_dist         = Policy_Dist(use_gpu)
-agent_memory        = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
-runner_memory       = Policy_Memory(redis_obj, capacity = 5 * n_update, n_update = n_update)
+agent_memory        = Policy_Memory(redis_obj, capacity = capacity)
+runner_memory       = Policy_Memory(redis_obj, capacity = capacity)
 q_loss              = Q_loss()
 policy_loss         = Policy_loss()
 

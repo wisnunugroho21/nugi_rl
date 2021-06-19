@@ -36,6 +36,7 @@ epochs                  = 1
 batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
+alpha                   = 0.2
 
 folder                  = 'weights/carla'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
@@ -80,8 +81,8 @@ print('action_dim: ', action_dim)
 policy_dist         = Policy_Dist(use_gpu)
 sac_memory          = Policy_Memory()
 runner_memory       = Policy_Memory()
-q_loss              = Q_loss(policy_dist)
-policy_loss         = Policy_loss(policy_dist)
+q_loss              = Q_loss(policy_dist, alpha = alpha)
+policy_loss         = Policy_loss(policy_dist, alpha = alpha)
 
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
 soft_q1             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))

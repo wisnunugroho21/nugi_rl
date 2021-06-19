@@ -2,10 +2,9 @@ from memory.policy.standard import PolicyMemory
 import json
 
 class PolicyRedisListMemory(PolicyMemory):
-    def __init__(self, redis, capacity = 100000, n_update = 1024, datas = None):
+    def __init__(self, redis, capacity = 100000, datas = None):
         super().__init__(capacity, datas)
         self.redis      = redis
-        self.n_update   = n_update
 
     def save_redis(self):
         for state, action, reward, done, next_state in zip(self.states, self.actions, self.rewards, self.dones, self.next_states):
