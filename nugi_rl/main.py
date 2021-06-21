@@ -39,7 +39,7 @@ n_saved                 = n_aux_update
 policy_kl_range         = 0.03
 policy_params           = 5
 value_clip              = 10.0
-entropy_coef            = 0.2
+entropy_coef            = 1.0
 vf_loss_coef            = 1.0
 batch_size              = 32
 PPO_epochs              = 10
@@ -49,7 +49,7 @@ gamma                   = 0.95
 learning_rate           = 3e-4
 
 folder                  = 'weights/carla'
-env                     = gym.make('Pendulum-v0') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
+env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 
 state_dim           = None
 action_dim          = None
