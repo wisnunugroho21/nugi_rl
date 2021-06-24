@@ -6,11 +6,9 @@ import os
 import sys
 import time
 import numpy as np
-import cv2
 import math
 import queue
 from PIL import Image
-import ray
 
 try:
     sys.path.append(glob.glob('/home/nugroho/Projects/Simulator/Carla/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
