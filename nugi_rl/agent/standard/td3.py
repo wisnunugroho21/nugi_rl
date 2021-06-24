@@ -73,9 +73,10 @@ class AgentTD3():
         if len(self.memory) > self.batch_size:
             for _ in range(self.epochs):
                 indices     = torch.randperm(len(self.memory))[:self.batch_size]
+                indices     = len(self.memory) - indices - 1
                 dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
 
-                if self.q_update >= 2:
+                if self.q_update == 2:
                     self.q_update = 1
 
                     for states, actions, rewards, dones, next_states in dataloader:
@@ -87,7 +88,7 @@ class AgentTD3():
                         self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
 
                 else:
-                    self.q_update += 1
+                    self.q_update = 2
                     
                     for states, actions, rewards, dones, next_states in dataloader:
                         self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
