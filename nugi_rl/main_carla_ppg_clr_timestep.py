@@ -9,20 +9,20 @@ from torch.optim.adam import Adam
 
 from eps_runner.iteration.carla import CarlaRunner
 from train_executor.executor import Executor
-from agent.image_state.ppg_clr.shared_cnn import AgentImageStatePPGClr
+from agent.image_state.ppg_clr_lstm.shared_cnn import AgentImageStatePPGClr
 from distribution.tanh_clipped_continous import TanhClippedContinous
-from environment.custom.carla.carla_rgb import CarlaEnv
+from environment.custom.carla.carla_rgb_timestep import CarlaEnv
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
 from loss.clr.moco import Moco
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg.carla.cnn_model import CnnModel
-from model.ppg.carla.policy_std_model import PolicyModel
-from model.ppg.carla.value_model import ValueModel
-from model.ppg.carla.projection_model import ProjectionModel
-from memory.policy.image_state.standard import ImageStatePolicyMemory
-from memory.aux_ppg.image_state.standard import ImageStateAuxPpgMemory
-from memory.aux_clr.standard import AuxClrMemory
+from model.ppg.carla_lstm.cnn_model import CnnModel
+from model.ppg.carla_lstm.policy_std_model import PolicyModel
+from model.ppg.carla_lstm.value_model import ValueModel
+from model.ppg.carla_lstm.projection_model import ProjectionModel
+from memory.policy.image_state.timestep import TimeImageStatePolicyMemory
+from memory.aux_ppg.image_state.timestep import TimeImageStateAuxPpgMemory
+from memory.aux_clr.timestep import TimeAuxClrMemory
 
 from helpers.pytorch_utils import set_device
 
@@ -45,12 +45,12 @@ n_saved                 = n_aux_update
 policy_kl_range         = 0.03
 policy_params           = 5
 value_clip              = 10.0
-entropy_coef            = 1.0
+entropy_coef            = 0.2
 vf_loss_coef            = 1.0
 batch_size              = 32
-ppo_epochs              = 5
-aux_ppg_epochs          = 5
-aux_clr_epochs          = 5
+ppo_epochs              = 10
+aux_ppg_epochs          = 10
+aux_clr_epochs          = 10
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -73,9 +73,9 @@ Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
 Clr_loss            = Moco
 Wrapper             = CarlaEnv
-Policy_Memory       = ImageStatePolicyMemory
-Aux_Memory          = ImageStateAuxPpgMemory
-Clr_Memory          = AuxClrMemory
+Policy_Memory       = TimeImageStatePolicyMemory
+Aux_Memory          = TimeImageStateAuxPpgMemory
+Clr_Memory          = TimeAuxClrMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentImageStatePPGClr
 

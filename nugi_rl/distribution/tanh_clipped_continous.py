@@ -4,7 +4,7 @@ import torch
 
 from helpers.pytorch_utils import set_device, to_list
 
-class ClippedContinous():
+class TanhClippedContinous():
     def __init__(self, use_gpu):
         self.use_gpu    = use_gpu
 
