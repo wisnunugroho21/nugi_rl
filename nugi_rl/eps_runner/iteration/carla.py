@@ -32,7 +32,8 @@ class CarlaRunner(IterRunner):
 
         for _ in range(self.n_update):
             action                                  = self.agent.act(self.images, self.states)
-            next_image, next_state, reward, done, _ = self.env.step(action)
+            action_gym                              = np.tanh(action)
+            next_image, next_state, reward, done, _ = self.env.step(action_gym)
             
             if self.training_mode:
                 self.memories.save_eps(self.images, self.states.tolist(), action, reward, float(done), next_image, next_state.tolist())

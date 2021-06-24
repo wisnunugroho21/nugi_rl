@@ -48,6 +48,7 @@ class AgentImageStatePPGClr(AgentPPG):
             values              = self.value(res, states)
             
             res_old             = self.cnn_old(images, True)
+            res_old             = res_old.reshape(timesteps, batch_size, res.shape[-1])
 
             old_action_datas, _ = self.policy_old(res_old, states, True)
             old_values          = self.value_old(res_old, states, True)
@@ -147,12 +148,14 @@ class AgentImageStatePPGClr(AgentPPG):
         self.ppo_memory.save_all(images, states, actions, rewards, dones, next_images, next_states)
 
     def act(self, images, state):
-        batch_size, timesteps, H, W, C  = images.shape
+        state               = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        images              = self.ppo_memory.transform(images).unsqueeze(0).to(self.device)
 
-        images              = images.reshape(timesteps * batch_size, H, W, C)
-        images, state       = self.ppo_memory.transform(images).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        batch_size, timesteps, H, W, C  = images.shape
         
+        images              = images.reshape(timesteps * batch_size, H, W, C)
         res                 = self.cnn(images)
+
         res                 = res.reshape(timesteps, batch_size, res.shape[-1])
         action_datas, _     = self.policy(res, state)
         

@@ -10,7 +10,6 @@ import cv2
 import math
 import queue
 from PIL import Image
-import ray
 
 try:
     sys.path.append(glob.glob('/home/nugroho/Projects/Simulator/Carla/PythonAPI/carla/dist/carla-*%d.%d-%s.egg' % (
@@ -136,11 +135,12 @@ class CarlaEnv():
         self.cur_step = 0
 
         images = []
-        images.append(self._process_image(self.cam_queue.get()))
 
         for _ in range(2):
             image_data  = np.zeros((self.im_height, self.im_width, 3), dtype = np.uint8)
             images.append(Image.fromarray(image_data, 'RGB'))
+
+        images.append(self._process_image(self.cam_queue.get()))       
 
         del self.collision_hist[:]
         del self.crossed_line_hist[:] 
@@ -152,10 +152,13 @@ class CarlaEnv():
         images      = []
 
         for _ in range(3):
-            steer       = -1 if action[0] < -1 else 1 if action[0] > 1 else action[0]
-            throttle    = 0 if action[1] < 0 else 1 if action[1] > 1 else action[1]
-            brake       = 0 if action[2] < 0 else 1 if action[2] > 1 else action[2]
-            self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), throttle = float(throttle), brake = float(brake)))
+            steer           = -1 if action[0] < -1 else 1 if action[0] > 1 else action[0]
+            throttle_break  = -1 if action[1] < -1 else 1 if action[1] > 1 else action[1]
+
+            if throttle_break >= 0:
+                self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), throttle = float(throttle_break)))
+            else:
+                self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), brake = float(-1 * throttle_break)))
 
             self._tick_env()
             self.cur_step   += 1

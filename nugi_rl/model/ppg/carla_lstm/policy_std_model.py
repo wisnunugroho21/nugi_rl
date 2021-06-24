@@ -10,13 +10,10 @@ class PolicyModel(nn.Module):
       self.state_extractor  = nn.Sequential( nn.Linear(2, 32), nn.ReLU() )
       self.image_extractor  = nn.LSTM(128, 128)
       
-      self.nn_layer         = nn.Sequential( nn.Linear(160, 320), nn.ReLU() )
+      self.nn_layer         = nn.Sequential( nn.Linear(160, 192), nn.ReLU() )
       
-      self.actor_steer      = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
-      self.actor_gas_break  = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() )
-
-      self.std_steer        = nn.Sequential( nn.Linear(64, 1), nn.Sigmoid() )
-      self.std_gas_break    = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() )
+      self.actor            = nn.Sequential( nn.Linear(64, 2), nn.Tanh() )
+      self.std              = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() )
 
       self.critic_layer     = nn.Sequential( nn.Linear(64, 1) )
         
@@ -28,15 +25,9 @@ class PolicyModel(nn.Module):
       x   = torch.cat([i, s], -1)
       x   = self.nn_layer(x)
 
-      action_steer        = self.actor_steer(x[:, :64])
-      action_gas_break    = self.actor_gas_break(x[:, 64:128])
-
-      std_steer           = self.std_steer(x[:, 128:192])
-      std_gas_break       = self.std_gas_break(x[:, 192:256]) * 0.5
-
-      action              = torch.cat((action_steer, action_gas_break), -1)
-      std                 = torch.cat((std_steer, std_gas_break), -1)
-      critic              = self.critic_layer(x[:, 256:320])
+      action              = self.actor(x[:, :64])
+      std                 = self.std(x[:, 64:128])
+      critic              = self.critic_layer(x[:, 128:192])
 
       if detach:
         return (action.detach(), std.detach()), critic.detach()

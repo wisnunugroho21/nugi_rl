@@ -10,7 +10,7 @@ from torch.optim.adam import Adam
 from eps_runner.iteration.carla import CarlaRunner
 from train_executor.executor import Executor
 from agent.image_state.ppg_clr.shared_cnn import AgentImageStatePPGClr
-from distribution.clipped_continous import ClippedContinous
+from distribution.tanh_clipped_continous import TanhClippedContinous
 from environment.custom.carla.carla_rgb import CarlaEnv
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
@@ -66,7 +66,7 @@ Cnn_Model           = CnnModel
 Policy_Model        = PolicyModel
 Value_Model         = ValueModel
 Projection_Model    = ProjectionModel
-Policy_Dist         = ClippedContinous
+Policy_Dist         = TanhClippedContinous
 Runner              = CarlaRunner
 Executor            = Executor
 Policy_loss         = TrulyPPO

@@ -29,13 +29,10 @@ class TimeAuxClrMemory(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        images  = self.images[idx]
+        image  = self.images[idx]
 
-        batch_size, timesteps, H, W, C  = images.shape
-        images          = images.reshape(timesteps * batch_size, H, W, C)
-
-        input_images    = self.input_trans(images)
-        target_images   = self.target_trans(images)
+        input_images    = self.input_trans(image)
+        target_images   = self.target_trans(image)
 
         return input_images, target_images
 
