@@ -9,7 +9,7 @@ class PolicyModel(nn.Module):
 
       self.state_extractor  = nn.Sequential( nn.Linear(2, 32), nn.ReLU() )
       self.image_extractor  = nn.Sequential( nn.Linear(128, 128), nn.ReLU() )
-      self.nn_layer         = nn.Sequential( nn.Linear(160, 192), nn.ReLU() )
+      self.nn_layer         = nn.Sequential( nn.Linear(160, 320), nn.ReLU() )
       
       self.actor_steer      = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
       self.actor_gas_break  = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
@@ -26,14 +26,14 @@ class PolicyModel(nn.Module):
       x   = self.nn_layer(x)
 
       action_steer        = self.actor_steer(x[:, :64])
-      action_gas_break    = self.actor_gas_break(x[:, 64:128])
+      std_steer           = self.std_steer(x[:, 64:128])
 
-      std_steer           = self.std_steer(x[:, :64])
-      std_gas_break       = self.std_gas_break(x[:, 64:128])
+      action_gas_break    = self.actor_gas_break(x[:, 128:192])
+      std_gas_break       = self.std_gas_break(x[:, 192:256])
 
       action              = torch.cat((action_steer, action_gas_break), -1)
       std                 = torch.cat((std_steer, std_gas_break), -1)
-      critic              = self.critic_layer(x[:, 128:192])
+      critic              = self.critic_layer(x[:, 256:320])
 
       if detach:
         return (action.detach(), std.detach()), critic.detach()

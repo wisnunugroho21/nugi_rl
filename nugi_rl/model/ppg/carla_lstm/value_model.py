@@ -12,8 +12,8 @@ class ValueModel(nn.Module):
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) )
         
     def forward(self, res, state, detach = False):
-      out_i, _ = self.image_extractor(res)
-      i = out_i[-1]
+      out_i, _  = self.image_extractor(res)
+      i         = out_i[-1]
 
       s   = self.state_extractor(state)
       x   = torch.cat([i, s], -1)
