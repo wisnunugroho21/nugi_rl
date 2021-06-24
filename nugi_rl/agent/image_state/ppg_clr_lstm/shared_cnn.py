@@ -38,8 +38,9 @@ class AgentImageStatePPGClr(AgentPPG):
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
         self.ppo_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            batch_size, timesteps, H, W, C  = images.shape
-            images              = images.reshape(timesteps * batch_size, H, W, C)
+            batch_size, timesteps, C, H, W  = images.shape
+            images              = images.reshape(timesteps * batch_size, C, H, W)
+            next_images         = next_images.reshape(timesteps * batch_size, C, H, W)
 
             res                 = self.cnn(images)
             res                 = res.reshape(timesteps, batch_size, res.shape[-1])
@@ -48,12 +49,14 @@ class AgentImageStatePPGClr(AgentPPG):
             values              = self.value(res, states)
             
             res_old             = self.cnn_old(images, True)
-            res_old             = res_old.reshape(timesteps, batch_size, res.shape[-1])
+            res_old             = res_old.reshape(timesteps, batch_size, res_old.shape[-1])
 
             old_action_datas, _ = self.policy_old(res_old, states, True)
             old_values          = self.value_old(res_old, states, True)
 
             next_res            = self.cnn(next_images, True)
+            next_res            = next_res.reshape(timesteps, batch_size, next_res.shape[-1])
+
             next_values         = self.value(next_res, next_states, True)
 
             loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
@@ -65,8 +68,8 @@ class AgentImageStatePPGClr(AgentPPG):
     def _training_aux_ppg(self, images, states):
         self.aux_ppg_optimizer.zero_grad()        
         with torch.cuda.amp.autocast():
-            batch_size, timesteps, H, W, C  = images.shape
-            images                  = images.reshape(timesteps * batch_size, H, W, C)
+            batch_size, timesteps, C, H, W  = images.shape
+            images                  = images.reshape(timesteps * batch_size, C, H, W)
 
             res                     = self.cnn(images, True)
             res                     = res.reshape(timesteps, batch_size, res.shape[-1])
@@ -151,12 +154,12 @@ class AgentImageStatePPGClr(AgentPPG):
         state               = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         images              = self.ppo_memory.transform(images).unsqueeze(0).to(self.device)
 
-        batch_size, timesteps, H, W, C  = images.shape
-        
-        images              = images.reshape(timesteps * batch_size, H, W, C)
-        res                 = self.cnn(images)
+        batch_size, timesteps, C, H, W  = images.shape
+        images              = images.reshape(timesteps * batch_size, C, H, W)
 
+        res                 = self.cnn(images)
         res                 = res.reshape(timesteps, batch_size, res.shape[-1])
+
         action_datas, _     = self.policy(res, state)
         
         if self.is_training_mode:
