@@ -24,7 +24,8 @@ class AtrousSpatialPyramidConv2d(nn.Module):
         self.extractor3 = SpatialAtrousExtractor(dim_in, 8)
 
         self.out = nn.Sequential(
-            nn.Conv2d(3 * dim_in, dim_out, kernel_size = 1)
+            nn.Conv2d(3 * dim_in, dim_out, kernel_size = 1),
+            nn.ReLU()
         )
 
     def forward(self, x):

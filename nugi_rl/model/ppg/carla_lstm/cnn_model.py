@@ -4,32 +4,37 @@ from model.components.ASPP import AtrousSpatialPyramidConv2d
 from model.components.SeperableConv2d import DepthwiseSeparableConv2d
 from model.components.Downsampler import Downsampler
 
+class ExtractEncoder(nn.Module):
+    def __init__(self, dim):
+        super(ExtractEncoder, self).__init__()
+
+        self.conv1 = nn.Sequential(
+            DepthwiseSeparableConv2d(dim, dim, kernel_size = 3, stride = 1, padding = 1, bias = False),
+            nn.ReLU(),
+            DepthwiseSeparableConv2d(dim, dim, kernel_size = 3, stride = 1, padding = 1, bias = False),
+        )
+
+    def forward(self, x):
+        x1 = self.conv1(x)
+        x1 = x + x1
+
+        return x1
+
 class CnnModel(nn.Module):
     def __init__(self):
       super(CnnModel, self).__init__()   
 
       self.conv = nn.Sequential(
         AtrousSpatialPyramidConv2d(3, 8),
+        DepthwiseSeparableConv2d(8, 8, kernel_size = 3, stride = 1, padding = 1),
         nn.ReLU(),
-        DepthwiseSeparableConv2d(8, 16, kernel_size = 3, stride = 1, padding = 1),
-        nn.ReLU(),
-        Downsampler(16, 16),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(16, 32, kernel_size = 3, stride = 1, padding = 1),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(32, 32, kernel_size = 3, stride = 1, padding = 1),
-        nn.ReLU(),
-        Downsampler(32, 32),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(32, 64, kernel_size = 3, stride = 1, padding = 1),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(64, 64, kernel_size = 3, stride = 1, padding = 1),
-        nn.ReLU(),
-        Downsampler(64, 64),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(64, 128, kernel_size = 3, stride = 1, padding = 1),
-        nn.ReLU(),
-        DepthwiseSeparableConv2d(128, 128, kernel_size = 5, stride = 1, padding = 0),
+        Downsampler(8, 16),
+        ExtractEncoder(16),
+        Downsampler(16, 32),
+        ExtractEncoder(32),
+        Downsampler(32, 64),
+        ExtractEncoder(64),
+        DepthwiseSeparableConv2d(64, 128, kernel_size = 5, stride = 1, padding = 0),
         nn.ReLU(),
       )
         
