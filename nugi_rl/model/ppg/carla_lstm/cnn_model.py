@@ -25,16 +25,15 @@ class CnnModel(nn.Module):
       super(CnnModel, self).__init__()   
 
       self.conv = nn.Sequential(
-        AtrousSpatialPyramidConv2d(3, 8),
-        DepthwiseSeparableConv2d(8, 8, kernel_size = 3, stride = 1, padding = 1),
-        nn.ReLU(),
-        Downsampler(8, 16),
+        AtrousSpatialPyramidConv2d(3, 16),
         ExtractEncoder(16),
         Downsampler(16, 32),
         ExtractEncoder(32),
         Downsampler(32, 64),
         ExtractEncoder(64),
-        DepthwiseSeparableConv2d(64, 128, kernel_size = 5, stride = 1, padding = 0),
+        Downsampler(64, 128),
+        ExtractEncoder(128),
+        DepthwiseSeparableConv2d(128, 256, kernel_size = 5, stride = 1, padding = 0),
         nn.ReLU(),
       )
         
