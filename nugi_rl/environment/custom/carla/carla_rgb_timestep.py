@@ -56,7 +56,7 @@ class CarlaEnv():
 
         settings                        = self.world.get_settings()
         settings.synchronous_mode       = True
-        settings.fixed_delta_seconds    = 0.0166
+        settings.fixed_delta_seconds    = 0.00833
         self.world.apply_settings(settings)
 
         self.cam_queue  = queue.Queue()
@@ -152,8 +152,8 @@ class CarlaEnv():
         images      = []
 
         for _ in range(3):
-            steer           = -1 if action[0] < -1 else 1 if action[0] > 1 else action[0]
-            throttle_break  = -1 if action[1] < -1 else 1 if action[1] > 1 else action[1]
+            steer           = action[0] #-1 if action[0] < -1 else 1 if action[0] > 1 else action[0]
+            throttle_break  = action[1] #-1 if action[1] < -1 else 1 if action[1] > 1 else action[1]
 
             if throttle_break >= 0:
                 self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), throttle = float(throttle_break)))
