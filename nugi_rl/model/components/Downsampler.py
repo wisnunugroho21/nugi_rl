@@ -13,7 +13,8 @@ class Downsampler(nn.Module):
             nn.Conv2d(dim_in, dim_in, kernel_size = 8, stride = 4, padding = 2, groups = dim_in, bias = False),
         )
         self.out = nn.Sequential(
-            nn.Conv2d(2 * dim_in, dim_out, kernel_size = 1)
+            nn.Conv2d(2 * dim_in, dim_out, kernel_size = 1),
+            nn.ReLU()
         )
 
     def forward(self, x):
