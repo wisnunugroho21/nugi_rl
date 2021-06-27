@@ -161,9 +161,9 @@ class CarlaEnv():
                 self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), brake = float(-1 * throttle_break)))
 
             self._tick_env()
-            self.cur_step   += 1
-
             images.append(self._process_image(self.cam_queue.get()))
+
+        self.cur_step   += 1
 
         v       = self.vehicle.get_velocity()
         mps     = math.sqrt(v.x ** 2 + v.y ** 2)
@@ -184,10 +184,10 @@ class CarlaEnv():
 
         elif len(self.crossed_line_hist) > 0 or len(self.collision_hist) > 0:
             done    = True
-            reward  = -0.1 * mps
+            reward  += -0.1 * mps
 
         elif loc.x >= -100 or loc.y >= -10:
             done    = True
-            reward  = 100        
+            reward  += 100        
         
         return images, np.array([mps, dgs]), reward, done, None

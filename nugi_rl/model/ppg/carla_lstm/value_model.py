@@ -6,7 +6,7 @@ class ValueModel(nn.Module):
       super(ValueModel, self).__init__()
 
       self.state_extractor      = nn.Sequential( nn.Linear(2, 32), nn.ReLU() )
-      self.image_extractor      = nn.LSTM(128, 128)
+      self.image_extractor      = nn.LSTM(256, 128)
       
       self.nn_layer             = nn.Sequential( nn.Linear(160, 64), nn.ReLU() )
       self.critic_layer         = nn.Sequential( nn.Linear(64, 1) )
