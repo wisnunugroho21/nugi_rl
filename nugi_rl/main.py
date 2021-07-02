@@ -10,7 +10,7 @@ from torch.optim.adam import Adam
 from eps_runner.iteration.iter_runner import IterRunner
 from train_executor.executor import Executor
 from agent.standard.ppg import AgentPPG
-from distribution.clipped_continous import ClippedContinous
+from distribution.tanh_clipped_continous import TanhClippedContinous
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
@@ -57,7 +57,7 @@ max_action          = 2
 
 Policy_Model        = Policy_Model
 Value_Model         = Value_Model
-Policy_Dist         = ClippedContinous
+Policy_Dist         = TanhClippedContinous
 Runner              = IterRunner
 Executor            = Executor
 Policy_loss         = TrulyPPO
