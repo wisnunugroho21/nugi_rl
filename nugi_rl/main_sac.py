@@ -10,7 +10,7 @@ from torch.optim.adam import Adam
 from eps_runner.iteration.iter_runner import IterRunner
 from train_executor.executor import Executor
 from agent.standard.sac import AgentSAC
-from distribution.clipped_continous import ClippedContinous
+from distribution.tanh_clipped_continous import TanhClippedContinous
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.sac.q_loss import QLoss
 from loss.sac.policy_loss import PolicyLoss
@@ -48,7 +48,7 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
-Policy_Dist         = ClippedContinous
+Policy_Dist         = TanhClippedContinous
 Runner              = IterRunner
 Executor            = Executor
 Policy_loss         = PolicyLoss
