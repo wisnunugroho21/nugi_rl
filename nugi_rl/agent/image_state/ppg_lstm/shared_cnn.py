@@ -6,9 +6,9 @@ from torch.utils.data import DataLoader
 from helpers.pytorch_utils import to_list
 from agent.standard.ppg import AgentPPG
 
-class AgentImageStatePPGClr(AgentPPG):
-    def __init__(self, projector, cnn, policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, aux_clr_loss, ppo_memory, aux_ppg_memory, aux_clr_memory,
-            ppo_optimizer, aux_ppg_optimizer, aux_clr_optimizer, PPO_epochs = 10, aux_ppg_epochs = 10, aux_clr_epochs = 10, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
+class AgentPPG(AgentPPG):
+    def __init__(self, cnn, policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, ppo_optimizer, 
+            aux_ppg_optimizer, PPO_epochs = 10, aux_ppg_epochs = 10, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
             policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32,  folder = 'model', use_gpu = True):
 
         super().__init__(policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
@@ -16,23 +16,12 @@ class AgentImageStatePPGClr(AgentPPG):
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu)
 
         self.cnn                = cnn
-        self.projector          = projector
-
         self.cnn_old            = copy.deepcopy(self.cnn)
-        self.projector_old      = copy.deepcopy(self.projector)
-
-        self.aux_clrLoss        = aux_clr_loss
-        self.aux_clr_memory     = aux_clr_memory
-        self.aux_clr_optimizer  = aux_clr_optimizer
-        self.aux_clr_scaler     = torch.cuda.amp.GradScaler()
-        self.aux_clr_epochs     = aux_clr_epochs
 
         if self.is_training_mode:
             self.cnn.train()
-            self.projector.train()
         else:
             self.cnn.eval()
-            self.projector.eval()
 
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
         self.ppo_optimizer.zero_grad()
@@ -84,21 +73,6 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_ppg_scaler.step(self.aux_ppg_optimizer)
         self.aux_ppg_scaler.update()
 
-    def _training_aux_clr(self, input_images, target_images):
-        self.aux_clr_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            res_anchor        = self.cnn(input_images)
-            encoded_anchor    = self.projector(res_anchor)
-
-            res_target        = self.cnn_old(target_images, True)
-            encoded_target    = self.projector_old(res_target, True)
-
-            loss = self.aux_clrLoss.compute_loss(encoded_anchor, encoded_target)
-
-        self.aux_clr_scaler.scale(loss).backward()
-        self.aux_clr_scaler.step(self.aux_clr_optimizer)
-        self.aux_clr_scaler.update()
-
     def _update_ppo(self):
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
@@ -122,27 +96,14 @@ class AgentImageStatePPGClr(AgentPPG):
                 self._training_aux_ppg(images.to(self.device), states.to(self.device))
 
         images, _ = self.aux_ppg_memory.get_all_items()
-        self.aux_clr_memory.save_all(images)
         self.aux_ppg_memory.clear_memory()
-
-    def _update_aux_clr(self):
-        self.cnn_old.load_state_dict(self.cnn.state_dict())
-        self.projector_old.load_state_dict(self.projector.state_dict())
-
-        for _ in range(self.aux_clr_epochs):
-            dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 8)
-            for input_images, target_images in dataloader:
-                self._training_aux_clr(input_images.to(self.device), target_images.to(self.device))            
-
-        self.aux_clr_memory.clear_memory()
 
     def update(self):
         self._update_ppo()
         self.i_update += 1
 
         if self.i_update % self.n_aux_update == 0:
-            self._update_aux_ppg()
-            self._update_aux_clr()                        
+            self._update_aux_ppg()                    
             self.i_update = 0
 
     def save_memory(self, policy_memory):
@@ -173,13 +134,10 @@ class AgentImageStatePPGClr(AgentPPG):
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'cnn_state_dict': self.cnn.state_dict(),
-            'projector_state_dict': self.projector.state_dict(),
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
             'aux_ppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
-            'aux_clr_optimizer_state_dict': self.aux_clr_optimizer.state_dict(),
             'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
             'aux_ppg_scaler_state_dict': self.aux_ppg_scaler.state_dict(),
-            'aux_clr_scaler_state_dict': self.aux_clr_scaler.state_dict(),
         }, self.folder + '/ppg.tar')
         
     def load_weights(self, device = None):
@@ -190,22 +148,17 @@ class AgentImageStatePPGClr(AgentPPG):
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.cnn.load_state_dict(model_checkpoint['cnn_state_dict'])
-        self.projector.load_state_dict(model_checkpoint['projector_state_dict'])
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
         self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])   
-        self.aux_clr_optimizer.load_state_dict(model_checkpoint['aux_clr_optimizer_state_dict'])
         self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
-        self.aux_ppg_scaler.load_state_dict(model_checkpoint['aux_ppg_scaler_state_dict'])  
-        self.aux_clr_scaler.load_state_dict(model_checkpoint['aux_clr_scaler_state_dict'])
+        self.aux_ppg_scaler.load_state_dict(model_checkpoint['aux_ppg_scaler_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()
             self.value.train()
             self.cnn.train()
-            self.projector.train()
 
         else:
             self.policy.eval()
             self.value.eval()
             self.cnn.eval()
-            self.projector.eval()
