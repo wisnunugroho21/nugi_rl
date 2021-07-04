@@ -14,7 +14,8 @@ from distribution.tanh_clipped_continous import TanhClippedContinous
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.sac.q_loss import QLoss
 from loss.sac.policy_loss import PolicyLoss
-from model.sac.TanhStdNN import Policy_Model, Q_Model
+from loss.sac.value_loss import ValueLoss
+from model.sac.TanhStdNN import Policy_Model, Q_Model, Value_Model
 from memory.policy.standard import PolicyMemory
 
 from helpers.pytorch_utils import set_device
@@ -48,10 +49,12 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
+Value_Model         = Value_Model
 Policy_Dist         = TanhClippedContinous
 Runner              = IterRunner
 Executor            = Executor
 Policy_loss         = PolicyLoss
+Value_loss          = ValueLoss
 Q_loss              = QLoss
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyMemory
@@ -84,15 +87,19 @@ sac_memory          = Policy_Memory(capacity = 2048)
 runner_memory       = Policy_Memory(capacity = 2048)
 q_loss              = Q_loss(policy_dist, alpha = alpha)
 policy_loss         = Policy_loss(policy_dist, alpha = alpha)
+value_loss          = Value_loss(policy_dist, alpha = alpha)
 
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
 soft_q1             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
 soft_q2             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+value               = Value_Model(state_dim).float().to(set_device(use_gpu))
+
 policy_optimizer    = Adam(list(policy.parameters()), lr = learning_rate)        
 soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
+value_optimizer     = Adam(list(value.parameters()), lr = learning_rate)
 
-agent = Agent(soft_q1, soft_q2, policy, state_dim, action_dim, policy_dist, q_loss, policy_loss, sac_memory, 
-        soft_q_optimizer, policy_optimizer, is_training_mode, batch_size, epochs, 
+agent = Agent(soft_q1, soft_q2, policy, value, state_dim, action_dim, policy_dist, q_loss, policy_loss, value_loss, sac_memory, 
+        soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode, batch_size, epochs, 
         soft_tau, folder, use_gpu)
                     
 runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]

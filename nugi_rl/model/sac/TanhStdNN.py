@@ -52,3 +52,21 @@ class Q_Model(nn.Module):
         return self.nn_layer(x).detach()
       else:
         return self.nn_layer(x)
+
+class Value_Model(nn.Module):
+    def __init__(self, state_dim, use_gpu = True):
+        super(Value_Model, self).__init__()   
+
+        self.nn_layer = nn.Sequential(
+          nn.Linear(state_dim, 256),
+          nn.ReLU(),
+          nn.Linear(256, 64),
+          nn.ReLU(),
+          nn.Linear(64, 1)
+        ).float().to(set_device(use_gpu))
+        
+    def forward(self, states, detach = False):
+      if detach:
+        return self.nn_layer(states).detach()
+      else:
+        return self.nn_layer(states)
