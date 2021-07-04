@@ -85,7 +85,7 @@ print('action_dim: ', action_dim)
 policy_dist         = Policy_Dist(use_gpu)
 sac_memory          = Policy_Memory(capacity = 2048)
 runner_memory       = Policy_Memory(capacity = 2048)
-q_loss              = Q_loss(policy_dist, alpha = alpha)
+q_loss              = Q_loss(policy_dist)
 policy_loss         = Policy_loss(policy_dist, alpha = alpha)
 value_loss          = Value_loss(policy_dist, alpha = alpha)
 

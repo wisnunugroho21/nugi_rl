@@ -11,7 +11,7 @@ from torch.optim.adam import Adam
 from eps_runner.iteration.iter_runner import IterRunner
 from train_executor.multi_agent_central_learner.multi_process.child import ChildExecutor
 from agent.standard.ppg import AgentPPG
-from distribution.clipped_continous import ClippedContinous
+from distribution.tanh_clipped_continous import TanhClippedContinous
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
@@ -58,7 +58,7 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Value_Model         = Value_Model
-Policy_Dist         = ClippedContinous
+Policy_Dist         = TanhClippedContinous
 Runner              = IterRunner
 Executor            = ChildExecutor
 Policy_loss         = TrulyPPO
@@ -106,7 +106,7 @@ value               = Value_Model(state_dim).float().to(set_device(use_gpu))
 ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)        
 aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
 
-agent   = Agent( policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
+agent   = Agent(policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 

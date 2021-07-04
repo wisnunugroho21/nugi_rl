@@ -1,11 +1,9 @@
 import torch
 
-class QLoss():        
-
-    def __init__(self, distribution, gamma = 0.99, alpha = 0.2):
+class QLoss():
+    def __init__(self, distribution, gamma = 0.99):
         self.gamma          = gamma
         self.distribution   = distribution
-        self.alpha          = alpha
 
     def compute_loss(self, predicted_q_value1, predicted_q_value2, target_value, reward, done):
         target_q_value          = (reward + (1 - done) * self.gamma * target_value).detach()

@@ -8,13 +8,14 @@ import redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.single_step.single_step_runner import SingleStepRunner
+from eps_runner.iteration.iter_runner import IterRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
-from agent.standard.td3 import AgentTD3
+from agent.standard.cql import AgentCql
 from environment.wrapper.gym_wrapper import GymWrapper
-from loss.td3.q_loss import QLoss
-from loss.td3.policy_loss import OffPolicyLoss
-from model.cql.TanhNN import Policy_Model, Q_Model
+from loss.cql.q_loss import QLoss
+from loss.cql.policy_loss import OffPolicyLoss
+from loss.sac.value_loss import ValueLoss
+from model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 
 from helpers.pytorch_utils import set_device
@@ -28,12 +29,12 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-# n_update                = 1024
+n_update                = 1024
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.95
 n_saved                 = 1
-epochs                  = 1
+epochs                  = 10
 batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
@@ -48,13 +49,15 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
-Runner              = SingleStepRunner
+Value_Model         = Value_Model
+Runner              = IterRunner
 Executor            = CentralLearnerExecutor
 Policy_loss         = OffPolicyLoss
 Q_loss              = QLoss
+Value_loss          = ValueLoss
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyRedisListMemory
-Agent               = AgentTD3
+Agent               = AgentCql
 
 #####################################################################################################################################################
 
@@ -84,17 +87,22 @@ agent_memory        = Policy_Memory(redis_obj, capacity = capacity)
 runner_memory       = Policy_Memory(redis_obj, capacity = capacity)
 q_loss              = Q_loss()
 policy_loss         = Policy_loss()
+value_loss          = Value_loss()
 
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
 soft_q1             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
 soft_q2             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+value               = Value_Model(state_dim).float().to(set_device(use_gpu))
+
 policy_optimizer    = Adam(list(policy.parameters()), lr = learning_rate)        
 soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
+value_optimizer     = Adam(list(value.parameters()), lr = learning_rate)
 
-agent = Agent(soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, agent_memory, soft_q_optimizer, 
-        policy_optimizer, is_training_mode, batch_size, epochs, soft_tau, folder, use_gpu)
+agent = Agent(soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss, policy_loss, value_loss, agent_memory, 
+        soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode, batch_size, epochs, 
+        soft_tau, folder, use_gpu)
 
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved) 
 
 executor.execute()
