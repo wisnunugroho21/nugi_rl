@@ -91,13 +91,11 @@ class AgentSAC():
 
     def _update_sac(self):
         if len(self.memory) > self.batch_size:
-            indices     = torch.randperm(len(self.memory))[:self.batch_size]
-            # indices     = len(self.memory) - indices - 1
-            indices[-1] = torch.IntTensor([len(self.memory) - 1])
-            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
-            # dataloader = DataLoader(self.memory, self.batch_size, shuffle = False, num_workers = 8)
-
             for _ in range(self.epochs):
+                indices     = torch.randperm(len(self.memory))[:self.batch_size]
+                indices[-1] = torch.IntTensor([len(self.memory) - 1])
+
+                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
                 for states, actions, rewards, dones, next_states in dataloader:
                     self._training_value(states.to(self.device))
                     self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
