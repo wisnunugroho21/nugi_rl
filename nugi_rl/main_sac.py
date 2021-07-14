@@ -29,12 +29,12 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-n_update                = 512
+n_update                = 1024
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.95
 n_saved                 = 1
-epochs                  = 5
+epochs                  = 10
 batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
@@ -83,8 +83,8 @@ if action_dim is None:
 print('action_dim: ', action_dim)
 
 policy_dist         = Policy_Dist(use_gpu)
-sac_memory          = Policy_Memory(capacity = 2048)
-runner_memory       = Policy_Memory(capacity = 2048)
+sac_memory          = Policy_Memory(capacity = n_update)
+runner_memory       = Policy_Memory(capacity = n_update)
 q_loss              = Q_loss(policy_dist)
 policy_loss         = Policy_loss(policy_dist, alpha = alpha)
 value_loss          = Value_loss(policy_dist, alpha = alpha)

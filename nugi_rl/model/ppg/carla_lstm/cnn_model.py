@@ -10,22 +10,31 @@ class ExtractEncoder(nn.Module):
 
         self.conv1 = nn.Sequential(
             DepthwiseSeparableConv2d(dim, dim, kernel_size = 3, stride = 1, padding = 1, bias = False),
-            nn.ReLU(),
+            nn.ReLU(),                    
+        )
+
+        self.conv2 = nn.Sequential(
             DepthwiseSeparableConv2d(dim, dim, kernel_size = 3, stride = 1, padding = 1, bias = False),
+            nn.ReLU(),
         )
 
     def forward(self, x):
         x1 = self.conv1(x)
         x1 = x + x1
 
-        return x1
+        x2 = self.conv2(x1)
+        x2 = x1 + x2
+
+        return x2
 
 class CnnModel(nn.Module):
     def __init__(self):
       super(CnnModel, self).__init__()   
 
       self.conv = nn.Sequential(
-        AtrousSpatialPyramidConv2d(3, 16),
+        # AtrousSpatialPyramidConv2d(3, 16),
+        DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1),
+        nn.ReLU(),
         ExtractEncoder(16),
         Downsampler(16, 32),
         ExtractEncoder(32),
@@ -33,6 +42,7 @@ class CnnModel(nn.Module):
         ExtractEncoder(64),
         Downsampler(64, 128),
         ExtractEncoder(128),
+        # AtrousSpatialPyramidConv2d(128, 128),
         DepthwiseSeparableConv2d(128, 256, kernel_size = 5, stride = 1, padding = 0),
         nn.ReLU(),
       )

@@ -14,7 +14,7 @@ from agent.standard.cql import AgentCql
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.cql.q_loss import QLoss
 from loss.cql.policy_loss import OffPolicyLoss
-from loss.sac.value_loss import ValueLoss
+from loss.cql.value_loss import ValueLoss
 from model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 
