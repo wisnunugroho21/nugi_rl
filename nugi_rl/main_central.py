@@ -37,7 +37,6 @@ epochs                  = 10
 batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
-capacity                = 10240
 
 folder                  = 'weights/carla'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
@@ -80,8 +79,8 @@ print('action_dim: ', action_dim)
 
 redis_obj           = redis.Redis()
 
-agent_memory        = Policy_Memory(redis_obj, capacity = capacity)
-runner_memory       = Policy_Memory(redis_obj, capacity = capacity)
+agent_memory        = Policy_Memory(redis_obj)
+runner_memory       = Policy_Memory(redis_obj)
 q_loss              = Q_loss()
 policy_loss         = Policy_loss()
 
