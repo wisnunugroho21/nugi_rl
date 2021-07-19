@@ -91,8 +91,8 @@ class AgentTD3():
 
             self.agent_memory.clear_memory()            
 
-    def save_agent_memory(self, policy_agent_memory):
-        states, actions, rewards, dones, next_states = policy_agent_memory.get_all_items()
+    def save_agent_memory(self, policy_memory):
+        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
         self.agent_memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
