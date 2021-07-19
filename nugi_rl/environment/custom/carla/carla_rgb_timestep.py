@@ -177,7 +177,7 @@ class CarlaEnv():
         dif_loc = math.sqrt(dif_x ** 2 + dif_y ** 2)
 
         done    = False
-        reward  = dif_loc * 10 - 0.1       
+        reward  = dif_loc * 1 - 0.1       
 
         if self.cur_step >= self.max_step:
             done    = True

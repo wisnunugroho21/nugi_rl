@@ -5,7 +5,7 @@ from copy import deepcopy
 from helpers.pytorch_utils import set_device, to_list, copy_parameters
 
 class AgentSAC():
-    def __init__(self, soft_q1, soft_q2, policy, value, state_dim, action_dim, distribution, q_loss, policy_loss, value_loss, memory, 
+    def __init__(self, soft_q1, soft_q2, policy, value, state_dim, action_dim, distribution, q_loss, policy_loss, value_loss, agent_memory, 
         soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
 
@@ -26,7 +26,7 @@ class AgentSAC():
         self.target_value       = deepcopy(self.value)         
 
         self.distribution       = distribution
-        self.memory             = memory
+        self.agent_memory             = agent_memory
         
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
@@ -90,12 +90,13 @@ class AgentSAC():
         self.policy_scaler.update()
 
     def _update_sac(self):
-        if len(self.memory) > self.batch_size:
-            for _ in range(self.epochs):
-                indices     = torch.randperm(len(self.memory))[:self.batch_size]
-                indices[-1] = torch.IntTensor([len(self.memory) - 1])
+        if len(self.agent_memory) > self.batch_size:
+            indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
+            indices[-1] = torch.IntTensor([len(self.agent_memory) - 1])
 
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
+            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
+
+            for _ in range(self.epochs):                
                 for states, actions, rewards, dones, next_states in dataloader:
                     self._training_value(states.to(self.device))
                     self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
@@ -106,9 +107,9 @@ class AgentSAC():
     def update(self):
         self._update_sac()
 
-    def save_memory(self, policy_memory):
+    def save_agent_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
+        self.agent_memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
         state               = torch.FloatTensor(state).unsqueeze(0).to(self.device)

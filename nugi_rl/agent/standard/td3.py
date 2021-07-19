@@ -5,7 +5,7 @@ from copy import deepcopy
 from helpers.pytorch_utils import set_device, copy_parameters, to_list
 
 class AgentTD3():
-    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
+    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, agent_memory, 
         soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
 
@@ -23,10 +23,10 @@ class AgentTD3():
         self.soft_q2            = soft_q2
 
         self.target_policy      = deepcopy(self.policy)
-        self.target_soft_q2     = deepcopy(self.soft_q2)
         self.target_soft_q1     = deepcopy(self.soft_q1)
+        self.target_soft_q2     = deepcopy(self.soft_q2)        
 
-        self.memory             = memory        
+        self.agent_memory             = agent_memory        
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
@@ -61,43 +61,39 @@ class AgentTD3():
             predicted_actions   = self.policy(states)
 
             predicted_q_value1  = self.soft_q1(states, predicted_actions)
-            predicted_q_value2  = self.soft_q2(states, predicted_actions)
-
-            loss = self.policyLoss.compute_loss(predicted_q_value1, predicted_q_value2)
+            loss = self.policyLoss.compute_loss(predicted_q_value1)
 
         self.policy_scaler.scale(loss).backward()
         self.policy_scaler.step(self.policy_optimizer)
         self.policy_scaler.update()
 
     def _update_offpolicy(self):
-        if len(self.memory) > self.batch_size:
-            for _ in range(self.epochs):
-                indices     = torch.randperm(len(self.memory))[:self.batch_size]
-                indices     = len(self.memory) - indices - 1
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
+        for _ in range(self.epochs):
+            dataloader = DataLoader(self.agent_memory, self.batch_size, shuffle = True, num_workers = 8)
+            
+            for states, actions, rewards, dones, next_states in dataloader:
+                if self.q_update == 1:
+                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+                    self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
+                    self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
 
-                if self.q_update == 2:
-                    self.q_update = 1
-
-                    for states, actions, rewards, dones, next_states in dataloader:
-                        self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                        self._training_policy(states.to(self.device))
-
-                        self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                        self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
-                        self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
+                    self.q_update = 2
 
                 else:
-                    self.q_update = 2
-                    
-                    for states, actions, rewards, dones, next_states in dataloader:
-                        self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                        self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                        self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
+                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+                    self._training_policy(states.to(self.device))
 
-    def save_memory(self, policy_memory):
+                    self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
+                    self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
+                    self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
+                    
+                    self.q_update = 1
+
+            self.agent_memory.clear_memory()            
+
+    def save_agent_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
+        self.agent_memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)

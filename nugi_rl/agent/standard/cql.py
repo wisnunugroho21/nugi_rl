@@ -62,12 +62,12 @@ class AgentCql():
     def _training_value(self, states):
         self.value_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
-            actions         = self.policy(states, True)
+            predicted_actions   = self.policy(states, True)
 
-            q_value1        = self.soft_q1(states, torch.tanh(actions), True)
-            q_value2        = self.soft_q2(states, torch.tanh(actions), True)
+            q_value1            = self.soft_q1(states, predicted_actions, True)
+            q_value2            = self.soft_q2(states, predicted_actions, True)
 
-            predicted_value = self.value(states)
+            predicted_value     = self.value(states)
 
             loss    = self.valueLoss.compute_loss(predicted_value, q_value1, q_value2)
 
@@ -93,7 +93,7 @@ class AgentCql():
         if len(self.memory) > self.batch_size:
             for _ in range(self.epochs):
                 indices     = torch.randperm(len(self.memory))[:1024]
-                indices     = len(self.memory) - indices - 1
+                # indices     = len(self.memory) - indices - 1
 
                 dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
                 for states, actions, rewards, dones, next_states in dataloader:
