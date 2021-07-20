@@ -65,9 +65,9 @@ class AgentCql():
             predicted_actions   = self.policy(states)
 
             predicted_q_value1  = self.soft_q1(states, predicted_actions)
-            # predicted_q_value2  = self.soft_q2(states, predicted_actions)
+            predicted_q_value2  = self.soft_q2(states, predicted_actions)
 
-            loss    = self.policyLoss.compute_loss(predicted_q_value1)
+            loss    = self.policyLoss.compute_loss(predicted_q_value1, predicted_q_value2)
 
         self.policy_scaler.scale(loss).backward()
         self.policy_scaler.step(self.policy_optimizer)
