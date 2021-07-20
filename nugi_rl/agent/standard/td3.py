@@ -46,10 +46,14 @@ class AgentTD3():
             target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
             target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
 
+            predicted_actions           = self.policy(states, True)
+            naive_predicted_q_value1    = self.soft_q1(states, predicted_actions)
+            naive_predicted_q_value2    = self.soft_q2(states, predicted_actions)
+
             predicted_q_value1          = self.soft_q1(states, actions)
             predicted_q_value2          = self.soft_q2(states, actions)
-
-            loss = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
+                                            
+            loss = self.qLoss.compute_loss(predicted_q_value1, naive_predicted_q_value1, predicted_q_value2, naive_predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
         
         self.soft_q_scaler.scale(loss).backward()
         self.soft_q_scaler.step(self.soft_q_optimizer)
