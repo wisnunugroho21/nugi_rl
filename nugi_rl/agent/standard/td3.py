@@ -5,7 +5,7 @@ from copy import deepcopy
 from helpers.pytorch_utils import set_device, copy_parameters, to_list
 
 class AgentTD3():
-    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, agent_memory, 
+    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
         soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
 
@@ -26,7 +26,7 @@ class AgentTD3():
         self.target_soft_q1     = deepcopy(self.soft_q1)
         self.target_soft_q2     = deepcopy(self.soft_q2)        
 
-        self.agent_memory             = agent_memory        
+        self.memory             = memory        
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
@@ -46,10 +46,14 @@ class AgentTD3():
             target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
             target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
 
+            predicted_actions           = self.policy(states, True)
+            naive_predicted_q_value1    = self.soft_q1(states, predicted_actions)
+            naive_predicted_q_value2    = self.soft_q2(states, predicted_actions)
+
             predicted_q_value1          = self.soft_q1(states, actions)
             predicted_q_value2          = self.soft_q2(states, actions)
-
-            loss = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
+                                            
+            loss = self.qLoss.compute_loss(predicted_q_value1, naive_predicted_q_value1, predicted_q_value2, naive_predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
         
         self.soft_q_scaler.scale(loss).backward()
         self.soft_q_scaler.step(self.soft_q_optimizer)
@@ -69,7 +73,7 @@ class AgentTD3():
 
     def _update_offpolicy(self):
         for _ in range(self.epochs):
-            dataloader = DataLoader(self.agent_memory, self.batch_size, shuffle = True, num_workers = 8)
+            dataloader = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
             
             for states, actions, rewards, dones, next_states in dataloader:
                 if self.q_update == 1:
@@ -89,11 +93,11 @@ class AgentTD3():
                     
                     self.q_update = 1
 
-            self.agent_memory.clear_memory()            
+            self.memory.clear_memory()            
 
-    def save_agent_memory(self, policy_memory):
+    def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.agent_memory.save_all(states, actions, rewards, dones, next_states)
+        self.memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
