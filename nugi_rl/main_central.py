@@ -8,7 +8,7 @@ import redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.iteration.iter_runner import IterRunner
+from eps_runner.single_step.single_step_runner import SingleStepRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
 from agent.standard.td3 import AgentTD3
 from environment.wrapper.gym_wrapper import GymWrapper
@@ -47,7 +47,7 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Q_Model             = Q_Model
-Runner              = IterRunner
+Runner              = SingleStepRunner
 Executor            = CentralLearnerExecutor
 Policy_loss         = OffPolicyLoss
 Q_loss              = QLoss
@@ -95,7 +95,7 @@ agent = Agent(soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_lo
         soft_q_optimizer, policy_optimizer, is_training_mode, batch_size, epochs, 
         soft_tau, folder, use_gpu)
 
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved) 
 
 executor.execute()

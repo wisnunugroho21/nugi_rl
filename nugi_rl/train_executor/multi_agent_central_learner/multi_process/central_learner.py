@@ -20,8 +20,9 @@ class CentralLearnerExecutor():
                     self.agent.memory.load_redis()
                     self.agent.memory.delete_redis()
 
+                    self.agent.update()
+
                 self.runner.run()
-                self.agent.update()
 
                 if self.save_weights:
                     if i_iteration % self.n_saved == 0:
