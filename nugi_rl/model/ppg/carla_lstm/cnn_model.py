@@ -33,7 +33,7 @@ class CnnModel(nn.Module):
 
       self.conv = nn.Sequential(
         # AtrousSpatialPyramidConv2d(3, 16),
-        DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1),
+        DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1, bias = False),
         nn.ReLU(),
         ExtractEncoder(16),
         Downsampler(16, 32),
@@ -43,7 +43,7 @@ class CnnModel(nn.Module):
         Downsampler(64, 128),
         ExtractEncoder(128),
         # AtrousSpatialPyramidConv2d(128, 128),
-        DepthwiseSeparableConv2d(128, 256, kernel_size = 5, stride = 1, padding = 0),
+        DepthwiseSeparableConv2d(128, 256, kernel_size = 5, stride = 1, padding = 0, bias = False),
         nn.ReLU(),
       )
         

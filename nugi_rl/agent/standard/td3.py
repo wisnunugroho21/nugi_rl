@@ -22,10 +22,6 @@ class AgentTD3():
         self.soft_q1            = soft_q1
         self.soft_q2            = soft_q2
 
-        self.target_policy      = deepcopy(self.policy)
-        self.target_soft_q1     = deepcopy(self.soft_q1)
-        self.target_soft_q2     = deepcopy(self.soft_q2)        
-
         self.memory             = memory        
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
@@ -42,18 +38,14 @@ class AgentTD3():
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
         with torch.cuda.amp.autocast():            
-            predicted_next_actions      = self.target_policy(next_states, True)
-            target_next_q1              = self.target_soft_q1(next_states, predicted_next_actions, True)
-            target_next_q2              = self.target_soft_q2(next_states, predicted_next_actions, True)
-
-            predicted_actions           = self.policy(states, True)
-            naive_predicted_q_value1    = self.soft_q1(states, predicted_actions)
-            naive_predicted_q_value2    = self.soft_q2(states, predicted_actions)
+            predicted_next_actions      = self.policy(next_states, True)
+            target_next_q1              = self.soft_q1(next_states, predicted_next_actions, True)
+            target_next_q2              = self.soft_q2(next_states, predicted_next_actions, True)
 
             predicted_q_value1          = self.soft_q1(states, actions)
             predicted_q_value2          = self.soft_q2(states, actions)
                                             
-            loss = self.qLoss.compute_loss(predicted_q_value1, naive_predicted_q_value1, predicted_q_value2, naive_predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
+            loss = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
         
         self.soft_q_scaler.scale(loss).backward()
         self.soft_q_scaler.step(self.soft_q_optimizer)
@@ -63,38 +55,30 @@ class AgentTD3():
         self.policy_optimizer.zero_grad()
         with torch.cuda.amp.autocast():
             predicted_actions   = self.policy(states)
-
             predicted_q_value1  = self.soft_q1(states, predicted_actions)
-            loss = self.policyLoss.compute_loss(predicted_q_value1)
+            predicted_q_value2  = self.soft_q2(states, predicted_actions)
+
+            loss = self.policyLoss.compute_loss(predicted_q_value1, predicted_q_value2)
 
         self.policy_scaler.scale(loss).backward()
         self.policy_scaler.step(self.policy_optimizer)
         self.policy_scaler.update()
 
-    def _update_offpolicy(self):
-        print(len(self.memory))
+    def _update_offpolicy(self):        
         for _ in range(self.epochs):
-            dataloader = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
+            indices     = torch.randperm(len(self.memory))[:self.batch_size]
+            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
             
-            for states, actions, rewards, dones, next_states in dataloader:
-                if self.q_update == 1:
+            if self.q_update == 1:
+                for states, actions, rewards, dones, next_states in dataloader:
                     self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                    self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                    self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
+                self.q_update = 2
 
-                    self.q_update = 2
-
-                else:
+            else:
+                for states, actions, rewards, dones, next_states in dataloader:
                     self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                    self._training_policy(states.to(self.device))
-
-                    self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                    self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
-                    self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
-                    
-                    self.q_update = 1
-
-            self.memory.clear_memory()            
+                    self._training_policy(states.to(self.device))                
+                self.q_update = 1
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
@@ -107,7 +91,8 @@ class AgentTD3():
         return to_list(action.squeeze(), self.use_gpu)
 
     def update(self):
-        self._update_offpolicy()
+        if len(self.memory) > self.batch_size:
+            self._update_offpolicy()
         
     def save_weights(self):
         torch.save({

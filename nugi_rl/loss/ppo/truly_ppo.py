@@ -36,5 +36,5 @@ class TrulyPPO():
             vpredclipped    = old_values + torch.clamp(values - old_values, -self.value_clip, self.value_clip)
             critic_loss     = ((returns - vpredclipped).pow(2) * 0.5).mean()
 
-        loss = (critic_loss * self.vf_loss_coef) - (dist_entropy * self.entropy_coef) - pg_loss
+        loss = (critic_loss * self.vf_loss_coef) -  (dist_entropy * self.entropy_coef) - pg_loss
         return loss
