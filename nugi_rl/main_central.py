@@ -10,11 +10,11 @@ from torch.optim.adam import Adam
 
 from eps_runner.single_step.single_step_runner import SingleStepRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
-from agent.standard.td3 import AgentTD3
+from agent.standard.cql import AgentCql
 from environment.wrapper.gym_wrapper import GymWrapper
-from loss.td3.q_loss import QLoss
-from loss.td3.policy_loss import OffPolicyLoss
-from model.td3.TanhNN import Policy_Model, Q_Model
+from loss.cql.q_loss import QLoss
+from loss.cql.policy_loss import OffPolicyLoss
+from model.cql.TanhNN import Policy_Model, Q_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 
 from helpers.pytorch_utils import set_device
@@ -28,12 +28,12 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-n_update                = 1024
+n_memory                = 1024
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.95
 n_saved                 = 1
-epochs                  = 10
+epochs                  = 1
 batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
@@ -53,7 +53,7 @@ Policy_loss         = OffPolicyLoss
 Q_loss              = QLoss
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyRedisListMemory
-Agent               = AgentTD3
+Agent               = AgentCql
 
 #####################################################################################################################################################
 
@@ -79,8 +79,8 @@ print('action_dim: ', action_dim)
 
 redis_obj           = redis.Redis()
 
-agent_memory        = Policy_Memory(redis_obj)
-runner_memory       = Policy_Memory(redis_obj)
+agent_memory        = Policy_Memory(redis_obj, capacity = n_memory)
+runner_memory       = Policy_Memory(redis_obj, capacity = n_memory)
 q_loss              = Q_loss()
 policy_loss         = Policy_loss()
 
