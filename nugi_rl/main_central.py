@@ -85,13 +85,12 @@ q_loss              = Q_loss()
 policy_loss         = Policy_loss()
 
 policy              = Policy_Model(state_dim, action_dim, use_gpu).float().to(set_device(use_gpu))
-soft_q1             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
-soft_q2             = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
+soft_q              = Q_Model(state_dim, action_dim).float().to(set_device(use_gpu))
 
-policy_optimizer    = Adam(list(policy.parameters()), lr = learning_rate)        
-soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
+policy_optimizer    = Adam(policy.parameters(), lr = learning_rate)        
+soft_q_optimizer    = Adam(soft_q.parameters(), lr = learning_rate)
 
-agent = Agent(soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, agent_memory, 
+agent = Agent(soft_q, policy, state_dim, action_dim, q_loss, policy_loss, agent_memory, 
         soft_q_optimizer, policy_optimizer, is_training_mode, batch_size, epochs, 
         soft_tau, folder, use_gpu)
 
