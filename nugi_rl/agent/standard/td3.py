@@ -72,6 +72,7 @@ class AgentTD3():
         self.policy_scaler.update()
 
     def _update_offpolicy(self):
+        print(len(self.memory))
         for _ in range(self.epochs):
             dataloader = DataLoader(self.memory, self.batch_size, shuffle = True, num_workers = 8)
             
