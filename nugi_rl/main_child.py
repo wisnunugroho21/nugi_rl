@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
 from eps_runner.single_step.single_step_runner import SingleStepRunner
-from train_executor.multi_agent_central_learner.multi_process.child import ChildExecutor
+from train_executor.executor import Executor
 from agent.standard.ppg import AgentPPG
 from distribution.tanh_clipped_continous import TanhClippedContinous
 from environment.wrapper.gym_wrapper import GymWrapper
@@ -19,6 +19,7 @@ from policy_function.advantage_function.generalized_advantage_estimation import 
 from model.ppg.TanhStdNN import Policy_Model, Value_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 from memory.aux_ppg.standard import AuxPpgMemory
+from eps_runner.wrapper.redis_iter_wrap_runner import RedisIterWrapRunner
 
 from helpers.pytorch_utils import set_device
 
@@ -60,7 +61,7 @@ Policy_Model        = Policy_Model
 Value_Model         = Value_Model
 Policy_Dist         = TanhClippedContinous
 Runner              = SingleStepRunner
-Executor            = ChildExecutor
+Executor            = Executor
 Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
 Wrapper             = GymWrapper
@@ -68,6 +69,7 @@ Policy_Memory       = PolicyRedisListMemory
 Aux_Memory          = AuxPpgMemory
 Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentPPG
+RunnerWrapper       = RedisIterWrapRunner
 
 #####################################################################################################################################################
 
@@ -93,11 +95,13 @@ print('action_dim: ', action_dim)
 
 redis_obj           = redis.Redis()
 
+ppo_memory          = Policy_Memory(redis_obj)
+runner_memory       = Policy_Memory(redis_obj)
+wrap_runner_memory  = Policy_Memory(redis_obj)
+
 policy_dist         = Policy_Dist(use_gpu)
 advantage_function  = Advantage_Function(gamma)
 aux_ppg_memory      = Aux_Memory()
-ppo_memory          = Policy_Memory(redis_obj)
-runner_memory       = Policy_Memory(redis_obj)
 aux_ppg_loss        = Aux_loss(policy_dist)
 ppo_loss            = Policy_loss(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
 
@@ -111,6 +115,7 @@ agent   = Agent(policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
 runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-executor    = Executor(agent, n_iteration, runner, n_update, save_weights, n_saved, load_weights, is_training_mode)
+wrap_runner = RunnerWrapper(runner, wrap_runner_memory, n_update)
+executor    = Executor(agent, n_iteration, runner, 1, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()
