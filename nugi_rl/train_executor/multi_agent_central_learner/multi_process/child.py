@@ -2,10 +2,11 @@ import time
 import datetime
 
 class ChildExecutor():
-    def __init__(self, agent, n_iteration, runner, save_weights = False, n_saved = 10, load_weights = False, is_training_mode = True):
+    def __init__(self, agent, n_iteration, runner, n_update, save_weights = False, n_saved = 10, load_weights = False, is_training_mode = True):
         self.agent              = agent
         self.runner             = runner
 
+        self.n_update           = n_update
         self.n_iteration        = n_iteration
         self.save_weights       = save_weights
         self.n_saved            = n_saved
@@ -22,8 +23,9 @@ class ChildExecutor():
 
         try:
             for i_iteration in range(1, self.n_iteration, 1):
-                memories  = self.runner.run()
-                memories.save_redis()
+                for _ in range(1, self.n_update, 1):
+                    memories  = self.runner.run()
+                    memories.save_redis()
 
                 if self.is_training_mode:
                     self.agent.save_memory(memories)

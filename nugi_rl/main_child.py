@@ -8,7 +8,7 @@ import redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.iteration.iter_runner import IterRunner
+from eps_runner.single_step.single_step_runner import SingleStepRunner
 from train_executor.multi_agent_central_learner.multi_process.child import ChildExecutor
 from agent.standard.ppg import AgentPPG
 from distribution.tanh_clipped_continous import TanhClippedContinous
@@ -50,7 +50,7 @@ gamma                   = 0.95
 learning_rate           = 3e-4
 
 folder                  = 'weights/carla'
-env                     = gym.make('LunarLanderContinuous-v2') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
+env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 
 state_dim           = None
 action_dim          = None
@@ -59,7 +59,7 @@ max_action          = 1
 Policy_Model        = Policy_Model
 Value_Model         = Value_Model
 Policy_Dist         = TanhClippedContinous
-Runner              = IterRunner
+Runner              = SingleStepRunner
 Executor            = ChildExecutor
 Policy_loss         = TrulyPPO
 Aux_loss            = JointAux
@@ -110,7 +110,7 @@ agent   = Agent(policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
+runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+executor    = Executor(agent, n_iteration, runner, n_update, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

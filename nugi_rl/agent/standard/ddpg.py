@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from helpers.pytorch_utils import set_device, copy_parameters, to_list
 
-class AgentCql():
+class AgentDDPG():
     def __init__(self, soft_q, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
         soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
@@ -43,12 +43,9 @@ class AgentCql():
             predicted_next_actions      = self.target_policy(next_states, True)
             target_next_q               = self.target_soft_q(next_states, predicted_next_actions, True)
 
-            predicted_actions           = self.policy(states, True)
-            naive_predicted_q_value     = self.soft_q(states, predicted_actions)
-
             predicted_q_value           = self.soft_q(states, actions)
 
-            loss    = self.qLoss.compute_loss(predicted_q_value, naive_predicted_q_value, target_next_q, rewards, dones)
+            loss    = self.qLoss.compute_loss(predicted_q_value, target_next_q, rewards, dones)
         
         self.soft_q_scaler.scale(loss).backward()
         self.soft_q_scaler.step(self.soft_q_optimizer)
@@ -70,8 +67,10 @@ class AgentCql():
         if len(self.memory) > self.batch_size:
             for _ in range(self.epochs):
                 indices     = torch.randperm(len(self.memory))[:self.batch_size]
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
-                
+                indices     = len(self.memory) - indices - 1
+                indices[-1] = torch.IntTensor([len(self.memory) - 1])
+
+                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
                 for states, actions, rewards, dones, next_states in dataloader:
                     self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
                     self._training_policy(states.to(self.device))
@@ -111,14 +110,11 @@ class AgentCql():
 
         model_checkpoint = torch.load(self.folder + '/cql.tar', map_location = device)
         
-        self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
-        self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        self.policy.load_state_dict(model_checkpoint['policy_state_dict']) 
         self.soft_q.load_state_dict(model_checkpoint['soft_q_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
-        self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])        
-        self.value_scaler.load_state_dict(model_checkpoint['value_scaler_state_dict'])
+        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict']) 
         self.soft_q_scaler.load_state_dict(model_checkpoint['soft_q_scaler_state_dict'])
 
         if self.is_training_mode:
