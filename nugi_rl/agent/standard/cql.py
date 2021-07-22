@@ -34,37 +34,30 @@ class AgentCql():
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
 
-        self.soft_q_scaler      = torch.cuda.amp.GradScaler()
-        self.policy_scaler      = torch.cuda.amp.GradScaler()
-
     def _training_q(self, states, actions, rewards, dones, next_states):
+        predicted_next_actions      = self.target_policy(next_states, True)
+        target_next_q               = self.target_soft_q(next_states, predicted_next_actions, True)
+
+        predicted_actions           = self.policy(states, True)
+        naive_predicted_q_value     = self.soft_q(states, predicted_actions)
+
+        predicted_q_value           = self.soft_q(states, actions)
+
+        loss    = self.qLoss.compute_loss(predicted_q_value, naive_predicted_q_value, target_next_q, rewards, dones)
+
         self.soft_q_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():            
-            predicted_next_actions      = self.target_policy(next_states, True)
-            target_next_q               = self.target_soft_q(next_states, predicted_next_actions, True)
-
-            predicted_actions           = self.policy(states, True)
-            naive_predicted_q_value     = self.soft_q(states, predicted_actions)
-
-            predicted_q_value           = self.soft_q(states, actions)
-
-            loss    = self.qLoss.compute_loss(predicted_q_value, naive_predicted_q_value, target_next_q, rewards, dones)
-        
-        self.soft_q_scaler.scale(loss).backward()
-        self.soft_q_scaler.step(self.soft_q_optimizer)
-        self.soft_q_scaler.update()
+        loss.backward()
+        self.soft_q_optimizer.step()
 
     def _training_policy(self, states):
+        predicted_actions   = self.policy(states)
+        predicted_q_value   = self.soft_q(states, predicted_actions)
+
+        loss    = self.policyLoss.compute_loss(predicted_q_value)
+
         self.policy_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            predicted_actions   = self.policy(states)
-            predicted_q_value   = self.soft_q(states, predicted_actions)
-
-            loss    = self.policyLoss.compute_loss(predicted_q_value)
-
-        self.policy_scaler.scale(loss).backward()
-        self.policy_scaler.step(self.policy_optimizer)
-        self.policy_scaler.update()
+        loss.backward()
+        self.policy_optimizer.step()
 
     def _update_offpolicy(self):
         if len(self.memory) > self.batch_size:
@@ -96,14 +89,9 @@ class AgentCql():
     def save_weights(self):
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
-            'value_state_dict': self.value.state_dict(),
             'soft_q_state_dict': self.soft_q.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
-            'value_optimizer_state_dict': self.value_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
-            'policy_scaler_state_dict': self.policy_scaler.state_dict(),
-            'value_scaler_state_dict': self.value_scaler.state_dict(),
-            'soft_q_scaler_state_dict': self.soft_q_scaler.state_dict(),
         }, self.folder + '/cql.tar')
         
     def load_weights(self, device = None):
@@ -116,8 +104,6 @@ class AgentCql():
         self.soft_q.load_state_dict(model_checkpoint['soft_q_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])
-        self.soft_q_scaler.load_state_dict(model_checkpoint['soft_q_scaler_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()
