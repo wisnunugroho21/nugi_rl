@@ -54,35 +54,31 @@ class AgentPPG():
           self.policy.eval()
           self.value.eval()
 
-    def _training_ppo(self, states, actions, rewards, dones, next_states):         
+    def _training_ppo(self, states, actions, rewards, dones, next_states): 
+        action_datas, _     = self.policy(states)
+        values              = self.value(states)
+
+        old_action_datas, _ = self.policy_old(states, True)
+        old_values          = self.value_old(states, True)
+        next_values         = self.value(next_states, True)
+
+        loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+
         self.ppo_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            action_datas, _     = self.policy(states)
-            values              = self.value(states)
+        loss.backward()
+        self.ppo_optimizer.step()
 
-            old_action_datas, _ = self.policy_old(states, True)
-            old_values          = self.value_old(states, True)
-            next_values         = self.value(next_states, True)
+    def _training_aux_ppg(self, states):  
+        action_datas, values    = self.policy(states)
 
-            loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        returns                 = self.value(states, True)
+        old_action_datas, _     = self.policy_old(states, True)
 
-        self.ppo_scaler.scale(loss).backward()
-        self.ppo_scaler.step(self.ppo_optimizer)
-        self.ppo_scaler.update()
+        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
-    def _training_aux_ppg(self, states):        
-        self.aux_ppg_optimizer.zero_grad()        
-        with torch.cuda.amp.autocast():
-            action_datas, values    = self.policy(states)
-
-            returns                 = self.value(states, True)
-            old_action_datas, _     = self.policy_old(states, True)
-
-            loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
-
-        self.aux_ppg_scaler.scale(loss).backward()
-        self.aux_ppg_scaler.step(self.aux_ppg_optimizer)
-        self.aux_ppg_scaler.update()
+        self.aux_ppg_optimizer.zero_grad()
+        loss.backward()
+        self.aux_ppg_optimizer.step()
 
     def _update_ppo(self):
         self.policy_old.load_state_dict(self.policy.state_dict())
