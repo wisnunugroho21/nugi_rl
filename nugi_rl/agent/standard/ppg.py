@@ -44,9 +44,6 @@ class AgentPPG():
         self.ppo_optimizer      = ppo_optimizer
         self.aux_ppg_optimizer  = aux_ppg_optimizer
 
-        self.ppo_scaler         = torch.cuda.amp.GradScaler()
-        self.aux_ppg_scaler     = torch.cuda.amp.GradScaler()
-
         if is_training_mode:
           self.policy.train()
           self.value.train()
@@ -135,8 +132,6 @@ class AgentPPG():
             'value_state_dict': self.value.state_dict(),
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
             'aux_ppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
-            'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
-            'aux_ppg_scaler_state_dict': self.aux_ppg_scaler.state_dict(),
         }, self.folder + '/ppg.tar')
         
     def load_weights(self, folder = None, device = None):
@@ -151,8 +146,6 @@ class AgentPPG():
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
         self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])
-        self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
-        self.aux_ppg_scaler.load_state_dict(model_checkpoint['aux_ppg_scaler_state_dict'])  
 
         if self.is_training_mode:
             self.policy.train()
