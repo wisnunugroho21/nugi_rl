@@ -7,19 +7,19 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 128),
           nn.ReLU(),
-          nn.Linear(256, 128),
+          nn.Linear(128, 128),
           nn.ReLU(),
         ).float().to(set_device(use_gpu))
 
         self.actor_layer = nn.Sequential(
-          nn.Linear(128, action_dim),
+          nn.Linear(64, action_dim),
           nn.Tanh()
         ).float().to(set_device(use_gpu))
 
         self.critic_layer = nn.Sequential(
-          nn.Linear(128, 1)
+          nn.Linear(64, 1)
         ).float().to(set_device(use_gpu))
 
         self.std = torch.FloatTensor([1.0]).to(set_device(use_gpu))
@@ -28,20 +28,20 @@ class Policy_Model(nn.Module):
       x = self.nn_layer(states)
 
       if detach:
-        return (self.actor_layer(x).detach(), self.std.detach()), self.critic_layer(x).detach()
+        return (self.actor_layer(x[:, :64]).detach(), self.std.detach()), self.critic_layer(x[:, 64:128]).detach()
       else:
-        return (self.actor_layer(x), self.std), self.critic_layer(x)
+        return (self.actor_layer(x[:, :64]), self.std), self.critic_layer(x[:, 64:128])
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim, use_gpu = True):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 128),
           nn.ReLU(),
-          nn.Linear(256, 128),
+          nn.Linear(128, 64),
           nn.ReLU(),
-          nn.Linear(128, 1)
+          nn.Linear(64, 1)
         ).float().to(set_device(use_gpu))
         
     def forward(self, states, detach = False):
