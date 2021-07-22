@@ -11,12 +11,12 @@ from torch.optim.adam import Adam
 from eps_runner.single_step.single_step_runner import SingleStepRunner
 from train_executor.executor import Executor
 from agent.standard.ppg import AgentPPG
-from distribution.tanh_clipped_continous import TanhClippedContinous
+from distribution.basic_continous import BasicContinous
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.joint_aux import JointAux
 from loss.ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg.TanhStdNN import Policy_Model, Value_Model
+from model.ppg.TanhNN import Policy_Model, Value_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 from memory.aux_ppg.standard import AuxPpgMemory
 from eps_runner.wrapper.redis_iter_wrap_runner import RedisIterWrapRunner
@@ -34,18 +34,18 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
-n_update                = 2048 # How many episode before you update the Policy 
+n_update                = 1024 # How many episode before you update the Policy 
 n_aux_update            = 5
 n_saved                 = n_aux_update
 
 policy_kl_range         = 0.03
 policy_params           = 5
 value_clip              = 10.0
-entropy_coef            = 0.2
+entropy_coef            = 0
 vf_loss_coef            = 1.0
 batch_size              = 32
-PPO_epochs              = 10
-Aux_epochs              = 10
+PPO_epochs              = 5
+Aux_epochs              = 5
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -59,7 +59,7 @@ max_action          = 1
 
 Policy_Model        = Policy_Model
 Value_Model         = Value_Model
-Policy_Dist         = TanhClippedContinous
+Policy_Dist         = BasicContinous
 Runner              = SingleStepRunner
 Executor            = Executor
 Policy_loss         = TrulyPPO
@@ -72,11 +72,6 @@ Agent               = AgentPPG
 RunnerWrapper       = RedisIterWrapRunner
 
 #####################################################################################################################################################
-
-random.seed(20)
-np.random.seed(20)
-torch.manual_seed(20)
-os.environ['PYTHONHASHSEED'] = str(20)
 
 environment = Wrapper(env)
 
