@@ -34,7 +34,7 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
-n_update                = 1024 # How many episode before you update the Policy 
+n_update                = 2048 # How many episode before you update the Policy 
 n_aux_update            = 5
 n_saved                 = n_aux_update
 
@@ -116,6 +116,6 @@ agent   = Agent(policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux
 
 runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 wrap_runner = RunnerWrapper(runner, wrap_runner_memory, n_update)
-executor    = Executor(agent, n_iteration, runner, 1, save_weights, n_saved, load_weights, is_training_mode)
+executor    = Executor(agent, n_iteration, wrap_runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

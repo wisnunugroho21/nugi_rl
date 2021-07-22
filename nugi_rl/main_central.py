@@ -10,11 +10,11 @@ from torch.optim.adam import Adam
 
 from eps_runner.single_step.single_step_runner import SingleStepRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
-from agent.standard.ddpg import AgentDDPG
+from agent.standard.cql import AgentCql
 from environment.wrapper.gym_wrapper import GymWrapper
-from loss.ddpg.q_loss import QLoss
-from loss.ddpg.policy_loss import OffPolicyLoss
-from model.dppg.TanhNN import Policy_Model, Q_Model
+from loss.cql.q_loss import QLoss
+from loss.cql.policy_loss import OffPolicyLoss
+from model.cql.TanhNN import Policy_Model, Q_Model
 from memory.policy.redis_list import PolicyRedisListMemory
 
 from helpers.pytorch_utils import set_device
@@ -28,7 +28,7 @@ use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-n_memory                = 10240
+n_memory                = 102400
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.95
@@ -53,14 +53,9 @@ Policy_loss         = OffPolicyLoss
 Q_loss              = QLoss
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyRedisListMemory
-Agent               = AgentDDPG
+Agent               = AgentCql
 
 #####################################################################################################################################################
-
-random.seed(20)
-np.random.seed(20)
-torch.manual_seed(20)
-os.environ['PYTHONHASHSEED'] = str(20)
 
 environment = Wrapper(env)
 

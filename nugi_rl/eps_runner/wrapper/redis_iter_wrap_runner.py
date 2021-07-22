@@ -5,10 +5,11 @@ class RedisIterWrapRunner():
         self.runner     = runner
 
     def run(self):
-        for _ in range(1, self.n_update, 1):
-            memories  = self.runner.run()
-            
+        for i in range(1, self.n_update, 1):
+            memories  = self.runner.run()            
             memories.save_redis()
-            self.memories.save_memory(memories)
+
+            states, actions, rewards, dones, next_states = memories.get_all_items()
+            self.memories.save_all(states, actions, rewards, dones, next_states)
 
         return self.memories

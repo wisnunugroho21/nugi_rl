@@ -32,7 +32,7 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
-n_update                = 1024 # How many episode before you update the Policy 
+n_update                = 2048 # How many episode before you update the Policy 
 n_aux_update            = 5
 n_saved                 = n_aux_update
 
@@ -69,11 +69,6 @@ Advantage_Function  = GeneralizedAdvantageEstimation
 Agent               = AgentPPG
 
 #####################################################################################################################################################
-
-random.seed(20)
-np.random.seed(20)
-torch.manual_seed(20)
-os.environ['PYTHONHASHSEED'] = str(20)
 
 environment = Wrapper(env)
 
