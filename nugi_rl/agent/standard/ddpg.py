@@ -68,7 +68,6 @@ class AgentDDPG():
             for _ in range(self.epochs):
                 indices     = torch.randperm(len(self.memory))[:self.batch_size]
                 indices     = len(self.memory) - indices - 1
-                indices[-1] = torch.IntTensor([len(self.memory) - 1])
 
                 dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
                 for states, actions, rewards, dones, next_states in dataloader:

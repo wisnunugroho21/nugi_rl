@@ -70,8 +70,9 @@ class AgentCql():
         if len(self.memory) > self.batch_size:
             for _ in range(self.epochs):
                 indices     = torch.randperm(len(self.memory))[:self.batch_size]
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
-                
+                indices     = len(self.memory) - indices - 1
+
+                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
                 for states, actions, rewards, dones, next_states in dataloader:
                     self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
                     self._training_policy(states.to(self.device))
@@ -111,14 +112,11 @@ class AgentCql():
 
         model_checkpoint = torch.load(self.folder + '/cql.tar', map_location = device)
         
-        self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
-        self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        self.policy.load_state_dict(model_checkpoint['policy_state_dict'])
         self.soft_q.load_state_dict(model_checkpoint['soft_q_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
-        self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])        
-        self.value_scaler.load_state_dict(model_checkpoint['value_scaler_state_dict'])
+        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])
         self.soft_q_scaler.load_state_dict(model_checkpoint['soft_q_scaler_state_dict'])
 
         if self.is_training_mode:
