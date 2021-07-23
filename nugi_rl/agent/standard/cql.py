@@ -84,9 +84,11 @@ class AgentCQL():
             indices     = len(self.memory) - indices - 1
 
             dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
-            for states, actions, rewards, dones, next_states in dataloader:
-                self._training_value(states.to(self.device))
+            for states, actions, rewards, dones, next_states in dataloader:         
+                actions = actions.clamp(-1, 1)
+                       
                 self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+                self._training_value(states.to(self.device))
                 self._training_policy(states.to(self.device))
 
                 self.target_value = copy_parameters(self.value, self.target_value, self.soft_tau)
@@ -110,10 +112,10 @@ class AgentCQL():
             'policy_state_dict': self.policy.state_dict(),
             'soft_q1_state_dict': self.soft_q1.state_dict(),
             'soft_q2_state_dict': self.soft_q2.state_dict(),
+            'value_state_dict': self.value.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
-            'policy_scaler_state_dict': self.policy_scaler.state_dict(),
-            'soft_q_scaler_state_dict': self.soft_q_scaler.state_dict(),
+            'value_optimizer_state_dict': self.value_optimizer.state_dict(),
         }, self.folder + '/sac.tar')
         
     def load_weights(self, device = None):
@@ -125,7 +127,7 @@ class AgentCQL():
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])
         self.soft_q1.load_state_dict(model_checkpoint['soft_q1_state_dict'])
         self.soft_q2.load_state_dict(model_checkpoint['soft_q2_state_dict'])
+        self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])
-        self.soft_q_scaler.load_state_dict(model_checkpoint['soft_q_scaler_state_dict'])
+        self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
