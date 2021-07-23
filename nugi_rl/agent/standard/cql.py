@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from helpers.pytorch_utils import set_device, to_list, copy_parameters
 
-class AgentSAC():
+class AgentCQL():
     def __init__(self, soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss, policy_loss, value_loss, memory, 
         soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
@@ -35,10 +35,6 @@ class AgentSAC():
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
         self.value_optimizer    = value_optimizer
-
-        self.soft_q_scaler      = torch.cuda.amp.GradScaler()
-        self.policy_scaler      = torch.cuda.amp.GradScaler()
-        self.value_scaler       = torch.cuda.amp.GradScaler()
 
     def _training_q(self, states, actions, rewards, dones, next_states):
         target_next_value   = self.target_value(next_states, True)
@@ -104,13 +100,8 @@ class AgentSAC():
         self.memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
-        state               = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        action_datas        = self.policy(state)
-        
-        if self.is_training_mode:
-            action = self.distribution.sample(action_datas)
-        else:
-            action = self.distribution.act_deterministic(action_datas)
+        state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        action  = self.policy(state)
               
         return to_list(action.squeeze(), self.use_gpu)
 
