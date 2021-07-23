@@ -5,6 +5,8 @@ class RedisIterWrapRunner():
         self.runner     = runner
 
     def run(self):
+        self.memories.clear_memory()
+        
         for i in range(1, self.n_update, 1):
             memories  = self.runner.run()            
             memories.save_redis()

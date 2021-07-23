@@ -10,7 +10,7 @@ from torch.optim.adam import Adam
 
 from eps_runner.single_step.single_step_runner import SingleStepRunner
 from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
-from agent.standard.cql import AgentCql
+from agent.standard.cql import AgentCQL
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.cql.q_loss import QLoss
 from loss.cql.policy_loss import OffPolicyLoss
@@ -56,7 +56,7 @@ Q_loss              = QLoss
 Value_Loss          = ValueLoss
 Wrapper             = GymWrapper
 Policy_Memory       = PolicyRedisListMemory
-Agent               = AgentCql
+Agent               = AgentCQL
 
 #####################################################################################################################################################
 

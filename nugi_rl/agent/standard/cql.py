@@ -78,22 +78,22 @@ class AgentCQL():
         loss.backward()
         self.policy_optimizer.step()
 
-    def _update_sac(self):
-        if len(self.memory) > self.batch_size:
-            for _ in range(self.epochs):
-                indices     = torch.randperm(len(self.memory))[:self.batch_size]
-                indices     = len(self.memory) - indices - 1
+    def _update_cql(self):        
+        for _ in range(self.epochs):
+            indices     = torch.randperm(len(self.memory))[:self.batch_size]
+            indices     = len(self.memory) - indices - 1
 
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
-                for states, actions, rewards, dones, next_states in dataloader:
-                    self._training_value(states.to(self.device))
-                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                    self._training_policy(states.to(self.device))
+            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
+            for states, actions, rewards, dones, next_states in dataloader:
+                self._training_value(states.to(self.device))
+                self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+                self._training_policy(states.to(self.device))
 
-                    self.target_value = copy_parameters(self.value, self.target_value, self.soft_tau)
+                self.target_value = copy_parameters(self.value, self.target_value, self.soft_tau)
 
     def update(self):
-        self._update_sac()
+        if len(self.memory) > self.batch_size:
+            self._update_cql()
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()

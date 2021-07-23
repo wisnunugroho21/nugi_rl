@@ -37,8 +37,7 @@ class EpisodicRunner():
                 else:
                     next_state, reward, done, _ = self.env.step(action)
                 
-                if self.training_mode:
-                    self.memories.save_eps(state.tolist(), action, reward, float(done), next_state.tolist())
+                self.memories.save_eps(state.tolist(), action, reward, float(done), next_state.tolist())
                     
                 state           = next_state
                 eps_time        += 1 
