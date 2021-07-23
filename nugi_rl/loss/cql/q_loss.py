@@ -4,11 +4,16 @@ class QLoss():
     def __init__(self, gamma = 0.99):
         self.gamma = gamma
 
-    def compute_loss(self, predicted_q_value, naive_predicted_q_value, target_next_q, reward, done):
-        target_q_value          = (reward + (1 - done) * self.gamma * target_next_q).detach()
+    def compute_loss(self, q1_value, q2_value, naive_q1_value, naive_q2_value, target_next_value, rewards, dones):
+        target_q_value          = (rewards + (1 - dones) * self.gamma * target_next_value).detach()
 
-        cql_regularizer         = (naive_predicted_q_value - predicted_q_value).mean()
-        td                      = ((target_q_value - predicted_q_value).pow(2) * 0.5).mean()
+        td_error1               = ((target_q_value - q1_value).pow(2) * 0.5).mean()
+        td_error2               = ((target_q_value - q2_value).pow(2) * 0.5).mean()
 
-        q_value_loss            = td + cql_regularizer        
-        return q_value_loss
+        cql_regularizer1        = (naive_q1_value - q1_value).mean()
+        cql_regularizer2        = (naive_q2_value - q2_value).mean()
+
+        q1_value_loss           = td_error1 + cql_regularizer1
+        q2_value_loss           = td_error2 + cql_regularizer2
+
+        return q1_value_loss + q2_value_loss

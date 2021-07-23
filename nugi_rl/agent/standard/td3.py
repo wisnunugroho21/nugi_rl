@@ -36,33 +36,29 @@ class AgentTD3():
         self.policy_scaler      = torch.cuda.amp.GradScaler()
 
     def _training_q(self, states, actions, rewards, dones, next_states):
-        self.soft_q_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():            
-            predicted_next_actions      = self.policy(next_states, True)
-            target_next_q1              = self.soft_q1(next_states, predicted_next_actions, True)
-            target_next_q2              = self.soft_q2(next_states, predicted_next_actions, True)
+        predicted_next_actions      = self.policy(next_states, True)
+        target_next_q1              = self.soft_q1(next_states, predicted_next_actions, True)
+        target_next_q2              = self.soft_q2(next_states, predicted_next_actions, True)
 
-            predicted_q_value1          = self.soft_q1(states, actions)
-            predicted_q_value2          = self.soft_q2(states, actions)
-                                            
-            loss = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
-        
-        self.soft_q_scaler.scale(loss).backward()
-        self.soft_q_scaler.step(self.soft_q_optimizer)
-        self.soft_q_scaler.update()
+        predicted_q_value1          = self.soft_q1(states, actions)
+        predicted_q_value2          = self.soft_q2(states, actions)
+                                        
+        loss = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_next_q1, target_next_q2, rewards, dones)
+
+        self.soft_q_optimizer.zero_grad()
+        loss.backward()
+        self.soft_q_optimizer.step()
 
     def _training_policy(self, states):
+        predicted_actions   = self.policy(states)
+        predicted_q_value1  = self.soft_q1(states, predicted_actions)
+        predicted_q_value2  = self.soft_q2(states, predicted_actions)
+
+        loss = self.policyLoss.compute_loss(predicted_q_value1, predicted_q_value2)
+
         self.policy_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            predicted_actions   = self.policy(states)
-            predicted_q_value1  = self.soft_q1(states, predicted_actions)
-            predicted_q_value2  = self.soft_q2(states, predicted_actions)
-
-            loss = self.policyLoss.compute_loss(predicted_q_value1, predicted_q_value2)
-
-        self.policy_scaler.scale(loss).backward()
-        self.policy_scaler.step(self.policy_optimizer)
-        self.policy_scaler.update()
+        loss.backward()
+        self.policy_optimizer.step()
 
     def _update_offpolicy(self):        
         for _ in range(self.epochs):
