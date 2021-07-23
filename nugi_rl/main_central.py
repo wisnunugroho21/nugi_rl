@@ -35,7 +35,7 @@ n_plot_batch            = 1
 soft_tau                = 0.95
 n_saved                 = 1
 epochs                  = 1
-batch_size              = 32
+batch_size              = 64
 action_std              = 1.0
 learning_rate           = 3e-4
 
