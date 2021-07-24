@@ -23,7 +23,7 @@ from helpers.pytorch_utils import set_device
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = False # If you want to save the agent, set this to True
+save_weights            = True # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
@@ -33,13 +33,15 @@ n_memory                = 102400
 n_iteration             = 1000000
 n_plot_batch            = 1
 soft_tau                = 0.95
-n_saved                 = 1
+n_saved                 = 1000
 epochs                  = 1
 batch_size              = 64
 action_std              = 1.0
 learning_rate           = 3e-4
+alpha                   = 0.5
+gamma                   = 0.95
 
-folder                  = 'weights/carla'
+folder                  = 'weights/ppg_bipedal_cql'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 
 state_dim           = None
@@ -79,7 +81,7 @@ redis_obj           = redis.Redis()
 
 agent_memory        = Policy_Memory(redis_obj, capacity = n_memory)
 runner_memory       = Policy_Memory(redis_obj, capacity = n_memory)
-q_loss              = Q_loss()
+q_loss              = Q_loss(gamma, alpha)
 policy_loss         = Policy_loss()
 value_loss          = Value_Loss()
 

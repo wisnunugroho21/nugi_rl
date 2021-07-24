@@ -116,7 +116,7 @@ class AgentCQL():
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
             'value_optimizer_state_dict': self.value_optimizer.state_dict(),
-        }, self.folder + '/sac.tar')
+        }, self.folder + '/cql.tar')
         
     def load_weights(self, device = None):
         if device == None:
