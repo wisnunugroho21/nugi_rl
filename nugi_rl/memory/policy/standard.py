@@ -25,7 +25,7 @@ class PolicyMemory(Dataset):
         return torch.FloatTensor(self.states[idx]), torch.FloatTensor(self.actions[idx]), torch.FloatTensor([self.rewards[idx]]), \
             torch.FloatTensor([self.dones[idx]]), torch.FloatTensor(self.next_states[idx])
 
-    def save_eps(self, state, action, reward, done, next_state):
+    def save_obs(self, state, action, reward, done, next_state):
         if len(self) >= self.capacity:
             del self.states[0]
             del self.actions[0]
@@ -45,7 +45,7 @@ class PolicyMemory(Dataset):
 
     def save_all(self, states, actions, rewards, dones, next_states):
         for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
-            self.save_eps(state, action, reward, done, next_state)
+            self.save_obs(state, action, reward, done, next_state)
 
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states 

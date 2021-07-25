@@ -51,6 +51,10 @@ class AgentPPG():
           self.policy.eval()
           self.value.eval()
 
+    @property
+    def memory(self):
+        return self.ppo_memory
+
     def _training_ppo(self, states, actions, rewards, dones, next_states): 
         action_datas, _     = self.policy(states)
         values              = self.value(states)

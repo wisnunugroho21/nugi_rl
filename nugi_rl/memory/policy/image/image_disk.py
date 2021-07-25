@@ -60,7 +60,7 @@ class ImagePolicyMemory(PolicyMemory):
     def __get_image_tens(self, filename):
         return Image.open(filename).convert("RGB")
 
-    def save_eps(self, state, action, reward, done, next_state, save_tensor_images = True):
+    def save_obs(self, state, action, reward, done, next_state, save_tensor_images = True):
         if len(self) >= self.capacity:
             del self.states[0]
             del self.actions[0]
@@ -85,7 +85,7 @@ class ImagePolicyMemory(PolicyMemory):
 
     def save_all(self, states, actions, rewards, dones, next_states, save_img = True):
         for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
-            self.save_eps(state, action, reward, done, next_state, save_img)
+            self.save_obs(state, action, reward, done, next_state, save_img)
 
     def get_all_items(self, get_tensor_images = True):
         states = self.states

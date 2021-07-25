@@ -23,7 +23,7 @@ class RedisPolicyMemory(PolicyMemory):
         return torch.FloatTensor(states), torch.FloatTensor(actions), torch.FloatTensor(rewards), \
             torch.FloatTensor(dones), torch.FloatTensor(next_states)
 
-    def save_eps(self, state, action, reward, done, next_state):
+    def save_obs(self, state, action, reward, done, next_state):
         if len(self) >= self.capacity:
             self.redis.ltrim('states', 0, -2)
             self.redis.ltrim('actions', 0, -2)
@@ -43,7 +43,7 @@ class RedisPolicyMemory(PolicyMemory):
 
     def save_all(self, states, actions, rewards, dones, next_states):
         for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
-            self.save_eps(state, action, reward, done, next_state)
+            self.save_obs(state, action, reward, done, next_state)
 
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states 

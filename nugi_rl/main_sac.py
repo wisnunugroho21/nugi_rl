@@ -83,8 +83,7 @@ if action_dim is None:
 print('action_dim: ', action_dim)
 
 policy_dist         = Policy_Dist(use_gpu)
-sac_memory          = Policy_Memory(capacity = n_memory)
-runner_memory       = Policy_Memory(capacity = n_memory)
+memory              = Policy_Memory(capacity = n_memory)
 q_loss              = Q_loss(policy_dist)
 policy_loss         = Policy_loss(policy_dist, alpha = alpha)
 value_loss          = Value_loss(policy_dist, alpha = alpha)
@@ -98,11 +97,11 @@ policy_optimizer    = Adam(list(policy.parameters()), lr = learning_rate)
 soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
 value_optimizer     = Adam(list(value.parameters()), lr = learning_rate)
 
-agent = Agent(soft_q1, soft_q2, policy, value, state_dim, action_dim, policy_dist, q_loss, policy_loss, value_loss, sac_memory, 
+agent = Agent(soft_q1, soft_q2, policy, value, state_dim, action_dim, policy_dist, q_loss, policy_loss, value_loss, memory, 
         soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode, batch_size, epochs, 
         soft_tau, folder, use_gpu)
                     
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = Runner(agent, environment, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

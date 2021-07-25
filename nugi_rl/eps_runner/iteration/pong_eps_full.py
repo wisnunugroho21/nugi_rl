@@ -3,8 +3,8 @@ from helpers.pytorch_utils import prepo_crop
 from eps_runner.iteration.iter_runner import IterRunner
 
 class PongFullRunner(IterRunner):
-    def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
-        super().__init__(agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer, n_plot_batch)
+    def __init__(self, agent, env, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+        super().__init__(agent, env, training_mode, render, n_update, is_discrete, max_action, writer, n_plot_batch)
 
         self.frame      = 4
 
@@ -14,8 +14,6 @@ class PongFullRunner(IterRunner):
         self.states[-1] = obs
 
     def run(self):
-        self.memories.clear_memory()
-
         for _ in range(self.n_update):
             action      = self.agent.act(self.states)
             action_gym  = action + 1 if action != 0 else 0
@@ -37,7 +35,7 @@ class PongFullRunner(IterRunner):
                     break 
             
             if self.training_mode:
-                self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 
@@ -60,6 +58,4 @@ class PongFullRunner(IterRunner):
                 self.states[-1] = obs
 
                 self.total_reward   = 0
-                self.eps_time       = 0             
-        
-        return self.memories
+                self.eps_time       = 0

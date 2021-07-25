@@ -31,12 +31,12 @@ class TimeImageStatePolicyMemory(PolicyMemory):
         states, actions, rewards, dones, next_states = super().__getitem__(idx)
         return images, states, actions, rewards, dones, next_images, next_states
 
-    def save_eps(self, image, state, action, reward, done, next_image, next_state):
+    def save_obs(self, image, state, action, reward, done, next_image, next_state):
         if len(self) >= self.capacity:
             del self.images[0]
             del self.next_images[0]
 
-        super().save_eps(state, action, reward, done, next_state)
+        super().save_obs(state, action, reward, done, next_state)
         self.images.append(image)
         self.next_images.append(next_image)
 
@@ -46,7 +46,7 @@ class TimeImageStatePolicyMemory(PolicyMemory):
 
     def save_all(self, images, states, actions, rewards, dones, next_images, next_states):
         for image, state, action, reward, done, next_image, next_state in zip(images, states, actions, rewards, dones, next_images, next_states):            
-            self.save_eps(image, state, action, reward, done, next_image, next_state)
+            self.save_obs(image, state, action, reward, done, next_image, next_state)
 
     def get_all_items(self):
         states, actions, rewards, dones, next_states = super().get_all_items()

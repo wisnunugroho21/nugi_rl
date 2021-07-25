@@ -35,6 +35,10 @@ class AgentTD3():
         self.soft_q_scaler      = torch.cuda.amp.GradScaler()
         self.policy_scaler      = torch.cuda.amp.GradScaler()
 
+    @property
+    def memory(self):
+        return self.memory
+
     def _training_q(self, states, actions, rewards, dones, next_states):
         predicted_next_actions      = self.policy(next_states, True)
         target_next_q1              = self.soft_q1(next_states, predicted_next_actions, True)

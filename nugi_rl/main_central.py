@@ -67,9 +67,8 @@ if action_dim is None:
 print('action_dim: ', action_dim)
 
 redis_obj           = redis.Redis()
+memory              = PolicyRedisListMemory(redis_obj, capacity = n_memory)
 
-agent_memory        = PolicyRedisListMemory(redis_obj, capacity = n_memory)
-runner_memory       = PolicyRedisListMemory(redis_obj, capacity = n_memory)
 q_loss              = QLoss(gamma, alpha)
 policy_loss         = OffPolicyLoss()
 value_loss          = ValueLoss()
@@ -83,11 +82,11 @@ policy_optimizer    = Adam(policy.parameters(), lr = learning_rate)
 soft_q_optimizer    = Adam(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
 value_optimizer     = Adam(value.parameters(), lr = learning_rate)
 
-agent = AgentCQL(soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss, policy_loss, value_loss, agent_memory, 
+agent = AgentCQL(soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss, policy_loss, value_loss, memory, 
         soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode, batch_size, epochs, 
         soft_tau, folder, use_gpu)
 
-runner      = SingleStepRunner(agent, environment, runner_memory, is_save_memory, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = SingleStepRunner(agent, environment, is_save_memory, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = CentralLearnerExecutor(agent, n_iteration, runner, save_weights, n_saved) 
 
 executor.execute()

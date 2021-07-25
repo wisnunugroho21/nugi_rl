@@ -36,7 +36,7 @@ class AuxClrMemory(Dataset):
 
         return input_images, target_images
 
-    def save_eps(self, image):
+    def save_obs(self, image):
         if len(self) >= self.capacity:
             del self.images[0]
 
@@ -46,11 +46,11 @@ class AuxClrMemory(Dataset):
         self.clear_memory()
 
         for image in images:
-            self.save_eps(image)
+            self.save_obs(image)
 
     def save_all(self, images):
         for image in images:
-            self.save_eps(image)
+            self.save_obs(image)
 
     def get_all_items(self):         
         return self.images

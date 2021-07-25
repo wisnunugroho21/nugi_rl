@@ -36,6 +36,10 @@ class AgentCQL():
         self.policy_optimizer   = policy_optimizer
         self.value_optimizer    = value_optimizer
 
+    @property
+    def memory(self):
+        return self.memory
+
     def _training_q(self, states, actions, rewards, dones, next_states):
         target_next_value   = self.target_value(next_states, True)
 

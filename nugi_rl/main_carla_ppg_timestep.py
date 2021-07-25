@@ -97,7 +97,6 @@ policy_dist         = Policy_Dist(use_gpu)
 advantage_function  = Advantage_Function(gamma)
 aux_ppg_memory      = Aux_Memory()
 ppo_memory          = Policy_Memory()
-runner_memory       = Policy_Memory()
 aux_ppg_loss        = Aux_loss(policy_dist)
 ppo_loss            = Policy_loss(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
 
@@ -111,7 +110,7 @@ agent = Agent(cnn, policy, value, state_dim, action_dim, policy_dist, ppo_loss, 
             aux_ppg_optimizer, ppo_epochs, aux_ppg_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu)
 
-runner      = Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = Runner(agent, environment, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

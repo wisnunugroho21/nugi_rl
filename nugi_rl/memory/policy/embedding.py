@@ -22,8 +22,8 @@ class EmbeddingPolicyMemory(PolicyMemory):
         states, actions, rewards, dones, next_states = super().__getitem__(idx)
         return states, actions, rewards, dones, next_states, torch.FloatTensor(self.available_actions[idx])
 
-    def save_eps(self, state, action, reward, done, next_state, available_action):
-        super().save_eps(state, reward, action, done, next_state)
+    def save_obs(self, state, action, reward, done, next_state, available_action):
+        super().save_obs(state, reward, action, done, next_state)
         self.available_actions.append(available_action)
 
     def save_replace_all(self, states, actions, rewards, dones, next_states, available_actions):

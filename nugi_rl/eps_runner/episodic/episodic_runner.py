@@ -1,10 +1,9 @@
 import numpy as np
 
 class EpisodicRunner():
-    def __init__(self, agent, env, memory, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+    def __init__(self, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.agent              = agent
         self.env                = env
-        self.memories           = memory
 
         self.render             = render
         self.is_save_memory     = is_save_memory
@@ -17,9 +16,6 @@ class EpisodicRunner():
         self.i_episode          = 0
 
     def run(self):
-        if self.is_save_memory:
-            self.memories.clear_memory()
-
         for _ in range(self.n_update):            
             state           = self.env.reset()
             done            = False
@@ -39,7 +35,7 @@ class EpisodicRunner():
                     next_state, reward, done, _ = self.env.step(action)
                 
                 if self.is_save_memory:
-                    self.memories.save_eps(state.tolist(), action, reward, float(done), next_state.tolist())
+                    self.agent.memory.save_obs(state.tolist(), action, reward, float(done), next_state.tolist())
                     
                 state           = next_state
                 eps_time        += 1 
@@ -53,6 +49,4 @@ class EpisodicRunner():
 
             if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
                 self.writer.add_scalar('Rewards', total_reward, self.i_episode)
-                self.writer.add_scalar('Times', eps_time, self.i_episode)
-        
-        return self.memories
+                self.writer.add_scalar('Times', eps_time, self.i_episode)        

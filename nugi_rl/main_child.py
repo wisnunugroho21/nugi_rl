@@ -77,12 +77,11 @@ print('action_dim: ', action_dim)
 redis_obj           = redis.Redis()
 
 ppo_memory          = PolicyRedisListMemory(redis_obj)
-runner_memory       = PolicyRedisListMemory(redis_obj)
-wrap_runner_memory  = PolicyRedisListMemory(redis_obj)
+aux_ppg_memory      = AuxPpgMemory()
 
 policy_dist         = BasicContinous(use_gpu)
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
-aux_ppg_memory      = AuxPpgMemory()
+
 aux_ppg_loss        = AuxPPG(policy_dist)
 ppo_loss            = TrulyPPO(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
 
@@ -95,8 +94,8 @@ agent   = AgentPPG(policy, value, state_dim, action_dim, policy_dist, ppo_loss, 
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
-runner      = SingleStepRunner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-wrap_runner = RedisIterWrapRunner(runner, wrap_runner_memory, n_update)
+runner      = SingleStepRunner(agent, environment, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+wrap_runner = RedisIterWrapRunner(agent, runner, n_update)
 executor    = Executor(agent, n_iteration, wrap_runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

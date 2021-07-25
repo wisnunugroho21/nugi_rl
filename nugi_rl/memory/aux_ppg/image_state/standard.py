@@ -25,22 +25,22 @@ class ImageStateAuxPpgMemory(AuxPpgMemory):
         states = super().__getitem__(idx)
         return images, states
 
-    def save_eps(self, image, state):
+    def save_obs(self, image, state):
         if len(self) >= self.capacity:
             del self.images[0]
 
-        super().save_eps(state)
+        super().save_obs(state)
         self.images.append(image)
 
     def save_replace_all(self, images, states):
         self.clear_memory()
 
         for image, state in zip(images, states):
-            self.save_eps(image, state)
+            self.save_obs(image, state)
 
     def save_all(self, images, states):
         for image, state in zip(images, states):
-            self.save_eps(image, state)
+            self.save_obs(image, state)
 
     def get_all_items(self):
         states = super().get_all_items()

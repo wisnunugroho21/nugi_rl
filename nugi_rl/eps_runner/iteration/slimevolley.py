@@ -4,8 +4,6 @@ from eps_runner.iteration.iter_runner import IterRunner
 
 class SlimeVolleyRunner(IterRunner):
     def run(self):
-        self.memories.clear_memory()       
-
         for _ in range(self.n_update):
             action  = self.agent.act(self.states)
 
@@ -25,7 +23,7 @@ class SlimeVolleyRunner(IterRunner):
             next_state, reward, done, _ =  self.env.step(action_gym)
             
             if self.training_mode:
-                self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 
@@ -45,5 +43,3 @@ class SlimeVolleyRunner(IterRunner):
                 self.states         = self.env.reset()
                 self.total_reward   = 0
                 self.eps_time       = 0        
-
-        return self.memories
