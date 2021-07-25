@@ -17,7 +17,7 @@ from loss.other.aux_ppg import AuxPPG
 from loss.ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
 from model.ppg.TanhStdNN import Policy_Model, Value_Model
-from memory.policy.global.redis_list import PolicyRedisListMemory
+from memory.policy.whole.redis_list import PolicyRedisListMemory
 from memory.aux_ppg.standard import AuxPpgMemory
 from eps_runner.wrapper.redis_iter_wrap_runner import RedisIterWrapRunner
 

@@ -16,7 +16,7 @@ from loss.cql.q_loss import QLoss
 from loss.cql.policy_loss import OffPolicyLoss
 from loss.cql.value_loss import ValueLoss
 from model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
-from memory.policy.global.redis_list import PolicyRedisListMemory
+from memory.policy.whole.redis_list import PolicyRedisListMemory
 
 from helpers.pytorch_utils import set_device
 
