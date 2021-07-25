@@ -1,6 +1,6 @@
 import torch
 
-class GeneralizedAdvantageEstimation():
+class VtraceAdvantageEstimation():
     def __init__(self, gamma = 0.99):
         self.gamma  = gamma
 

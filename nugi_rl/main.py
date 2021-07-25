@@ -26,6 +26,7 @@ from helpers.pytorch_utils import set_device
 load_weights            = False # If you want to load the agent, set this to True
 save_weights            = False # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
+is_save_memory          = True
 use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -51,9 +52,9 @@ learning_rate           = 3e-4
 folder                  = 'weights/ppg_bipedal_1'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 
-state_dim           = None
-action_dim          = None
-max_action          = 2
+state_dim               = None
+action_dim              = None
+max_action              = 1
 
 #####################################################################################################################################################
 
@@ -89,7 +90,7 @@ agent   = AgentPPG( policy, value, state_dim, action_dim, policy_dist, ppo_loss,
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
-runner      = IterRunner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = IterRunner(agent, environment, runner_memory, is_save_memory, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

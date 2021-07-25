@@ -16,7 +16,7 @@ from loss.cql.q_loss import QLoss
 from loss.cql.policy_loss import OffPolicyLoss
 from loss.cql.value_loss import ValueLoss
 from model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
-from memory.policy.redis_list import PolicyRedisListMemory
+from memory.policy.global.redis_list import PolicyRedisListMemory
 
 from helpers.pytorch_utils import set_device
 
@@ -25,6 +25,7 @@ from helpers.pytorch_utils import set_device
 load_weights            = False # If you want to load the agent, set this to True
 save_weights            = True # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
+is_save_memory          = True
 use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -86,7 +87,7 @@ agent = AgentCQL(soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss,
         soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode, batch_size, epochs, 
         soft_tau, folder, use_gpu)
 
-runner      = SingleStepRunner(agent, environment, runner_memory, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = SingleStepRunner(agent, environment, runner_memory, is_save_memory, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = CentralLearnerExecutor(agent, n_iteration, runner, save_weights, n_saved) 
 
 executor.execute()
