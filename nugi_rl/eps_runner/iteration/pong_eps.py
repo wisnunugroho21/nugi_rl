@@ -1,18 +1,16 @@
 import numpy as np
-from utils.math_function import prepro_half_one_dim
+from helpers.math_function import prepro_half_one_dim
 from eps_runner.iteration.iter_runner import IterRunner
 
 class PongRunner(IterRunner):
-    def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
-        super().__init__(agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer, n_plot_batch)
+    def __init__(self, agent, env, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+        super().__init__(agent, env, training_mode, render, n_update, is_discrete, max_action, writer, n_plot_batch)
 
         obs         = self.env.reset()  
         self.obs    = prepro_half_one_dim(obs)
         self.states = self.obs
 
     def run(self, agent):
-        self.memories.clear_memory()
-
         for _ in range(self.n_update):
             action      = agent.act(self.states)
             action_gym  = action + 1 if action != 0 else 0
@@ -22,7 +20,7 @@ class PongRunner(IterRunner):
             next_state  = next_obs - self.obs
             
             if self.training_mode:
-                self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.obs            = next_obs
@@ -45,6 +43,4 @@ class PongRunner(IterRunner):
                 self.states = self.obs
 
                 self.total_reward   = 0
-                self.eps_time       = 0             
-        
-        return self.memories
+                self.eps_time       = 0

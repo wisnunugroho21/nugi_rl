@@ -69,6 +69,10 @@ class AgentPPGClr():
             self.cnn.eval()
             self.projector.eval()
 
+    @property
+    def memory(self):
+        return self.ppo_memory
+
     def _training_ppo(self, states, actions, rewards, dones, next_states):
         self.ppo_optimizer.zero_grad()
         with torch.cuda.amp.autocast():

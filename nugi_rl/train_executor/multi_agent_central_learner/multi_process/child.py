@@ -27,8 +27,10 @@ class ChildExecutor():
                     memories  = self.runner.run()
                     memories.save_redis()
 
+                    if self.is_training_mode:
+                        self.agent.save_memory(memories)
+
                 if self.is_training_mode:
-                    self.agent.save_memory(memories)
                     self.agent.update()
 
                     if self.save_weights:

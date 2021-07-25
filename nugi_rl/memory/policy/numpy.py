@@ -21,7 +21,7 @@ class NumpyPolicyMemory(PolicyMemory):
         return torch.from_numpy(self.states[idx]), torch.from_numpy(self.actions[idx]), torch.from_numpy(self.rewards[idx]), \
             torch.from_numpy(self.dones[idx]), torch.from_numpy(self.next_states[idx])     
 
-    def save_eps(self, state, action, reward, done, next_state):
+    def save_obs(self, state, action, reward, done, next_state):
         if len(self) == 0:
             self.states         = np.array([state], dtype = np.float32)
             self.actions        = np.array([action], dtype = np.float32)

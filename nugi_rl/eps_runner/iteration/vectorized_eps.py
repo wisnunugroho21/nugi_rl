@@ -2,7 +2,7 @@ import numpy as np
 from eps_runner.iteration.iter_runner import IterRunner
 
 class VectorizedRunner(IterRunner): 
-    def __init__(self, agent, envs, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+    def __init__(self, agent, envs, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.envs               = envs
         self.agent              = agent
         self.render             = render
@@ -18,7 +18,6 @@ class VectorizedRunner(IterRunner):
         self.eps_time           = 0
 
         self.states             = [env.reset() for env in self.envs]
-        self.memories           = memory
 
         self.states             = [env.reset() for env in envs]
         self.total_rewards      = [0 for _ in range(len(envs))]
@@ -26,9 +25,6 @@ class VectorizedRunner(IterRunner):
         self.i_episodes         = [0 for _ in range(len(envs))]
 
     def run(self):
-        for memory in self.memories:
-            memory.clear_memory()
-
         for _ in range(self.n_update):
             actions = self.agent.act(self.states)
 
@@ -43,7 +39,7 @@ class VectorizedRunner(IterRunner):
                     next_state, reward, done, _ = env.step(action)
 
                 if self.training_mode:
-                    memory.save_eps(self.states[index].tolist(), action, reward, float(done), next_state.tolist())
+                    self.agent.memory.save_obs(self.states[index].tolist(), action, reward, float(done), next_state.tolist())
 
                 self.states[index]           = next_state
                 self.total_rewards[index]    += reward
@@ -63,5 +59,3 @@ class VectorizedRunner(IterRunner):
                     self.states[index]           = env.reset()
                     self.total_rewards[index]    = 0
                     self.eps_times[index]        = 0
-        
-        return self.memories

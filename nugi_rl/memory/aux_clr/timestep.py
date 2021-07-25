@@ -36,7 +36,7 @@ class TimeAuxClrMemory(Dataset):
 
         return input_images, target_images
 
-    def save_eps(self, images):
+    def save_obs(self, images):
         if len(self) >= self.capacity:
             del self.images[0]
 
@@ -47,11 +47,11 @@ class TimeAuxClrMemory(Dataset):
         self.clear_memory()
 
         for images in batch_images:
-            self.save_eps(images)
+            self.save_obs(images)
 
     def save_all(self, batch_images):
         for images in batch_images:
-            self.save_eps(images)
+            self.save_obs(images)
 
     def get_all_items(self):         
         return self.images

@@ -1,7 +1,7 @@
 import torch
 from helpers.pytorch_utils import set_device
 
-class ValueFunction():
+class TemporalDifference():
     def __init__(self, gamma = 0.99):
         self.gamma = gamma
 

@@ -1,13 +1,12 @@
 import numpy as np
 
 class SingleStepRunner():
-    def __init__(self, agent, env, memory, training_mode, render, is_discrete, max_action, writer = None, n_plot_batch = 100):
+    def __init__(self, agent, env, is_save_memory, render, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.agent              = agent
         self.env                = env
-        self.memories           = memory
 
         self.render             = render
-        self.training_mode      = training_mode
+        self.is_save_memory     = is_save_memory
         self.max_action         = max_action
         self.writer             = writer
         self.n_plot_batch       = n_plot_batch
@@ -20,8 +19,7 @@ class SingleStepRunner():
 
         self.states             = self.env.reset()
 
-    def run(self):
-        self.memories.clear_memory() 
+    def run(self):             
         action  = self.agent.act(self.states)
 
         if self.is_discrete:
@@ -33,7 +31,8 @@ class SingleStepRunner():
         else:
             next_state, reward, done, _ = self.env.step(action)
         
-        self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+        if self.is_save_memory:
+            self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
             
         self.states         = next_state
         self.eps_time       += 1 
@@ -52,6 +51,4 @@ class SingleStepRunner():
 
             self.states         = self.env.reset()
             self.total_reward   = 0
-            self.eps_time       = 0        
-
-        return self.memories
+            self.eps_time       = 0

@@ -43,7 +43,7 @@ class auxPpgImageDiskMemory(auxPpgMemory):
     def __get_image_tens(self, filename):
         return Image.open(filename).convert("RGB")
 
-    def save_eps(self, state):
+    def save_obs(self, state):
         if len(self) >= self.capacity:
             del self.states[0]
 
@@ -55,7 +55,7 @@ class auxPpgImageDiskMemory(auxPpgMemory):
 
     def save_all(self, states):
         for state in zip(states):
-            self.save_eps(state)
+            self.save_obs(state)
 
     def get_all_items(self):         
         return self.states

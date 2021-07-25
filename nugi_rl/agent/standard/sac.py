@@ -43,6 +43,10 @@ class AgentSAC():
         self.policy_scaler      = torch.cuda.amp.GradScaler()
         self.value_scaler       = torch.cuda.amp.GradScaler()
 
+    @property
+    def memory(self):
+        return self.memory
+
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
         with torch.cuda.amp.autocast():

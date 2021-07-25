@@ -1,4 +1,4 @@
-class JointAux():
+class AuxPPG():
     def __init__(self, distribution):
         self.distribution       = distribution
 

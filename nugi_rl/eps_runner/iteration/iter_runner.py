@@ -1,13 +1,12 @@
 import numpy as np
 
 class IterRunner():
-    def __init__(self, agent, env, memory, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+    def __init__(self, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.agent              = agent
         self.env                = env
-        self.memories           = memory
 
         self.render             = render
-        self.training_mode      = training_mode
+        self.is_save_memory     = is_save_memory
         self.n_update           = n_update
         self.max_action         = max_action
         self.writer             = writer
@@ -22,8 +21,6 @@ class IterRunner():
         self.states             = self.env.reset()
 
     def run(self):
-        self.memories.clear_memory()       
-
         for _ in range(self.n_update):
             action  = self.agent.act(self.states)
 
@@ -36,7 +33,8 @@ class IterRunner():
             else:
                 next_state, reward, done, _ = self.env.step(action)
             
-            self.memories.save_eps(self.states.tolist(), action, reward, float(done), next_state.tolist())
+            if self.is_save_memory:
+                self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 
@@ -56,5 +54,3 @@ class IterRunner():
                 self.states         = self.env.reset()
                 self.total_reward   = 0
                 self.eps_time       = 0        
-
-        return self.memories

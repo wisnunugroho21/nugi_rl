@@ -19,7 +19,7 @@ class AuxPpgMemory(Dataset):
     def __getitem__(self, idx):
         return torch.FloatTensor(self.states[idx])
 
-    def save_eps(self, state):
+    def save_obs(self, state):
         if len(self) >= self.capacity:
             del self.states[0]
 
@@ -31,7 +31,7 @@ class AuxPpgMemory(Dataset):
 
     def save_all(self, states):
         for state in states:
-            self.save_eps(state)
+            self.save_obs(state)
 
     def get_all_items(self):         
         return self.states
