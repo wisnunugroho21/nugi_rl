@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 
 from eps_runner.iteration.iter_runner import IterRunner
 
@@ -42,4 +43,6 @@ class SlimeVolleyRunner(IterRunner):
 
                 self.states         = self.env.reset()
                 self.total_reward   = 0
-                self.eps_time       = 0        
+                self.eps_time       = 0    
+
+        return deepcopy(self.agent.memory)    

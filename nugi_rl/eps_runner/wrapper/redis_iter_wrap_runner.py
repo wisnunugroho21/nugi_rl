@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 class RedisIterWrapRunner():
     def __init__(self, agent, runner, n_update):
         self.agent      = agent
@@ -8,3 +10,5 @@ class RedisIterWrapRunner():
         for i in range(1, self.n_update, 1):
             self.runner.run()            
             self.agent.memory.save_redis()
+
+        return deepcopy(self.agent.memory)

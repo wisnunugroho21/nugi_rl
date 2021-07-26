@@ -1,4 +1,6 @@
 import numpy as np
+from copy import deepcopy
+
 from eps_runner.iteration.iter_runner import IterRunner
 
 class VectorizedRunner(IterRunner): 
@@ -59,3 +61,5 @@ class VectorizedRunner(IterRunner):
                     self.states[index]           = env.reset()
                     self.total_rewards[index]    = 0
                     self.eps_times[index]        = 0
+
+        return deepcopy(self.agent.memory)

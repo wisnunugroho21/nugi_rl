@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 
 class IterRunner():
     def __init__(self, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
@@ -53,4 +54,6 @@ class IterRunner():
 
                 self.states         = self.env.reset()
                 self.total_reward   = 0
-                self.eps_time       = 0        
+                self.eps_time       = 0    
+
+        return deepcopy(self.agent.memory)    
