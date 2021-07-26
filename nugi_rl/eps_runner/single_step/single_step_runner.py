@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 
 class SingleStepRunner():
     def __init__(self, agent, env, is_save_memory, render, is_discrete, max_action, writer = None, n_plot_batch = 100):
@@ -52,3 +53,5 @@ class SingleStepRunner():
             self.states         = self.env.reset()
             self.total_reward   = 0
             self.eps_time       = 0
+
+        return deepcopy(self.agent.memory)

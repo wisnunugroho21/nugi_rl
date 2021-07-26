@@ -1,6 +1,7 @@
 import numpy as np
-from helpers.pytorch_utils import prepo_crop
+from helpers.math_function import prepo_crop
 from eps_runner.iteration.iter_runner import IterRunner
+from copy import deepcopy
 
 class PongFullRunner(IterRunner):
     def __init__(self, agent, env, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
@@ -59,3 +60,5 @@ class PongFullRunner(IterRunner):
 
                 self.total_reward   = 0
                 self.eps_time       = 0
+
+        return deepcopy(self.agent.memory)

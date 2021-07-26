@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 
 class EpisodicRunner():
     def __init__(self, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
@@ -49,4 +50,6 @@ class EpisodicRunner():
 
             if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
                 self.writer.add_scalar('Rewards', total_reward, self.i_episode)
-                self.writer.add_scalar('Times', eps_time, self.i_episode)        
+                self.writer.add_scalar('Times', eps_time, self.i_episode)
+
+        return deepcopy(self.agent.memory)                    
