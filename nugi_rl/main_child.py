@@ -3,7 +3,7 @@ import random
 import numpy as np
 import torch
 import os
-import redis
+from keydb import KeyDB
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
@@ -74,7 +74,7 @@ if action_dim is None:
     action_dim = environment.get_action_dim()
 print('action_dim: ', action_dim)
 
-redis_obj           = redis.Redis()
+redis_obj           = KeyDB()
 
 ppo_memory          = PolicyRedisListMemory(redis_obj)
 aux_ppg_memory      = AuxPpgMemory()

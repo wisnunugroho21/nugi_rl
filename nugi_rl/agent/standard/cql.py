@@ -5,8 +5,8 @@ from copy import deepcopy
 from helpers.pytorch_utils import set_device, to_list, copy_parameters
 
 class AgentCQL():
-    def __init__(self, soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss, policy_loss, value_loss, memory, 
-        soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
+    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
+        soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
 
         self.batch_size         = batch_size
@@ -29,7 +29,7 @@ class AgentCQL():
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
-        self.memory             = memory
+        self.agent_memory       = memory
         self.device             = set_device(self.use_gpu)
         self.q_update           = 1
         
@@ -38,7 +38,7 @@ class AgentCQL():
 
     @property
     def memory(self):
-        return self.memory
+        return self.agent_memory
 
     def _training_q(self, states, actions, rewards, dones, next_states):
         predicted_next_actions  = self.target_policy(next_states, True)
@@ -72,10 +72,10 @@ class AgentCQL():
 
     def _update_cql(self):        
         for _ in range(self.epochs):
-            indices     = torch.randperm(len(self.memory))[:self.batch_size]
-            indices     = len(self.memory) - indices - 1
+            indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
+            indices     = len(self.agent_memory) - indices - 1
 
-            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
+            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
             if self.q_update == 1:
                 for states, actions, rewards, dones, next_states in dataloader:
                     actions = actions.clamp(-1, 1)
@@ -99,12 +99,12 @@ class AgentCQL():
                 self.q_update = 1
 
     def update(self):
-        if len(self.memory) > self.batch_size:
+        if len(self.agent_memory) > self.batch_size:
             self._update_cql()
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
+        self.agent_memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
@@ -117,10 +117,10 @@ class AgentCQL():
             'policy_state_dict': self.policy.state_dict(),
             'soft_q1_state_dict': self.soft_q1.state_dict(),
             'soft_q2_state_dict': self.soft_q2.state_dict(),
-            'value_state_dict': self.value.state_dict(),
+            #'value_state_dict': self.value.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
-            'value_optimizer_state_dict': self.value_optimizer.state_dict(),
+            #'value_optimizer_state_dict': self.value_optimizer.state_dict(),
         }, self.folder + '/cql.tar')
         
     def load_weights(self, device = None):
@@ -132,7 +132,7 @@ class AgentCQL():
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])
         self.soft_q1.load_state_dict(model_checkpoint['soft_q1_state_dict'])
         self.soft_q2.load_state_dict(model_checkpoint['soft_q2_state_dict'])
-        self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        #self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
+        #self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
