@@ -5,8 +5,8 @@ from copy import deepcopy
 from helpers.pytorch_utils import set_device, to_list, copy_parameters
 
 class AgentCQL():
-    def __init__(self, soft_q1, soft_q2, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
-        soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
+    def __init__(self, soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss, policy_loss, value_loss, memory, 
+        soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
 
         self.batch_size         = batch_size
@@ -21,29 +21,27 @@ class AgentCQL():
         self.policy             = policy
         self.soft_q1            = soft_q1
         self.soft_q2            = soft_q2
-        
-        self.target_policy      = deepcopy(self.policy)
-        self.target_soft_q1     = deepcopy(self.soft_q1)
-        self.target_soft_q2     = deepcopy(self.soft_q2)             
+        self.value              = value
+
+        self.target_value       = deepcopy(self.value)     
         
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
+        self.valueLoss          = value_loss
 
-        self.agent_memory       = memory
+        self.agent_memory             = memory
         self.device             = set_device(self.use_gpu)
-        self.q_update           = 1
         
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
+        self.value_optimizer    = value_optimizer
 
     @property
     def memory(self):
         return self.agent_memory
 
     def _training_q(self, states, actions, rewards, dones, next_states):
-        predicted_next_actions  = self.target_policy(next_states, True)
-        target_next_q1          = self.target_soft_q1(next_states, predicted_next_actions, True)
-        target_next_q2          = self.target_soft_q2(next_states, predicted_next_actions, True)
+        target_next_value   = self.target_value(next_states, True)
 
         q1_value            = self.soft_q1(states, actions)
         q2_value            = self.soft_q2(states, actions)
@@ -52,11 +50,25 @@ class AgentCQL():
         naive_q1_value      = self.soft_q1(states, predicted_actions)
         naive_q2_value      = self.soft_q2(states, predicted_actions)
 
-        loss    = self.qLoss.compute_loss(q1_value, q2_value, naive_q1_value, naive_q2_value, target_next_q1, target_next_q2, rewards, dones)
+        loss    = self.qLoss.compute_loss(q1_value, q2_value, naive_q1_value, naive_q2_value, target_next_value, rewards, dones)
 
         self.soft_q_optimizer.zero_grad()
         loss.backward()
         self.soft_q_optimizer.step()
+
+    def _training_value(self, states):
+        actions         = self.policy(states, True)
+
+        q1_value        = self.soft_q1(states, actions, True)
+        q2_value        = self.soft_q2(states, actions, True)
+
+        predicted_value = self.value(states)
+
+        loss    = self.valueLoss.compute_loss(predicted_value, q1_value, q2_value)
+
+        self.value_optimizer.zero_grad()
+        loss.backward()
+        self.value_optimizer.step()
 
     def _training_policy(self, states):
         actions     = self.policy(states)
@@ -75,28 +87,15 @@ class AgentCQL():
             indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
             indices     = len(self.agent_memory) - indices - 1
 
-            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
-            if self.q_update == 1:
-                for states, actions, rewards, dones, next_states in dataloader:
-                    actions = actions.clamp(-1, 1)
+            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
+            for states, actions, rewards, dones, next_states in dataloader:         
+                actions = actions.clamp(-1, 1)
+                       
+                self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+                self._training_value(states.to(self.device))
+                self._training_policy(states.to(self.device))
 
-                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                    
-                    self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                    self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
-                self.q_update = 2
-
-            else:
-                for states, actions, rewards, dones, next_states in dataloader:
-                    actions = actions.clamp(-1, 1)
-
-                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                    self._training_policy(states.to(self.device))         
-
-                    self.target_soft_q1 = copy_parameters(self.soft_q1, self.target_soft_q1, self.soft_tau)
-                    self.target_soft_q2 = copy_parameters(self.soft_q2, self.target_soft_q2, self.soft_tau)
-                    self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)       
-                self.q_update = 1
+                self.target_value = copy_parameters(self.value, self.target_value, self.soft_tau)
 
     def update(self):
         if len(self.agent_memory) > self.batch_size:
@@ -117,10 +116,10 @@ class AgentCQL():
             'policy_state_dict': self.policy.state_dict(),
             'soft_q1_state_dict': self.soft_q1.state_dict(),
             'soft_q2_state_dict': self.soft_q2.state_dict(),
-            #'value_state_dict': self.value.state_dict(),
+            'value_state_dict': self.value.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
-            #'value_optimizer_state_dict': self.value_optimizer.state_dict(),
+            'value_optimizer_state_dict': self.value_optimizer.state_dict(),
         }, self.folder + '/cql.tar')
         
     def load_weights(self, device = None):
@@ -132,7 +131,7 @@ class AgentCQL():
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])
         self.soft_q1.load_state_dict(model_checkpoint['soft_q1_state_dict'])
         self.soft_q2.load_state_dict(model_checkpoint['soft_q2_state_dict'])
-        #self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        #self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
+        self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
