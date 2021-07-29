@@ -25,7 +25,7 @@ from helpers.pytorch_utils import set_device
 load_weights            = False # If you want to load the agent, set this to True
 save_weights            = False # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
-is_save_memory          = True
+is_save_memory          = False
 use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -33,14 +33,14 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 n_memory                = 102400
 n_iteration             = 1000000
 n_plot_batch            = 1
-soft_tau                = 0.95
+soft_tau                = 0.995
 n_saved                 = 1000
 epochs                  = 1
-batch_size              = 64
+batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
 alpha                   = 0.5
-gamma                   = 0.95
+gamma                   = 0.99
 
 folder                  = 'weights/ppg_bipedal_cql'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
