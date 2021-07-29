@@ -9,14 +9,14 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
 from eps_runner.single_step.single_step_runner import SingleStepRunner
-from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
+from train_executor.executor import Executor
 from agent.standard.deterministic_sac_cql import AgentCQL
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.cql.q_loss import QLoss
 from loss.cql.policy_loss import OffPolicyLoss
 from loss.cql.value_loss import ValueLoss
 from model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
-from memory.policy.whole.redis_list import PolicyRedisListMemory
+from memory.policy.redis import RedisPolicyMemory
 
 from helpers.pytorch_utils import set_device
 
@@ -67,7 +67,7 @@ if action_dim is None:
 print('action_dim: ', action_dim)
 
 redis_obj           = KeyDB()
-memory              = PolicyRedisListMemory(redis_obj, capacity = n_memory)
+memory              = RedisPolicyMemory(redis_obj, capacity = n_memory)
 
 q_loss              = QLoss(gamma, alpha)
 policy_loss         = OffPolicyLoss()
@@ -87,6 +87,6 @@ agent = AgentCQL(soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss,
         soft_tau, folder, use_gpu)
 
 runner      = SingleStepRunner(agent, environment, is_save_memory, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-executor    = CentralLearnerExecutor(agent, n_iteration, runner, save_weights, n_saved) 
+executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode) 
 
 executor.execute()
