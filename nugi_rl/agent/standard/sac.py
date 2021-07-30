@@ -26,7 +26,7 @@ class AgentSAC():
         self.target_value       = deepcopy(self.value)         
 
         self.distribution       = distribution
-        self.memory             = memory
+        self.agent_memory       = memory
         
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
@@ -45,7 +45,7 @@ class AgentSAC():
 
     @property
     def memory(self):
-        return self.memory
+        return self.agent_memory
 
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
@@ -93,27 +93,26 @@ class AgentSAC():
         self.policy_scaler.step(self.policy_optimizer)
         self.policy_scaler.update()
 
-    def _update_sac(self):
-        if len(self.memory) > self.batch_size:
-            for _ in range(self.epochs):
-                indices     = torch.randperm(len(self.memory))[:self.batch_size]
-                indices     = len(self.memory) - indices - 1
-                indices[-1] = torch.IntTensor([len(self.memory) - 1])
+    def _update_sac(self):        
+        for _ in range(self.epochs):
+            indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
+            indices[-1] = torch.IntTensor([len(self.agent_memory) - 1])
 
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
-                for states, actions, rewards, dones, next_states in dataloader:
-                    self._training_value(states.to(self.device))
-                    self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                    self._training_policy(states.to(self.device))
+            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
+            for states, actions, rewards, dones, next_states in dataloader:                
+                self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+                self._training_value(states.to(self.device))
+                self._training_policy(states.to(self.device))
 
-                    self.target_value = copy_parameters(self.value, self.target_value, self.soft_tau)
+                self.target_value = copy_parameters(self.value, self.target_value, self.soft_tau)
 
     def update(self):
-        self._update_sac()
+        if len(self.agent_memory) > self.batch_size:
+            self._update_sac()
 
     def save_memory(self, policy_memory):
         states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
+        self.agent_memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
         state               = torch.FloatTensor(state).unsqueeze(0).to(self.device)

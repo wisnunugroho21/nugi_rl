@@ -12,9 +12,9 @@ class TrulyPPO():
         self.distribution       = distribution
 
     def compute_loss(self, action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones):
-        advantages      = self.advantage_function.compute_advantages(rewards, values, next_values, dones)
+        advantages      = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()
         returns         = (advantages + values).detach()
-        advantages      = ((advantages - advantages.mean()) / (advantages.std() + 1e-6)).detach()       
+        # advantages      = ((advantages - advantages.mean()) / (advantages.std() + 1e-6)).detach()       
 
         logprobs        = self.distribution.logprob(action_datas, actions) + 1e-5
         old_logprobs    = (self.distribution.logprob(old_action_datas, actions) + 1e-5).detach()
