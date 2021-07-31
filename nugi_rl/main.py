@@ -40,13 +40,13 @@ n_saved                 = n_aux_update
 policy_kl_range         = 0.03
 policy_params           = 5
 value_clip              = 5.0
-entropy_coef            = 0.1
+entropy_coef            = 0.2
 vf_loss_coef            = 1.0
 batch_size              = 32
 PPO_epochs              = 5
 Aux_epochs              = 5
 action_std              = 1.0
-gamma                   = 0.95
+gamma                   = 0.99
 learning_rate           = 3e-4
 
 folder                  = 'weights/ppg_bipedal_1'

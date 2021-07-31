@@ -19,7 +19,7 @@ from policy_function.advantage_function.generalized_advantage_estimation import 
 from model.ppg.TanhStdNN import Policy_Model, Value_Model
 from memory.policy.whole.redis_list import PolicyRedisListMemory
 from memory.aux_ppg.standard import AuxPpgMemory
-from eps_runner.wrapper.redis_iter_wrap_runner import RedisIterWrapRunner
+from eps_runner.wrapper.iter.redis_iter_wrap_runner import RedisIterWrapRunner
 
 from helpers.pytorch_utils import set_device
 

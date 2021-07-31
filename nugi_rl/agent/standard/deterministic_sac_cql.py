@@ -84,7 +84,6 @@ class AgentCQL():
 
     def _update_cql(self):        
         for _ in range(self.epochs):
-            # indices     = torch.randperm(len(self.agent_memory))[-self.batch_size:]
             indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
 
             dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                

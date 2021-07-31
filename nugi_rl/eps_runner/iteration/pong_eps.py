@@ -46,4 +46,4 @@ class PongRunner(IterRunner):
                 self.total_reward   = 0
                 self.eps_time       = 0
 
-        return deepcopy(self.agent.memory)
+        return self.agent.memory

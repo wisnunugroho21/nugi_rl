@@ -39,59 +39,49 @@ class AgentSAC():
         self.policy_optimizer   = policy_optimizer
         self.value_optimizer    = value_optimizer
 
-        self.soft_q_scaler      = torch.cuda.amp.GradScaler()
-        self.policy_scaler      = torch.cuda.amp.GradScaler()
-        self.value_scaler       = torch.cuda.amp.GradScaler()
-
     @property
     def memory(self):
         return self.agent_memory
 
     def _training_q(self, states, actions, rewards, dones, next_states):
+        target_values      = self.target_value(next_states, True)
+
+        predicted_q_value1  = self.soft_q1(states, actions)
+        predicted_q_value2  = self.soft_q2(states, actions)
+
+        loss  = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_values, rewards, dones)
+
         self.soft_q_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            target_values      = self.target_value(next_states, True)
-
-            predicted_q_value1  = self.soft_q1(states, torch.tanh(actions))
-            predicted_q_value2  = self.soft_q2(states, torch.tanh(actions))
-
-            loss  = self.qLoss.compute_loss(predicted_q_value1, predicted_q_value2, target_values, rewards, dones)
-
-        self.soft_q_scaler.scale(loss).backward()
-        self.soft_q_scaler.step(self.soft_q_optimizer)
-        self.soft_q_scaler.update()
+        loss.backward()
+        self.soft_q_optimizer.step()
 
     def _training_value(self, states):
+        action_datas    = self.policy(states, True)
+        actions         = self.distribution.sample(action_datas).detach()
+
+        q_value1        = self.soft_q1(states, actions, True)
+        q_value2        = self.soft_q2(states, actions, True)
+
+        predicted_value = self.value(states)
+
+        loss    = self.valueLoss.compute_loss(predicted_value, action_datas, actions, q_value1, q_value2)
+
         self.value_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            action_datas    = self.policy(states, True)
-            actions         = self.distribution.sample(action_datas).detach()
-
-            q_value1        = self.soft_q1(states, torch.tanh(actions), True)
-            q_value2        = self.soft_q2(states, torch.tanh(actions), True)
-
-            predicted_value = self.value(states)
-
-            loss    = self.valueLoss.compute_loss(predicted_value, action_datas, actions, q_value1, q_value2)
-
-        self.value_scaler.scale(loss).backward()
-        self.value_scaler.step(self.value_optimizer)
-        self.value_scaler.update()
+        loss.backward()
+        self.value_optimizer.step()
 
     def _training_policy(self, states):
+        action_datas    = self.policy(states)
+        actions         = self.distribution.sample(action_datas)
+
+        q_value1        = self.soft_q1(states, actions)
+        q_value2        = self.soft_q2(states, actions)
+
+        loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
+
         self.policy_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            action_datas    = self.policy(states)
-            actions         = self.distribution.sample(action_datas)
-
-            q_value1        = self.soft_q1(states, torch.tanh(actions))
-            q_value2        = self.soft_q2(states, torch.tanh(actions))
-
-            loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
-
-        self.policy_scaler.scale(loss).backward()
-        self.policy_scaler.step(self.policy_optimizer)
-        self.policy_scaler.update()
+        loss.backward()
+        self.policy_optimizer.step()
 
     def _update_sac(self):        
         for _ in range(self.epochs):
