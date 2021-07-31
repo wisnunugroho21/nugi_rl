@@ -7,18 +7,18 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.single_step.single_step_runner import SingleStepRunner
-from train_executor.executor import Executor
-from agent.standard.sac import AgentSAC
-from distribution.tanh_clipped_continous import TanhClippedContinous
-from environment.wrapper.gym_wrapper import GymWrapper
-from loss.sac.q_loss import QLoss
-from loss.sac.policy_loss import PolicyLoss
-from loss.sac.value_loss import ValueLoss
-from model.sac.TanhStdNN import Policy_Model, Q_Model, Value_Model
-from memory.policy.standard import PolicyMemory
+from nugi_rl.eps_runner.single_step.single_step_runner import SingleStepRunner
+from nugi_rl.train_executor.executor import Executor
+from nugi_rl.agent.standard.sac import AgentSAC
+from nugi_rl.distribution.tanh_clipped_continous import TanhClippedContinous
+from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.loss.sac.q_loss import QLoss
+from nugi_rl.loss.sac.policy_loss import PolicyLoss
+from nugi_rl.loss.sac.value_loss import ValueLoss
+from nugi_rl.model.sac.TanhStdNN import Policy_Model, Q_Model, Value_Model
+from nugi_rl.memory.policy.standard import PolicyMemory
 
-from helpers.pytorch_utils import set_device
+from nugi_rl.helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 

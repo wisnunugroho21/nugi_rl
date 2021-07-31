@@ -3,25 +3,23 @@ import random
 import numpy as np
 import torch
 import os
-from redis import Redis
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.single_step.single_step_runner import SingleStepRunner
-from train_executor.executor import Executor
-from agent.standard.ppg import AgentPPG
-from distribution.basic_continous import BasicContinous
-from environment.wrapper.gym_wrapper import GymWrapper
-from loss.other.aux_ppg import AuxPPG
-from loss.ppo.truly_ppo import TrulyPPO
-from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg.TanhStdNN import Policy_Model, Value_Model
-from memory.policy.whole.redis_list import PolicyRedisListMemory
-from memory.aux_ppg.standard import AuxPpgMemory
-from eps_runner.wrapper.iter.redis_iter_wrap_runner import RedisIterWrapRunner
+from nugi_rl.eps_runner.iteration.iter_runner import IterRunner
+from nugi_rl.train_executor.executor import Executor
+from nugi_rl.agent.standard.ppg import AgentPPG
+from nugi_rl.distribution.basic_continous import BasicContinous
+from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.loss.other.aux_ppg import AuxPPG
+from nugi_rl.loss.ppo.truly_ppo import TrulyPPO
+from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
+from nugi_rl.model.ppg.TanhStdNN import Policy_Model, Value_Model
+from nugi_rl.memory.policy.standard import PolicyMemory
+from nugi_rl.memory.aux_ppg.standard import AuxPpgMemory
 
-from helpers.pytorch_utils import set_device
+from nugi_rl.helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
@@ -50,12 +48,12 @@ action_std              = 1.0
 gamma                   = 0.99
 learning_rate           = 3e-4
 
-folder                  = 'weights/ppg_bipedal'
+folder                  = 'weights/ppg_bipedal_1'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
 
-state_dim           = None
-action_dim          = None
-max_action          = 1
+state_dim               = None
+action_dim              = None
+max_action              = 1
 
 #####################################################################################################################################################
 
@@ -74,14 +72,10 @@ if action_dim is None:
     action_dim = environment.get_action_dim()
 print('action_dim: ', action_dim)
 
-redis_obj           = Redis()
-
-ppo_memory          = PolicyRedisListMemory(redis_obj)
-aux_ppg_memory      = AuxPpgMemory()
-
 policy_dist         = BasicContinous(use_gpu)
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
-
+aux_ppg_memory      = AuxPpgMemory()
+ppo_memory          = PolicyMemory()
 aux_ppg_loss        = AuxPPG(policy_dist)
 ppo_loss            = TrulyPPO(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
 
@@ -90,12 +84,11 @@ value               = Value_Model(state_dim).float().to(set_device(use_gpu))
 ppo_optimizer       = Adam(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)        
 aux_ppg_optimizer   = Adam(list(policy.parameters()), lr = learning_rate)
 
-agent   = AgentPPG(policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
+agent   = AgentPPG( policy, value, state_dim, action_dim, policy_dist, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
             ppo_optimizer, aux_ppg_optimizer, PPO_epochs, Aux_epochs, n_aux_update, is_training_mode, policy_kl_range, 
             policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,  folder, use_gpu = True)
 
-runner      = SingleStepRunner(agent, environment, is_training_mode, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-wrap_runner = RedisIterWrapRunner(agent, runner, n_update)
-executor    = Executor(agent, n_iteration, wrap_runner, save_weights, n_saved, load_weights, is_training_mode)
+runner      = IterRunner(agent, environment, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()
