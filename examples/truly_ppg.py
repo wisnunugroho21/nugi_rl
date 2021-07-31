@@ -57,25 +57,19 @@ max_action              = 1
 
 #####################################################################################################################################################
 
-environment = GymWrapper(env)
+random.seed(20)
+np.random.seed(20)
+torch.manual_seed(20)
+os.environ['PYTHONHASHSEED'] = str(20)
 
-if state_dim is None:
-    state_dim = environment.get_obs_dim()
-print('state_dim: ', state_dim)
-
-if environment.is_discrete():
-    print('discrete')
-else:
-    print('continous')
-
-if action_dim is None:
-    action_dim = environment.get_action_dim()
-print('action_dim: ', action_dim)
+environment         = GymWrapper(env)
 
 policy_dist         = BasicContinous(use_gpu)
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
+
 aux_ppg_memory      = AuxPpgMemory()
 ppo_memory          = PolicyMemory()
+
 aux_ppg_loss        = AuxPPG(policy_dist)
 ppo_loss            = TrulyPPO(policy_dist, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef, gamma)
 
@@ -90,5 +84,18 @@ agent   = AgentPPG( policy, value, state_dim, action_dim, policy_dist, ppo_loss,
 
 runner      = IterRunner(agent, environment, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
+
+if state_dim is None:
+    state_dim = environment.get_obs_dim()
+print('state_dim: ', state_dim)
+
+if environment.is_discrete():
+    print('discrete')
+else:
+    print('continous')
+
+if action_dim is None:
+    action_dim = environment.get_action_dim()
+print('action_dim: ', action_dim)
 
 executor.execute()
