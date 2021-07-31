@@ -64,21 +64,7 @@ np.random.seed(20)
 torch.manual_seed(20)
 os.environ['PYTHONHASHSEED'] = str(20)
 
-environment = CarlaEnv(im_height = 320, im_width = 320, im_preview = False, max_step = 512)
-
-if state_dim is None:
-    state_dim = environment.get_obs_dim()
-print('state_dim: ', state_dim)
-
-if environment.is_discrete():
-    print('discrete')
-else:
-    print('continous')
-
-if action_dim is None:
-    action_dim = environment.get_action_dim()
-print('action_dim: ', action_dim)
-
+environment         = CarlaEnv(im_height = 320, im_width = 320, im_preview = False, max_step = 512)
 policy_dist         = BasicContinous(use_gpu)
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
 
@@ -101,5 +87,18 @@ agent = AgentPPG(cnn, policy, value, state_dim, action_dim, policy_dist, ppo_los
 
 runner      = CarlaRunner(agent, environment, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
+
+if state_dim is None:
+    state_dim = environment.get_obs_dim()
+print('state_dim: ', state_dim)
+
+if environment.is_discrete():
+    print('discrete')
+else:
+    print('continous')
+
+if action_dim is None:
+    action_dim = environment.get_action_dim()
+print('action_dim: ', action_dim)
 
 executor.execute()
