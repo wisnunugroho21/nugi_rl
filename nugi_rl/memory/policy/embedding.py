@@ -39,7 +39,7 @@ class EmbeddingPolicyMemory(PolicyMemory):
         return states, actions, rewards, dones, next_states, self.available_actions
 
     def get_ranged_items(self, start_position = 0, end_position = None):   
-        if end_position is not None or -1:
+        if end_position is not None or end_position == -1:
             available_actions   = self.available_actions[start_position:end_position + 1]
         else:
             available_actions   = self.available_actions[start_position:]

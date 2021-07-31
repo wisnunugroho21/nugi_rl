@@ -53,7 +53,7 @@ class TimeImageStatePolicyMemory(PolicyMemory):
         return self.images, states, actions, rewards, dones, self.next_images, next_states
 
     def get_ranged_items(self, start_position = 0, end_position = None):   
-        if end_position is not None or -1:
+        if end_position is not None or end_position == -1:
             images      = self.images[start_position:end_position + 1]
             next_images = self.next_images[start_position:end_position + 1]
         else:

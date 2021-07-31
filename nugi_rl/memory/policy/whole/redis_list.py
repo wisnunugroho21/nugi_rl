@@ -7,7 +7,7 @@ class PolicyRedisListMemory(PolicyMemory):
         self.redis      = redis
 
     def save_redis(self, start_position = 0, end_position = None):
-        if end_position is not None or -1:
+        if end_position is not None or end_position == -1:
             states      = self.states[start_position:end_position + 1]
             actions     = self.actions[start_position:end_position + 1]
             rewards     = self.rewards[start_position:end_position + 1]

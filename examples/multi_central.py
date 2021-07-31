@@ -8,17 +8,17 @@ from redis import Redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.single_step.single_step_runner import SingleStepRunner
-from train_executor.executor import Executor
-from agent.standard.deterministic_sac_cql import AgentCQL
-from environment.wrapper.gym_wrapper import GymWrapper
-from loss.cql.q_loss import QLoss
-from loss.cql.policy_loss import OffPolicyLoss
-from loss.cql.value_loss import ValueLoss
-from model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
-from memory.policy.redis import RedisPolicyMemory
+from nugi_rl.eps_runner.single_step.single_step_runner import SingleStepRunner
+from nugi_rl.train_executor.executor import Executor
+from nugi_rl.agent.standard.deterministic_sac_cql import AgentCQL
+from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.loss.cql.q_loss import QLoss
+from nugi_rl.loss.cql.policy_loss import OffPolicyLoss
+from nugi_rl.loss.cql.value_loss import ValueLoss
+from nugi_rl.model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
+from nugi_rl.memory.policy.redis import RedisPolicyMemory
 
-from helpers.pytorch_utils import set_device
+from nugi_rl.helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
