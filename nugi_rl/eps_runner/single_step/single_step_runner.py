@@ -54,4 +54,4 @@ class SingleStepRunner():
             self.total_reward   = 0
             self.eps_time       = 0
 
-        return self.agent.memory
+        return self.agent.memory.get_ranged_items(-1)

@@ -11,4 +11,4 @@ class RedisIterWrapRunner():
             self.runner.run()            
             self.agent.memory.save_redis(-1)
 
-        return self.agent.memory
+        return self.agent.memory.get_ranged_items(-self.n_update)

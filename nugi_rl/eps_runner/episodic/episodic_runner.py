@@ -52,4 +52,4 @@ class EpisodicRunner():
                 self.writer.add_scalar('Rewards', total_reward, self.i_episode)
                 self.writer.add_scalar('Times', eps_time, self.i_episode)
 
-        return self.agent.memory                    
+        return self.agent.memory.get_ranged_items(-eps_time)

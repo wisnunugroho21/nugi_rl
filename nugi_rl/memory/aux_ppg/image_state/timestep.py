@@ -46,6 +46,15 @@ class TimeImageStateAuxPpgMemory(AuxPpgMemory):
         states = super().get_all_items()
         return self.images, states
 
+    def get_ranged_items(self, start_position = 0, end_position = None):   
+        if end_position is not None or -1:
+            images  = self.images[start_position:end_position + 1]
+        else:
+            images  = self.images[start_position:]
+
+        states = super().get_all_items()
+        return images, states
+
     def clear_memory(self):
         super().clear_memory()
         del self.images[:]

@@ -48,7 +48,23 @@ class PolicyMemory(Dataset):
             self.save_obs(state, action, reward, done, next_state)
 
     def get_all_items(self):         
-        return self.states, self.actions, self.rewards, self.dones, self.next_states 
+        return self.states, self.actions, self.rewards, self.dones, self.next_states
+
+    def get_ranged_items(self, start_position = 0, end_position = None):   
+        if end_position is not None or -1:
+            states      = self.states[start_position:end_position + 1]
+            actions     = self.actions[start_position:end_position + 1]
+            rewards     = self.rewards[start_position:end_position + 1]
+            dones       = self.dones[start_position:end_position + 1]
+            next_states = self.next_states[start_position:end_position + 1]
+        else:
+            states      = self.states[start_position:]
+            actions     = self.actions[start_position:]
+            rewards     = self.rewards[start_position:]
+            dones       = self.dones[start_position:]
+            next_states = self.next_states[start_position:]
+
+        return states, actions, rewards, dones, next_states 
 
     def clear_memory(self):
         del self.states[:]

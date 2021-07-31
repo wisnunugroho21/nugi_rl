@@ -48,7 +48,16 @@ class RedisPolicyMemory(PolicyMemory):
             self.save_obs(state, action, reward, done, next_state)
 
     def get_all_items(self):         
-        return self.states, self.actions, self.rewards, self.dones, self.next_states 
+        return self.states, self.actions, self.rewards, self.dones, self.next_states
+
+    def get_ranged_items(self, start_position = 0, end_position = None):   
+        states         = list(map(lambda e: json.loads(e), self.redis.lrange('states', start_position, end_position)))
+        actions        = list(map(lambda e: json.loads(e), self.redis.lrange('actions', start_position, end_position)))
+        rewards        = list(map(lambda e: json.loads(e), self.redis.lrange('rewards', start_position, end_position)))
+        dones          = list(map(lambda e: json.loads(e), self.redis.lrange('dones', start_position, end_position)))
+        next_states    = list(map(lambda e: json.loads(e), self.redis.lrange('next_states', start_position, end_position)))
+
+        return states, actions, rewards, dones, next_states  
 
     def clear_memory(self):
         self.redis.delete('states')

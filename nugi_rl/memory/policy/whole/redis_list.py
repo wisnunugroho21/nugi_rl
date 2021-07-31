@@ -7,11 +7,18 @@ class PolicyRedisListMemory(PolicyMemory):
         self.redis      = redis
 
     def save_redis(self, start_position = 0, end_position = None):
-        states      = self.states[start_position:end_position] if end_position is not None else self.states[start_position:]
-        actions     = self.actions[start_position:end_position] if end_position is not None else self.actions[start_position:]
-        rewards     = self.rewards[start_position:end_position] if end_position is not None else self.rewards[start_position:]
-        dones       = self.dones[start_position:end_position] if end_position is not None else self.dones[start_position:]
-        next_states = self.next_states[start_position:end_position] if end_position is not None else self.next_states[start_position:]
+        if end_position is not None or -1:
+            states      = self.states[start_position:end_position + 1]
+            actions     = self.actions[start_position:end_position + 1]
+            rewards     = self.rewards[start_position:end_position + 1]
+            dones       = self.dones[start_position:end_position + 1]
+            next_states = self.next_states[start_position:end_position + 1]
+        else:
+            states      = self.states[start_position:]
+            actions     = self.actions[start_position:]
+            rewards     = self.rewards[start_position:]
+            dones       = self.dones[start_position:]
+            next_states = self.next_states[start_position:]
 
         for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
             self.redis.rpush('states', json.dumps(state))

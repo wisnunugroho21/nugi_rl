@@ -50,3 +50,5 @@ class CarlaRunner(IterRunner):
                 self.images, self.states    = self.env.reset()
                 self.total_reward           = 0
                 self.eps_time               = 0
+
+        return self.agent.memory.get_ranged_items(-self.n_update)
