@@ -3,29 +3,29 @@ import random
 import numpy as np
 import torch
 import os
-import redis
+from redis import Redis
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
 from eps_runner.single_step.single_step_runner import SingleStepRunner
-from train_executor.multi_agent_central_learner.multi_process.central_learner import CentralLearnerExecutor
-from agent.standard.cql import AgentCQL
+from train_executor.executor import Executor
+from agent.standard.deterministic_sac_cql import AgentCQL
 from environment.wrapper.gym_wrapper import GymWrapper
 from loss.cql.q_loss import QLoss
 from loss.cql.policy_loss import OffPolicyLoss
 from loss.cql.value_loss import ValueLoss
 from model.cql.TanhNN import Policy_Model, Q_Model, Value_Model
-from memory.policy.whole.redis_list import PolicyRedisListMemory
+from memory.policy.redis import RedisPolicyMemory
 
 from helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = True # If you want to save the agent, set this to True
+save_weights            = False # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
-is_save_memory          = True
+is_save_memory          = False
 use_gpu                 = True
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 495 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -33,14 +33,14 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 n_memory                = 102400
 n_iteration             = 1000000
 n_plot_batch            = 1
-soft_tau                = 0.95
+soft_tau                = 0.995
 n_saved                 = 1000
 epochs                  = 1
-batch_size              = 64
+batch_size              = 32
 action_std              = 1.0
 learning_rate           = 3e-4
 alpha                   = 0.5
-gamma                   = 0.95
+gamma                   = 0.99
 
 folder                  = 'weights/ppg_bipedal_cql'
 env                     = gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') # gym.make('BipedalWalker-v3') for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, max_step = 512) # [gym.make(env_name) for _ in range(2)] # CarlaEnv(im_height = 240, im_width = 240, im_preview = False, seconds_per_episode = 3 * 60) # [gym.make(env_name) for _ in range(2)] # gym.make(env_name) # [gym.make(env_name) for _ in range(2)]
@@ -66,8 +66,8 @@ if action_dim is None:
     action_dim = environment.get_action_dim()
 print('action_dim: ', action_dim)
 
-redis_obj           = redis.Redis()
-memory              = PolicyRedisListMemory(redis_obj, capacity = n_memory)
+redis_obj           = Redis()
+memory              = RedisPolicyMemory(redis_obj, capacity = n_memory)
 
 q_loss              = QLoss(gamma, alpha)
 policy_loss         = OffPolicyLoss()
@@ -87,6 +87,6 @@ agent = AgentCQL(soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss,
         soft_tau, folder, use_gpu)
 
 runner      = SingleStepRunner(agent, environment, is_save_memory, render, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # Runner(agent, environment, runner_memory, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
-executor    = CentralLearnerExecutor(agent, n_iteration, runner, save_weights, n_saved) 
+executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode) 
 
 executor.execute()

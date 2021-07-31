@@ -62,4 +62,4 @@ class VectorizedRunner(IterRunner):
                     self.total_rewards[index]    = 0
                     self.eps_times[index]        = 0
 
-        return deepcopy(self.agent.memory)
+        return self.agent.memory.get_ranged_items(-self.n_update)

@@ -55,6 +55,14 @@ class AuxClrMemory(Dataset):
     def get_all_items(self):         
         return self.images
 
+    def get_ranged_items(self, start_position = 0, end_position = None):   
+        if end_position is not None or -1:
+            images  = self.images[start_position:end_position + 1]
+        else:
+            images  = self.images[start_position:]
+
+        return images
+
     def clear_memory(self):
         del self.images[:]
 

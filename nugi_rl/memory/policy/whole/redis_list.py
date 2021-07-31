@@ -6,20 +6,33 @@ class PolicyRedisListMemory(PolicyMemory):
         super().__init__(capacity, datas)
         self.redis      = redis
 
-    def save_redis(self):
-        for state, action, reward, done, next_state in zip(self.states, self.actions, self.rewards, self.dones, self.next_states):
+    def save_redis(self, start_position = 0, end_position = None):
+        if end_position is not None or -1:
+            states      = self.states[start_position:end_position + 1]
+            actions     = self.actions[start_position:end_position + 1]
+            rewards     = self.rewards[start_position:end_position + 1]
+            dones       = self.dones[start_position:end_position + 1]
+            next_states = self.next_states[start_position:end_position + 1]
+        else:
+            states      = self.states[start_position:]
+            actions     = self.actions[start_position:]
+            rewards     = self.rewards[start_position:]
+            dones       = self.dones[start_position:]
+            next_states = self.next_states[start_position:]
+
+        for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
             self.redis.rpush('states', json.dumps(state))
             self.redis.rpush('actions', json.dumps(action))
             self.redis.rpush('rewards', json.dumps(reward))
             self.redis.rpush('dones', json.dumps(done))
             self.redis.rpush('next_states', json.dumps(next_state))
 
-    def load_redis(self):
-        states         = list(map(lambda e: json.loads(e), self.redis.lrange('states', 0, -1)))
-        actions        = list(map(lambda e: json.loads(e), self.redis.lrange('actions', 0, -1)))
-        rewards        = list(map(lambda e: json.loads(e), self.redis.lrange('rewards', 0, -1)))
-        dones          = list(map(lambda e: json.loads(e), self.redis.lrange('dones', 0, -1)))
-        next_states    = list(map(lambda e: json.loads(e), self.redis.lrange('next_states', 0, -1)))
+    def load_redis(self, start_position = 0, end_position = -1):
+        states         = list(map(lambda e: json.loads(e), self.redis.lrange('states', start_position, end_position)))
+        actions        = list(map(lambda e: json.loads(e), self.redis.lrange('actions', start_position, end_position)))
+        rewards        = list(map(lambda e: json.loads(e), self.redis.lrange('rewards', start_position, end_position)))
+        dones          = list(map(lambda e: json.loads(e), self.redis.lrange('dones', start_position, end_position)))
+        next_states    = list(map(lambda e: json.loads(e), self.redis.lrange('next_states', start_position, end_position)))
 
         self.save_all(states, actions, rewards, dones, next_states)
 

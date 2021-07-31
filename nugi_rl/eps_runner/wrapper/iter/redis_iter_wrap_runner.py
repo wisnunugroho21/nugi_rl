@@ -9,6 +9,6 @@ class RedisIterWrapRunner():
     def run(self):        
         for i in range(1, self.n_update, 1):
             self.runner.run()            
-            self.agent.memory.save_redis()
+            self.agent.memory.save_redis(-1)
 
-        return deepcopy(self.agent.memory)
+        return self.agent.memory.get_ranged_items(-self.n_update)

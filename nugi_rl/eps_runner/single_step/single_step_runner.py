@@ -27,7 +27,7 @@ class SingleStepRunner():
             action = int(action)
 
         if self.max_action is not None and not self.is_discrete:
-            action_gym  =  np.tanh(action) * self.max_action
+            action_gym  =  np.clip(action, -1, 1) * self.max_action
             next_state, reward, done, _ = self.env.step(action_gym)
         else:
             next_state, reward, done, _ = self.env.step(action)
@@ -54,4 +54,4 @@ class SingleStepRunner():
             self.total_reward   = 0
             self.eps_time       = 0
 
-        return deepcopy(self.agent.memory)
+        return self.agent.memory.get_ranged_items(-1)

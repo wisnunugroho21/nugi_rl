@@ -3,7 +3,7 @@ import random
 import numpy as np
 import torch
 import os
-import redis
+from redis import Redis
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
@@ -19,7 +19,7 @@ from policy_function.advantage_function.generalized_advantage_estimation import 
 from model.ppg.TanhStdNN import Policy_Model, Value_Model
 from memory.policy.whole.redis_list import PolicyRedisListMemory
 from memory.aux_ppg.standard import AuxPpgMemory
-from eps_runner.wrapper.redis_iter_wrap_runner import RedisIterWrapRunner
+from eps_runner.wrapper.iter.redis_iter_wrap_runner import RedisIterWrapRunner
 
 from helpers.pytorch_utils import set_device
 
@@ -40,14 +40,14 @@ n_saved                 = n_aux_update
 
 policy_kl_range         = 0.03
 policy_params           = 5
-value_clip              = 10.0
-entropy_coef            = 0.1
+value_clip              = 5.0
+entropy_coef            = 0.2
 vf_loss_coef            = 1.0
 batch_size              = 32
 PPO_epochs              = 5
 Aux_epochs              = 5
 action_std              = 1.0
-gamma                   = 0.95
+gamma                   = 0.99
 learning_rate           = 3e-4
 
 folder                  = 'weights/ppg_bipedal'
@@ -74,7 +74,7 @@ if action_dim is None:
     action_dim = environment.get_action_dim()
 print('action_dim: ', action_dim)
 
-redis_obj           = redis.Redis()
+redis_obj           = Redis()
 
 ppo_memory          = PolicyRedisListMemory(redis_obj)
 aux_ppg_memory      = AuxPpgMemory()

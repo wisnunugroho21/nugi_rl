@@ -15,7 +15,7 @@ class NumpyPolicyMemory(PolicyMemory):
             self.states, self.actions, self.rewards, self.dones, self.next_states = datas
 
     def __len__(self):
-        return len(self.dones)
+        return self.dones.size
 
     def __getitem__(self, idx):
         return torch.from_numpy(self.states[idx]), torch.from_numpy(self.actions[idx]), torch.from_numpy(self.rewards[idx]), \
@@ -37,6 +37,8 @@ class NumpyPolicyMemory(PolicyMemory):
             self.next_states    = np.append(self.next_states, [next_state], axis = 0)
 
     def save_replace_all(self, states, actions, rewards, dones, next_states):
+        self.clear_memory()
+
         self.states         = np.array(states)
         self.actions        = np.array(actions)
         self.rewards        = np.array(rewards)
@@ -44,14 +46,30 @@ class NumpyPolicyMemory(PolicyMemory):
         self.next_states    = np.array(next_states)
 
     def save_all(self, states, actions, rewards, dones, next_states):
-        self.states         = np.concatenate(np.array(states))
-        self.actions        = np.concatenate(np.array(actions))
-        self.rewards        = np.concatenate(np.array(rewards))
-        self.dones          = np.concatenate(np.array(dones))
-        self.next_states    = np.concatenate(np.array(next_states))
+        self.states         = np.concatenate(self.states, np.array(states))
+        self.actions        = np.concatenate(self.actions, np.array(actions))
+        self.rewards        = np.concatenate(self.rewards, np.array(rewards))
+        self.dones          = np.concatenate(self.dones, np.array(dones))
+        self.next_states    = np.concatenate(self.next_states, np.array(next_states))
 
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states
+
+    def get_ranged_items(self, start_position = 0, end_position = None):   
+        if end_position is not None or -1:
+            states      = self.states[start_position:end_position + 1]
+            actions     = self.actions[start_position:end_position + 1]
+            rewards     = self.rewards[start_position:end_position + 1]
+            dones       = self.dones[start_position:end_position + 1]
+            next_states = self.next_states[start_position:end_position + 1]
+        else:
+            states      = self.states[start_position:]
+            actions     = self.actions[start_position:]
+            rewards     = self.rewards[start_position:]
+            dones       = self.dones[start_position:]
+            next_states = self.next_states[start_position:]
+
+        return states, actions, rewards, dones, next_states
 
     def clear_memory(self):
         self.states         = np.delete(self.states, np.s_[:])

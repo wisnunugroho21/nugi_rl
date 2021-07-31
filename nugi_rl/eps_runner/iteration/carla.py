@@ -29,7 +29,7 @@ class CarlaRunner(IterRunner):
     def run(self):
         for _ in range(self.n_update):
             action                                  = self.agent.act(self.images, self.states)
-            action_gym                              = np.tanh(action)
+            action_gym                              = np.clip(action, -1, 1)
             next_image, next_state, reward, done, _ = self.env.step(action_gym)
             
             if self.training_mode:
@@ -50,3 +50,5 @@ class CarlaRunner(IterRunner):
                 self.images, self.states    = self.env.reset()
                 self.total_reward           = 0
                 self.eps_time               = 0
+
+        return self.agent.memory.get_ranged_items(-self.n_update)
