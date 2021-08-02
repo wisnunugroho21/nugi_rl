@@ -37,7 +37,7 @@ reward_threshold        = 495 # Set threshold for reward. The learning will stop
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 1000000 # How many episode you want to run
 n_memory_clr            = 10000
-n_update                = 256 # How many episode before you update the Policy 
+n_update                = 512 # How many episode before you update the Policy 
 n_aux_update            = 2
 n_saved                 = n_aux_update
 
@@ -68,7 +68,7 @@ np.random.seed(20)
 torch.manual_seed(20)
 os.environ['PYTHONHASHSEED'] = str(20)
 
-environment         = CarlaEnv(im_height = 320, im_width = 320, im_preview = False, max_step = 512)
+environment         = CarlaEnv(im_height = 320, im_width = 320, im_preview = False, max_step = 256)
 policy_dist         = BasicContinous(use_gpu)
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
 

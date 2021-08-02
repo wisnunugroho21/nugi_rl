@@ -24,7 +24,6 @@ class AgentImageStatePPGClr(AgentPPG):
         self.aux_clrLoss        = aux_clr_loss
         self.aux_clr_memory     = aux_clr_memory
         self.aux_clr_optimizer  = aux_clr_optimizer
-        self.aux_clr_scaler     = torch.cuda.amp.GradScaler()
         self.aux_clr_epochs     = aux_clr_epochs
 
         if self.is_training_mode:
@@ -35,69 +34,63 @@ class AgentImageStatePPGClr(AgentPPG):
             self.projector.eval()
 
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
-        self.ppo_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            batch_size, timesteps, C, H, W  = images.shape
-            images              = images.reshape(timesteps * batch_size, C, H, W)
-            next_images         = next_images.reshape(timesteps * batch_size, C, H, W)
+        batch_size, timesteps, C, H, W  = images.shape
+        images              = images.reshape(timesteps * batch_size, C, H, W)
+        next_images         = next_images.reshape(timesteps * batch_size, C, H, W)
 
-            res                 = self.cnn(images)
-            res                 = res.reshape(timesteps, batch_size, res.shape[-1])
+        res                 = self.cnn(images)
+        res                 = res.reshape(timesteps, batch_size, res.shape[-1])
 
-            action_datas, _     = self.policy(res, states)
-            values              = self.value(res, states)
-            
-            res_old             = self.cnn_old(images, True)
-            res_old             = res_old.reshape(timesteps, batch_size, res_old.shape[-1])
-
-            old_action_datas, _ = self.policy_old(res_old, states, True)
-            old_values          = self.value_old(res_old, states, True)
-
-            next_res            = self.cnn(next_images, True)
-            next_res            = next_res.reshape(timesteps, batch_size, next_res.shape[-1])
-
-            next_values         = self.value(next_res, next_states, True)
-
-            loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        action_datas, _     = self.policy(res, states)
+        values              = self.value(res, states)
         
-        self.ppo_scaler.scale(loss).backward()
-        self.ppo_scaler.step(self.ppo_optimizer)
-        self.ppo_scaler.update()
+        res_old             = self.cnn_old(images, True)
+        res_old             = res_old.reshape(timesteps, batch_size, res_old.shape[-1])
+
+        old_action_datas, _ = self.policy_old(res_old, states, True)
+        old_values          = self.value_old(res_old, states, True)
+
+        next_res            = self.cnn(next_images, True)
+        next_res            = next_res.reshape(timesteps, batch_size, next_res.shape[-1])
+
+        next_values         = self.value(next_res, next_states, True)
+
+        loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+
+        self.ppo_optimizer.zero_grad()
+        loss.backward()
+        self.ppo_optimizer.step()
 
     def _training_aux_ppg(self, images, states):
-        self.aux_ppg_optimizer.zero_grad()        
-        with torch.cuda.amp.autocast():
-            batch_size, timesteps, C, H, W  = images.shape
-            images                  = images.reshape(timesteps * batch_size, C, H, W)
+        batch_size, timesteps, C, H, W  = images.shape
+        images                  = images.reshape(timesteps * batch_size, C, H, W)
 
-            res                     = self.cnn(images, True)
-            res                     = res.reshape(timesteps, batch_size, res.shape[-1])
+        res                     = self.cnn(images, True)
+        res                     = res.reshape(timesteps, batch_size, res.shape[-1])
 
-            returns                 = self.value(res, states, True)
-            old_action_datas, _     = self.policy_old(res, states, True)
+        returns                 = self.value(res, states, True)
+        old_action_datas, _     = self.policy_old(res, states, True)
 
-            action_datas, values    = self.policy(res, states)                        
+        action_datas, values    = self.policy(res, states)                        
 
-            loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
-        self.aux_ppg_scaler.scale(loss).backward()
-        self.aux_ppg_scaler.step(self.aux_ppg_optimizer)
-        self.aux_ppg_scaler.update()
+        self.aux_ppg_optimizer.zero_grad()
+        loss.backward()
+        self.aux_ppg_optimizer.step()
 
     def _training_aux_clr(self, input_images, target_images):
+        res_anchor        = self.cnn(input_images)
+        encoded_anchor    = self.projector(res_anchor)
+
+        res_target        = self.cnn_old(target_images, True)
+        encoded_target    = self.projector_old(res_target, True)
+
+        loss = self.aux_clrLoss.compute_loss(encoded_anchor, encoded_target)
+
         self.aux_clr_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            res_anchor        = self.cnn(input_images)
-            encoded_anchor    = self.projector(res_anchor)
-
-            res_target        = self.cnn_old(target_images, True)
-            encoded_target    = self.projector_old(res_target, True)
-
-            loss = self.aux_clrLoss.compute_loss(encoded_anchor, encoded_target)
-
-        self.aux_clr_scaler.scale(loss).backward()
-        self.aux_clr_scaler.step(self.aux_clr_optimizer)
-        self.aux_clr_scaler.update()
+        loss.backward()
+        self.aux_clr_optimizer.step()
 
     def _update_ppo(self):
         self.policy_old.load_state_dict(self.policy.state_dict())
@@ -177,9 +170,6 @@ class AgentImageStatePPGClr(AgentPPG):
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
             'aux_ppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
             'aux_clr_optimizer_state_dict': self.aux_clr_optimizer.state_dict(),
-            'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
-            'aux_ppg_scaler_state_dict': self.aux_ppg_scaler.state_dict(),
-            'aux_clr_scaler_state_dict': self.aux_clr_scaler.state_dict(),
         }, self.folder + '/ppg.tar')
         
     def load_weights(self, device = None):
@@ -194,9 +184,6 @@ class AgentImageStatePPGClr(AgentPPG):
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
         self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])   
         self.aux_clr_optimizer.load_state_dict(model_checkpoint['aux_clr_optimizer_state_dict'])
-        self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
-        self.aux_ppg_scaler.load_state_dict(model_checkpoint['aux_ppg_scaler_state_dict'])  
-        self.aux_clr_scaler.load_state_dict(model_checkpoint['aux_clr_scaler_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()
