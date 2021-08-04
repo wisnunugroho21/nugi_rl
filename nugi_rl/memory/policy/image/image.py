@@ -27,5 +27,5 @@ class ImagePolicyMemory(PolicyMemory):
         states      = self.trans(self.states[idx])
         next_states = self.trans(self.next_states[idx])
 
-        return states, torch.FloatTensor(self.actions[idx]), torch.FloatTensor([self.rewards[idx]]), \
-            torch.FloatTensor([self.dones[idx]]), next_states
+        return states, torch.tensor(self.actions[idx]), torch.tensor([self.rewards[idx]]), \
+            torch.tensor([self.dones[idx]]), next_states

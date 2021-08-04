@@ -20,7 +20,7 @@ class EmbeddingPolicyMemory(PolicyMemory):
 
     def __getitem__(self, idx):
         states, actions, rewards, dones, next_states = super().__getitem__(idx)
-        return states, actions, rewards, dones, next_states, torch.FloatTensor(self.available_actions[idx])
+        return states, actions, rewards, dones, next_states, torch.tensor(self.available_actions[idx])
 
     def save_obs(self, state, action, reward, done, next_state, available_action):
         super().save_obs(state, reward, action, done, next_state)

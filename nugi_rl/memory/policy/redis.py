@@ -22,8 +22,8 @@ class RedisPolicyMemory(PolicyMemory):
         dones          = list(map(lambda e: json.loads(e), self.redis.lrange('dones', idx, idx)))
         next_states    = list(map(lambda e: json.loads(e), self.redis.lrange('next_states', idx, idx)))
 
-        return torch.FloatTensor(states), torch.FloatTensor(actions), torch.FloatTensor(rewards), \
-            torch.FloatTensor(dones), torch.FloatTensor(next_states)
+        return torch.tensor(states), torch.tensor(actions), torch.tensor(rewards), \
+            torch.tensor(dones), torch.tensor(next_states)
 
     def save_obs(self, state, action, reward, done, next_state):
         if len(self) >= self.capacity:
