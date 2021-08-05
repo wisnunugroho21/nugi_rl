@@ -25,42 +25,38 @@ class AgentImageStatePPG(AgentPPG):
             self.cnn.eval()
 
     def _training_ppo(self, images, states, actions, rewards, dones, next_images, next_states):
-        self.ppo_optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            res                 = self.cnn(images)
+        res                 = self.cnn(images)
 
-            action_datas, _     = self.policy(res, states)
-            values              = self.value(res, states)
-            
-            res_old             = self.cnn_old(images, True)
-
-            old_action_datas, _ = self.policy_old(res_old, states, True)
-            old_values          = self.value_old(res_old, states, True)
-
-            next_res            = self.cnn(next_images, True)
-            next_values         = self.value(next_res, next_states, True)
-
-            loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        action_datas, _     = self.policy(res, states)
+        values              = self.value(res, states)
         
-        self.ppo_scaler.scale(loss).backward()
-        self.ppo_scaler.step(self.ppo_optimizer)
-        self.ppo_scaler.update()
+        res_old             = self.cnn_old(images, True)
+
+        old_action_datas, _ = self.policy_old(res_old, states, True)
+        old_values          = self.value_old(res_old, states, True)
+
+        next_res            = self.cnn(next_images, True)
+        next_values         = self.value(next_res, next_states, True)
+
+        loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        
+        self.ppo_optimizer.zero_grad()
+        loss.backward()
+        self.ppo_optimizer.step()
 
     def _training_aux_ppg(self, images, states):
-        self.aux_ppg_optimizer.zero_grad()        
-        with torch.cuda.amp.autocast():
-            res                     = self.cnn(images, True)
+        res                     = self.cnn(images, True)
 
-            returns                 = self.value(res, states, True)
-            old_action_datas, _     = self.policy_old(res, states, True)
-            
-            action_datas, values    = self.policy(res, states)            
+        returns                 = self.value(res, states, True)
+        old_action_datas, _     = self.policy_old(res, states, True)
+        
+        action_datas, values    = self.policy(res, states)            
 
-            loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
+        loss = self.auxLoss.compute_loss(action_datas, old_action_datas, values, returns)
 
-        self.aux_ppg_scaler.scale(loss).backward()
-        self.aux_ppg_scaler.step(self.aux_ppg_optimizer)
-        self.aux_ppg_scaler.update()
+        self.aux_ppg_optimizer.zero_grad()
+        loss.backward()
+        self.aux_ppg_optimizer.step()
 
     def _update_ppo(self):
         self.policy_old.load_state_dict(self.policy.state_dict())
@@ -110,8 +106,6 @@ class AgentImageStatePPG(AgentPPG):
             'cnn_state_dict': self.cnn.state_dict(),
             'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
             'aux_ppg_optimizer_state_dict': self.aux_ppg_optimizer.state_dict(),
-            'ppo_scaler_state_dict': self.ppo_scaler.state_dict(),
-            'aux_ppg_scaler_state_dict': self.aux_ppg_scaler.state_dict(),
         }, self.folder + '/ppg.tar')
         
     def load_weights(self, device = None):
@@ -123,9 +117,7 @@ class AgentImageStatePPG(AgentPPG):
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         self.cnn.load_state_dict(model_checkpoint['cnn_state_dict'])
         self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
-        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])   
-        self.ppo_scaler.load_state_dict(model_checkpoint['ppo_scaler_state_dict'])        
-        self.aux_ppg_scaler.load_state_dict(model_checkpoint['aux_ppg_scaler_state_dict'])  
+        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()

@@ -3,9 +3,9 @@ import torchvision.transforms as transforms
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
-from agent.standard.cql import AgentCql
+from agent.standard.deterministic_sac_cql import AgentCQL
 
-class AgentImageStateCql(AgentCql):
+class AgentImageStateCql(AgentCQL):
     def __init__(self, cnn, soft_q, value, policy, state_dim, action_dim, distribution, q_loss, v_loss, policy_loss, memory, 
         soft_q_optimizer, value_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
         soft_tau = 0.95, folder = 'model', use_gpu = True):
@@ -29,7 +29,7 @@ class AgentImageStateCql(AgentCql):
             predicted_actions           = self.policy(res, states, True)
             next_value                  = self.value(next_res, next_states, True)
 
-            naive_predicted_q_value     = self.soft_q(res, states, predicted_actions)
+            naive_predicted_q_value     = self.soft_q1(res, states, predicted_actions)
             predicted_q_value           = self.soft_q(res, states, actions)
 
             loss = self.qLoss.compute_loss(naive_predicted_q_value, predicted_q_value, rewards, dones, next_value)        
