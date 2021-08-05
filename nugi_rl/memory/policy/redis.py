@@ -22,8 +22,9 @@ class RedisPolicyMemory(PolicyMemory):
         dones          = list(map(lambda e: json.loads(e), self.redis.lrange('dones', idx, idx)))
         next_states    = list(map(lambda e: json.loads(e), self.redis.lrange('next_states', idx, idx)))
 
-        return torch.tensor(states), torch.tensor(actions), torch.tensor(rewards), \
-            torch.tensor(dones), torch.tensor(next_states)
+        return torch.tensor(states, dtype = torch.float32), torch.tensor(actions, dtype = torch.float32), \
+            torch.tensor(rewards, dtype = torch.float32), torch.tensor(dones, dtype = torch.float32), \
+            torch.tensor(next_states, dtype = torch.float32)
 
     def save_obs(self, state, action, reward, done, next_state):
         if len(self) >= self.capacity:
@@ -50,7 +51,7 @@ class RedisPolicyMemory(PolicyMemory):
     def get_all_items(self):         
         return self.states, self.actions, self.rewards, self.dones, self.next_states
 
-    def get_ranged_items(self, start_position = 0, end_position = None):   
+    def get_ranged_items(self, start_position = 0, end_position = -1):   
         states         = list(map(lambda e: json.loads(e), self.redis.lrange('states', start_position, end_position)))
         actions        = list(map(lambda e: json.loads(e), self.redis.lrange('actions', start_position, end_position)))
         rewards        = list(map(lambda e: json.loads(e), self.redis.lrange('rewards', start_position, end_position)))

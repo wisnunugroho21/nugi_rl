@@ -22,8 +22,9 @@ class PolicyMemory(Dataset):
         return len(self.dones)
 
     def __getitem__(self, idx):
-        return torch.tensor(self.states[idx]), torch.tensor(self.actions[idx]), torch.tensor([self.rewards[idx]]), \
-            torch.tensor([self.dones[idx]]), torch.tensor(self.next_states[idx])
+        return torch.tensor(self.states[idx], dtype = torch.float32), torch.tensor(self.actions[idx], dtype = torch.float32), \
+            torch.tensor([self.rewards[idx]], dtype = torch.float32), torch.tensor([self.dones[idx]], dtype = torch.float32), \
+            torch.tensor(self.next_states[idx], dtype = torch.float32)
 
     def save_obs(self, state, action, reward, done, next_state):
         if len(self) >= self.capacity:
