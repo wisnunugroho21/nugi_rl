@@ -1,7 +1,7 @@
 import torch
 
 class TrulyPPO():
-    def __init__(self, distribution, advantage_function, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01, gamma = 0.95):
+    def __init__(self, distribution, advantage_function, policy_kl_range = 0.0008, policy_params = 20, value_clip = 1.0, vf_loss_coef = 1.0, entropy_coef = 0.01):
         self.policy_kl_range    = policy_kl_range
         self.policy_params      = policy_params
         self.value_clip         = value_clip
@@ -14,7 +14,6 @@ class TrulyPPO():
     def compute_loss(self, action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones):
         advantages      = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()
         returns         = (advantages + values).detach()
-        # advantages      = ((advantages - advantages.mean()) / (advantages.std() + 1e-6)).detach()       
 
         logprobs        = self.distribution.logprob(action_datas, actions) + 1e-5
         old_logprobs    = (self.distribution.logprob(old_action_datas, actions) + 1e-5).detach()

@@ -3,26 +3,16 @@ from copy import deepcopy
 import torch
 from torch.utils.data import DataLoader
 
-from helpers.pytorch_utils import set_device, to_list, to_tensor
-
 class AgentPPG():  
-    def __init__(self, policy, value, state_dim, action_dim, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
-                ppo_optimizer, aux_ppg_optimizer, ppo_epochs = 10, aux_ppg_epochs = 10, n_aux_update = 10, is_training_mode = True, policy_kl_range = 0.03, 
-                policy_params = 5, value_clip = 1.0, entropy_coef = 0.0, vf_loss_coef = 1.0, batch_size = 32,  folder = 'model', use_gpu = True):   
+    def __init__(self, policy, value, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
+                ppo_optimizer, aux_ppg_optimizer, ppo_epochs = 10, aux_ppg_epochs = 10, n_aux_update = 10, is_training_mode = True, 
+                batch_size = 32,  folder = 'model', device = torch.device('cuda:0')):   
 
-        self.policy_kl_range    = policy_kl_range 
-        self.policy_params      = policy_params
-        self.value_clip         = value_clip    
-        self.entropy_coef       = entropy_coef
-        self.vf_loss_coef       = vf_loss_coef
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
         self.aux_ppg_epochs     = aux_ppg_epochs
         self.is_training_mode   = is_training_mode
-        self.action_dim         = action_dim
-        self.state_dim          = state_dim
         self.folder             = folder
-        self.use_gpu            = use_gpu
         self.n_aux_update       = n_aux_update
 
         self.policy             = policy
@@ -38,7 +28,7 @@ class AgentPPG():
         self.ppoLoss            = ppo_loss
         self.auxLoss            = aux_ppg_loss      
 
-        self.device             = set_device(self.use_gpu)
+        self.device             = device
         self.i_update           = 0
 
         self.ppo_optimizer      = ppo_optimizer
@@ -125,7 +115,7 @@ class AgentPPG():
         else:
             action = self.distribution.deterministic(action_datas)
               
-        return to_list(action.squeeze(), self.use_gpu)
+        return action.squeeze().detach().tolist()
 
     def save_weights(self, folder = None):
         if folder == None:

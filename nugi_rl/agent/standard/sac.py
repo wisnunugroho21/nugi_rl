@@ -5,16 +5,13 @@ from copy import deepcopy
 from helpers.pytorch_utils import set_device, to_list, copy_parameters
 
 class AgentSAC():
-    def __init__(self, soft_q1, soft_q2, policy, value, state_dim, action_dim, distribution, q_loss, policy_loss, value_loss, memory, 
+    def __init__(self, soft_q1, soft_q2, policy, value, distribution, q_loss, policy_loss, value_loss, memory, 
         soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
-        soft_tau = 0.95, folder = 'model', use_gpu = True):
+        soft_tau = 0.95, folder = 'model', device = torch.device('cuda:0')):
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
-        self.action_dim         = action_dim
-        self.state_dim          = state_dim
         self.folder             = folder
-        self.use_gpu            = use_gpu
         self.epochs             = epochs
         self.soft_tau           = soft_tau
 
@@ -32,7 +29,7 @@ class AgentSAC():
         self.policyLoss         = policy_loss
         self.valueLoss          = value_loss
 
-        self.device             = set_device(self.use_gpu)
+        self.device             = device
         self.q_update           = 1
         
         self.soft_q_optimizer   = soft_q_optimizer
@@ -113,7 +110,7 @@ class AgentSAC():
         else:
             action = self.distribution.act_deterministic(action_datas)
               
-        return to_list(action.squeeze(), self.use_gpu)
+        return action.squeeze().detach().tolist()
 
     def save_weights(self):
         torch.save({
@@ -137,5 +134,3 @@ class AgentSAC():
         self.soft_q2.load_state_dict(model_checkpoint['soft_q2_state_dict'])
         self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
         self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
-        self.policy_scaler.load_state_dict(model_checkpoint['policy_scaler_state_dict'])
-        self.soft_q_scaler.load_state_dict(model_checkpoint['soft_q_scaler_state_dict'])

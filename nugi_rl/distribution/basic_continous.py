@@ -5,27 +5,24 @@ import torch
 from helpers.pytorch_utils import set_device, to_list
 
 class BasicContinous():
-    def __init__(self, use_gpu):
-        self.use_gpu = use_gpu
-
     def sample(self, datas):
         mean, std = datas
 
         distribution    = Normal(torch.zeros_like(mean), torch.ones_like(std))
-        rand            = distribution.sample().float().to(set_device(self.use_gpu))
+        rand            = distribution.sample()
         return mean + std * rand
         
     def entropy(self, datas):
         mean, std = datas
         
         distribution = Normal(mean, std)
-        return distribution.entropy().float().to(set_device(self.use_gpu))
+        return distribution.entropy()
         
     def logprob(self, datas, value_data):
         mean, std = datas
 
         distribution = Normal(mean, std)
-        return distribution.log_prob(value_data).float().to(set_device(self.use_gpu))
+        return distribution.log_prob(value_data)
 
     def kldivergence(self, datas1, datas2):
         mean1, std1 = datas1
@@ -33,7 +30,7 @@ class BasicContinous():
 
         distribution1 = Normal(mean1, std1)
         distribution2 = Normal(mean2, std2)
-        return kl_divergence(distribution1, distribution2).float().to(set_device(self.use_gpu))
+        return kl_divergence(distribution1, distribution2)
 
     def deterministic(self, datas):
         mean, _ = datas
