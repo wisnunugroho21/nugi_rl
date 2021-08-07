@@ -8,18 +8,18 @@ from redis import Redis
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adamw import AdamW
 
-from eps_runner.single_step.single_step_runner import SingleStepRunner
-from train_executor.executor import Executor
-from agent.standard.ppg import AgentPPG
-from distribution.basic_continous import BasicContinous
-from environment.wrapper.gym_wrapper import GymWrapper
-from loss.other.aux_ppg import AuxPPG
-from loss.ppo.truly_ppo import TrulyPPO
-from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg.TanhStdNN import Policy_Model, Value_Model
-from memory.policy.whole.redis_list import PolicyRedisListMemory
-from memory.aux_ppg.standard import AuxPpgMemory
-from eps_runner.wrapper.iter.redis_iter_wrap_runner import RedisIterWrapRunner
+from nugi_rl.eps_runner.single_step.single_step_runner import SingleStepRunner
+from nugi_rl.train_executor.executor import Executor
+from nugi_rl.agent.standard.ppg import AgentPPG
+from nugi_rl.distribution.basic_continous import BasicContinous
+from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.loss.other.aux_ppg import AuxPPG
+from nugi_rl.loss.ppo.truly_ppo import TrulyPPO
+from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
+from nugi_rl.model.ppg.TanhStdNN import Policy_Model, Value_Model
+from nugi_rl.memory.policy.whole.redis_list import PolicyRedisListMemory
+from nugi_rl.memory.aux_ppg.standard import AuxPpgMemory
+from nugi_rl.eps_runner.wrapper.iter.redis_iter_wrap_runner import RedisIterWrapRunner
 
 ############## Hyperparameters ##############
 

@@ -7,19 +7,18 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adam import Adam
 
-from eps_runner.iteration.iter_runner import IterRunner
-from train_executor.executor import Executor
-from agent.standard.ppg import AgentPPG
-from distribution.basic_continous import BasicContinous
-from environment.wrapper.gym_wrapper import GymWrapper
-from loss.other.aux_ppg import AuxPPG
-from loss.ppo.truly_ppo import TrulyPPO
-from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.ppg.TanhStdNN import Policy_Model, Value_Model
-from memory.policy.standard import PolicyMemory
-from memory.aux_ppg.standard import AuxPpgMemory
+from nugi_rl.eps_runner.iteration.iter_runner import IterRunner
+from nugi_rl.train_executor.executor import Executor
+from nugi_rl.agent.standard.ppg import AgentPPG
+from nugi_rl.distribution.basic_continous import BasicContinous
+from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.loss.other.aux_ppg import AuxPPG
+from nugi_rl.loss.ppo.truly_ppo import TrulyPPO
+from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
+from nugi_rl.model.ppg.TanhStdNN import Policy_Model, Value_Model
+from nugi_rl.memory.policy.standard import PolicyMemory
+from nugi_rl.memory.aux_ppg.standard import AuxPpgMemory
 
-from helpers.pytorch_utils import set_device
 
 ############## Hyperparameters ##############
 
