@@ -53,12 +53,20 @@ class TeacherAdvInv():
             self._update_rewards()
 
     def teach(self, state, action, logprob, done, next_state):
-        g_values         = self.g_model(state, action)
-        h_values         = self.h_model(state)
+        state       = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+        action      = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
+        logprob     = torch.FloatTensor(logprob).unsqueeze(0).float().to(self.device)
+        done        = torch.FloatTensor(done).unsqueeze(0).float().to(self.device)
+        next_state  = torch.FloatTensor(next_state).unsqueeze(0).float().to(self.device)
+
+        g_values        = self.g_model(state, action)
+        h_values        = self.h_model(state)
         h_next_values   = self.h_model(next_state)
         
         discrimination = self.discriminator_loss.compute_descrimination(self, g_values, h_values, h_next_values, logprob, done)
-        return discrimination.log() - (1 - discrimination).log()
+        reward = discrimination.log() - (1 - discrimination).log()
+        
+        return reward.squeeze().detach().tolist()
 
     def save_weights(self, folder = None):
         if folder == None:
