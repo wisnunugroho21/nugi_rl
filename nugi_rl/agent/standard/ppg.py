@@ -100,11 +100,7 @@ class AgentPPG():
 
         if self.i_update % self.n_aux_update == 0:
             self._update_aux_ppg()
-            self.i_update = 0
-
-    def save_memory(self, ppo_memory):
-        states, actions, rewards, dones, next_states = ppo_memory.get_all_items()
-        self.ppo_memory.save_all(states, actions, rewards, dones, next_states)
+            self.i_update = 0    
 
     def act(self, state):
         state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
@@ -116,6 +112,14 @@ class AgentPPG():
             action = self.distribution.deterministic(action_datas)
               
         return action.squeeze().detach().tolist()
+
+    def logprobs(self, state, action):
+        state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+        action_datas, _ = self.policy(state)
+
+        logprobs        = self.distribution.logprob(action_datas, action)
+
+        return logprobs.squeeze().detach().tolist()
 
     def save_weights(self, folder = None):
         if folder == None:

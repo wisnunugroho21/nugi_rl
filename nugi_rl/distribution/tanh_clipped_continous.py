@@ -6,14 +6,10 @@ from distribution.basic_continous import BasicContinous
 from helpers.pytorch_utils import set_device, to_list
 
 class TanhClippedContinous(BasicContinous):
-    def __init__(self, use_gpu):
-        self.use_gpu    = use_gpu
-        
-        
     def logprob(self, datas, value_data):
         mean, std = datas
 
         distribution = Normal(mean, std)
-        old_logprob = distribution.log_prob(value_data).float().to(set_device(self.use_gpu))
+        old_logprob = distribution.log_prob(value_data)
 
         return old_logprob - (1.0 - value_data.tanh().pow(2)).log()

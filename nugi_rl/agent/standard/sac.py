@@ -84,6 +84,7 @@ class AgentSAC():
         for _ in range(self.epochs):
             indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
             indices[-1] = torch.IntTensor([len(self.agent_memory) - 1])
+            # indices     = torch.arange(-self.batch_size, 0)
 
             dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
             for states, actions, rewards, dones, next_states in dataloader:                
@@ -112,6 +113,14 @@ class AgentSAC():
               
         return action.squeeze().detach().tolist()
 
+    def logprobs(self, state, action):
+        state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+        action_datas, _ = self.policy(state)
+
+        logprobs        = self.distribution.logprob(action_datas, action)
+
+        return logprobs.squeeze().detach().tolist()
+
     def save_weights(self):
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
@@ -119,8 +128,6 @@ class AgentSAC():
             'soft_q2_state_dict': self.soft_q2.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
-            'policy_scaler_state_dict': self.policy_scaler.state_dict(),
-            'soft_q_scaler_state_dict': self.soft_q_scaler.state_dict(),
         }, self.folder + '/sac.tar')
         
     def load_weights(self, device = None):

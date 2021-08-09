@@ -4,8 +4,8 @@ from eps_runner.iteration.iter_runner import IterRunner
 from copy import deepcopy
 
 class PongRunner(IterRunner):
-    def __init__(self, agent, env, training_mode, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
-        super().__init__(agent, env, training_mode, render, n_update, is_discrete, max_action, writer, n_plot_batch)
+    def __init__(self, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+        super().__init__(agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer, n_plot_batch)
 
         obs         = self.env.reset()  
         self.obs    = prepro_half_one_dim(obs)
@@ -20,7 +20,7 @@ class PongRunner(IterRunner):
             next_obs    = prepro_half_one_dim(next_obs)
             next_state  = next_obs - self.obs
             
-            if self.training_mode:
+            if self.is_save_memory:
                 self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state

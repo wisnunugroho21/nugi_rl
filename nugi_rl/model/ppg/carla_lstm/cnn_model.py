@@ -34,19 +34,19 @@ class CnnModel(nn.Module):
       self.conv = nn.Sequential(
         DepthwiseSeparableConv2d(3, 16, kernel_size = 3, stride = 1, padding = 1, bias = False),
         nn.ReLU(),
-        DepthwiseSeparableConv2d(16, 32, kernel_size = 8, stride = 4, padding = 2, bias = False),
+        DepthwiseSeparableConv2d(16, 32, kernel_size = 4, stride = 4, bias = False),
         nn.ReLU(),
         DepthwiseSeparableConv2d(32, 32, kernel_size = 3, stride = 1, padding = 1, bias = False),
         nn.ReLU(),
-        DepthwiseSeparableConv2d(32, 64, kernel_size = 8, stride = 4, padding = 2, bias = False),
+        DepthwiseSeparableConv2d(32, 64, kernel_size = 4, stride = 4, bias = False),
         nn.ReLU(),
         DepthwiseSeparableConv2d(64, 64, kernel_size = 3, stride = 1, padding = 1, bias = False),
         nn.ReLU(),
-        DepthwiseSeparableConv2d(64, 128, kernel_size = 8, stride = 4, padding = 2, bias = False),
+        DepthwiseSeparableConv2d(64, 128, kernel_size = 4, stride = 4, bias = False),
         nn.ReLU(),
         DepthwiseSeparableConv2d(128, 128, kernel_size = 3, stride = 1, padding = 1, bias = False),
         nn.ReLU(),
-        DepthwiseSeparableConv2d(128, 256, kernel_size = 5, stride = 1, padding = 0, bias = False),
+        DepthwiseSeparableConv2d(128, 256, kernel_size = 5, stride = 1, bias = False),
         nn.ReLU(),
       )
         
