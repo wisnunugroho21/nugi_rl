@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 from nugi_rl.memory.teacher.sng.sng_template import SNGTemplateMemory
 
-class SNMemory(Dataset):
+class SNGMemory(Dataset):
     def __init__(self, capacity = 100000):
         self.capacity       = capacity
 
@@ -20,7 +20,7 @@ class SNMemory(Dataset):
         return expert_states, expert_next_states, policy_states, policy_next_states, goals
 
     def save_policy_obs(self, state, goal, next_state):
-        self.policy_memory.save_obs(state, goal, next_state)            
+        self.policy_memory.save_obs(state, goal, next_state)
 
     def save_policy_replace_all(self, states, goals, next_states):
         self.policy_memory.save_replace_all(states, goals, next_states)
