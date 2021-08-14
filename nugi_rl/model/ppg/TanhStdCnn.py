@@ -3,37 +3,33 @@ import torch.nn as nn
 from helpers.pytorch_utils import set_device
 
 class Policy_Model(nn.Module):
-    def __init__(self, state_dim, action_dim):
+    def __init__(self, state_dim, action_dim, use_gpu = True):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 1024),
-          nn.ReLU(),
-          nn.Linear(1024, 768),
-          nn.ReLU(),
-        )
+          nn.Linear(11, 384),
+        ).float().to(set_device(use_gpu))
 
         self.actor_mean_layer = nn.Sequential(
-          nn.Linear(256, action_dim)
-        )
+          nn.Linear(64, action_dim),
+          nn.Tanh()
+        ).float().to(set_device(use_gpu))
 
         self.actor_std_layer = nn.Sequential(
-          nn.Linear(256, action_dim),
+          nn.Linear(64, action_dim),
           nn.Sigmoid()
-        )
+        ).float().to(set_device(use_gpu))
 
         self.critic_layer = nn.Sequential(
-          nn.Linear(256, 1)
-        )
+          nn.Linear(64, 1)
+        ).float().to(set_device(use_gpu))
         
     def forward(self, states, detach = False):
       x = self.nn_layer(states)
 
-      mean    = self.actor_mean_layer(x[:, :256])
-      std     = self.actor_std_layer(x[:, 256:512])
-      critic  = self.critic_layer(x[:, 512:768])
-      
-      # std = std.exp().clamp(0, 5)
+      mean    = self.actor_mean_layer(x[:, :64])
+      std     = self.actor_std_layer(x[:, 64:128])
+      critic  = self.critic_layer(x[:, 128:192])
 
       if detach:
         return (mean.detach(), std.detach()), critic.detach()
@@ -41,15 +37,15 @@ class Policy_Model(nn.Module):
         return (mean, std), critic
       
 class Value_Model(nn.Module):
-    def __init__(self, state_dim):
+    def __init__(self, state_dim, use_gpu = True):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 1024),
-          nn.ReLU(),
-          nn.Linear(1024, 256),
-          nn.ReLU(),
-          nn.Linear(256, 1)
+          nn.Linear(state_dim, 384),
+          nn.ELU(),
+          nn.Linear(384, 64),
+          nn.ELU(),
+          nn.Linear(64, 1)
         )
         
     def forward(self, states, detach = False):

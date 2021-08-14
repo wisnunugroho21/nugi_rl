@@ -2,7 +2,7 @@ from copy import deepcopy
 import torch
 from torch.utils.data import Dataset
 
-class AdvInvTemplateMemory(Dataset):
+class SADLNTemplateMemory(Dataset):
     def __init__(self, capacity = 100000):
         self.capacity       = capacity
 

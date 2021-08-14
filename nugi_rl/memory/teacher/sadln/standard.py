@@ -1,14 +1,14 @@
 import torch
 from torch.utils.data import Dataset
 
-from nugi_rl.memory.teacher.adversarial_inverse_template import AdvInvTemplateMemory
+from nugi_rl.memory.teacher.sadln.sadln_template import SADLNTemplateMemory
 
-class AdvInvMemory(Dataset):
+class SNMemory(Dataset):
     def __init__(self, capacity = 100000):
         self.capacity       = capacity
 
-        self.policy_memory  = AdvInvTemplateMemory(capacity)
-        self.expert_memory  = AdvInvTemplateMemory(capacity)
+        self.policy_memory  = SADLNTemplateMemory(capacity)
+        self.expert_memory  = SADLNTemplateMemory(capacity)
 
     def __len__(self):
         return len(self.expert_memory) if len(self.expert_memory) <= len(self.policy_memory) else len(self.policy_memory)
