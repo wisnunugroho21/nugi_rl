@@ -120,6 +120,7 @@ class AgentGoalPPG():
     def logprobs(self, state, goal, action):
         state           = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         goal            = torch.FloatTensor(goal).unsqueeze(0).to(self.device)
+        action          = torch.FloatTensor(action).unsqueeze(0).to(self.device)
 
         action_datas, _ = self.policy(state, goal)
         logprobs        = self.distribution.logprob(action_datas, action)

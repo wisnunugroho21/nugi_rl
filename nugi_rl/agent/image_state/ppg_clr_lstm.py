@@ -159,7 +159,22 @@ class AgentImageStatePPGClr(AgentPPG):
         else:
             action = self.distribution.deterministic(action_datas)
               
-        return to_list(action.squeeze(), self.use_gpu)
+        return action.squeeze().detach().tolist()
+
+    def logprobs(self, images, state, action):
+        images, state   = self.ppo_memory.transform(images).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        action          = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
+
+        batch_size, timesteps, C, H, W  = images.shape
+        images          = images.reshape(timesteps * batch_size, C, H, W)
+
+        res             = self.cnn(images)
+        res             = res.reshape(timesteps, batch_size, res.shape[-1])
+
+        action_datas, _ = self.policy(state)
+        logprobs        = self.distribution.logprob(action_datas, action)
+
+        return logprobs.squeeze().detach().tolist()
 
     def save_weights(self):
         torch.save({

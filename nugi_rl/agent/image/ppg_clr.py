@@ -176,7 +176,9 @@ class AgentPPGClr():
 
     def act(self, state):
         state           = self.ppo_memory.transform(state).unsqueeze(0).to(self.device)
-        action_datas, _ = self.policy(state)
+
+        res             = self.cnn(state)
+        action_datas, _ = self.policy(res)
         
         if self.is_training_mode:
             action = self.distribution.sample(action_datas)
@@ -184,6 +186,16 @@ class AgentPPGClr():
             action = self.distribution.deterministic(action_datas)
               
         return to_list(action.squeeze(), self.use_gpu)
+
+    def logprobs(self, state, action):
+        state           = self.ppo_memory.transform(state).unsqueeze(0).to(self.device)
+        action          = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
+
+        res             = self.cnn(state)
+        action_datas, _ = self.policy(res)
+
+        logprobs        = self.distribution.logprob(action_datas, action)
+        return logprobs.squeeze().detach().tolist()
 
     def save_weights(self, folder = None):
         if folder == None:
