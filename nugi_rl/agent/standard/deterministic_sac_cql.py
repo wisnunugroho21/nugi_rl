@@ -7,7 +7,7 @@ from helpers.pytorch_utils import set_device, to_list, copy_parameters
 class AgentCQL():
     def __init__(self, soft_q1, soft_q2, policy, value, state_dim, action_dim, q_loss, policy_loss, value_loss, memory, 
         soft_q_optimizer, policy_optimizer, value_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
-        soft_tau = 0.95, folder = 'model', device = torch.device('cuda:0')):
+        soft_tau = 0.95, folder = 'model', device = torch.device('cuda:0'), target_value = None):
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
@@ -22,7 +22,7 @@ class AgentCQL():
         self.soft_q2            = soft_q2
         self.value              = value
 
-        self.target_value       = deepcopy(self.value)     
+        self.target_value       = target_value
         
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
@@ -34,6 +34,9 @@ class AgentCQL():
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
         self.value_optimizer    = value_optimizer
+
+        if self.target_value is None:
+            self.target_value = deepcopy(self.value)
 
     @property
     def memory(self):

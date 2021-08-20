@@ -7,35 +7,38 @@ from helpers.pytorch_utils import set_device, copy_parameters, to_list
 class AgentDDPG():
     def __init__(self, soft_q, policy, state_dim, action_dim, q_loss, policy_loss, memory, 
         soft_q_optimizer, policy_optimizer, is_training_mode = True, batch_size = 32, epochs = 1, 
-        soft_tau = 0.95, folder = 'model', use_gpu = True):
+        soft_tau = 0.95, folder = 'model', device = torch.device('cuda:0'), 
+        target_policy = None, target_soft_q = None):
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
         self.action_dim         = action_dim
         self.state_dim          = state_dim
         self.folder             = folder
-        self.use_gpu            = use_gpu
         self.epochs             = epochs
         self.soft_tau           = soft_tau
 
         self.policy             = policy
         self.soft_q             = soft_q
 
-        self.target_policy      = deepcopy(self.policy)
-        self.target_soft_q      = deepcopy(self.soft_q)
+        self.target_policy      = target_policy
+        self.target_soft_q      = target_soft_q
                 
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
         self.memory             = memory
-        self.device             = set_device(self.use_gpu)
+        self.device             = device
         self.q_update           = 1
         
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
 
-        self.soft_q_scaler      = torch.cuda.amp.GradScaler()
-        self.policy_scaler      = torch.cuda.amp.GradScaler()
+        if self.target_policy is None:
+            self.target_policy  = deepcopy(self.policy)
+
+        if self.target_soft_q is None:
+            self.target_soft_q  = deepcopy(self.soft_q)
 
     @property
     def memory(self):

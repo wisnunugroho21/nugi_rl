@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 
 class TeacherAdvInv():
-    def __init__(self, g_model, h_model, loss_fn, memory, optimizer, epochs, device, is_training_mode = True, batch_size = 32):
+    def __init__(self, g_model, h_model, loss_fn, memory, optimizer, epochs = 10, device = torch.device('cuda:0'), is_training_mode = True, batch_size = 32):
         self.g_model            = g_model
         self.h_model            = h_model
 
@@ -54,11 +54,11 @@ class TeacherAdvInv():
             self._update_rewards()
 
     def teach(self, state, action, logprob, done, next_state):
-        state       = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-        action      = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
-        logprob     = torch.FloatTensor(logprob).unsqueeze(0).float().to(self.device)
-        done        = torch.FloatTensor(done).unsqueeze(0).float().to(self.device)
-        next_state  = torch.FloatTensor(next_state).unsqueeze(0).float().to(self.device)
+        state       = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        action      = torch.FloatTensor(action).unsqueeze(0).to(self.device)
+        logprob     = torch.FloatTensor(logprob).unsqueeze(0).to(self.device)
+        done        = torch.FloatTensor(done).unsqueeze(0).to(self.device)
+        next_state  = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
 
         g_values        = self.g_model(state, action)
         h_values        = self.h_model(state)

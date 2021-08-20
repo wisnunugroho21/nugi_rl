@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 
 class TeacherAdvMtnPrio():
-    def __init__(self, discrim_model, loss_fn, memory, optimizer, epochs, device, is_training_mode = True, batch_size = 32):
+    def __init__(self, discrim_model, loss_fn, memory, optimizer, epochs = 10, device = torch.device('cuda:0'), is_training_mode = True, batch_size = 32):
         self.discrim_model      = discrim_model
 
         self.memory             = memory
@@ -43,9 +43,9 @@ class TeacherAdvMtnPrio():
             self._update_rewards()
 
     def teach(self, state, next_state, goal):
-        state       = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-        goal        = torch.FloatTensor(goal).unsqueeze(0).float().to(self.device)
-        next_state  = torch.FloatTensor(next_state).unsqueeze(0).float().to(self.device)
+        state       = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        goal        = torch.FloatTensor(goal).unsqueeze(0).to(self.device)
+        next_state  = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
 
         discrimination  = self.discrim_model(state, next_state, goal)
         reward          = torch.max(0, 1 - 0.25 * (discrimination - 1).pow(2))

@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from helpers.pytorch_utils import set_device
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim):

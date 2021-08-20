@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 class AgentPPG():  
     def __init__(self, policy, value, distribution, ppo_loss, aux_ppg_loss, ppo_memory, aux_ppg_memory, 
                 ppo_optimizer, aux_ppg_optimizer, ppo_epochs = 10, aux_ppg_epochs = 10, n_aux_update = 10, is_training_mode = True, 
-                batch_size = 32,  folder = 'model', device = torch.device('cuda:0')):   
+                batch_size = 32,  folder = 'model', device = torch.device('cuda:0'), policy_old = None, value_old = None):   
 
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
@@ -16,10 +16,10 @@ class AgentPPG():
         self.n_aux_update       = n_aux_update
 
         self.policy             = policy
-        self.policy_old         = deepcopy(self.policy)
+        self.policy_old         = policy_old
 
         self.value              = value
-        self.value_old          = deepcopy(self.value)
+        self.value_old          = value_old        
 
         self.distribution       = distribution
         self.ppo_memory         = ppo_memory
@@ -33,6 +33,12 @@ class AgentPPG():
 
         self.ppo_optimizer      = ppo_optimizer
         self.aux_ppg_optimizer  = aux_ppg_optimizer
+
+        if self.policy_old is None:
+            self.policy_old = deepcopy(self.policy)
+
+        if self.value_old is None:
+            self.value_old  = deepcopy(self.value)
 
         if is_training_mode:
           self.policy.train()
