@@ -4,10 +4,10 @@ import torch.nn as nn
 from helpers.pytorch_utils import set_device
 
 class PolicyModel(nn.Module):
-    def __init__(self, state_dim, action_dim, use_gpu = True):
+    def __init__(self, state_dim, action_dim, device = torch.device('cuda:0')):
       super(PolicyModel, self).__init__()
 
-      self.std                  = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(use_gpu))
+      self.std                  = torch.FloatTensor([1.0, 0.5, 0.5]).to(device)
 
       self.state_extractor      = nn.Sequential( nn.Linear(2, 32), nn.ReLU() )
       self.image_extractor      = nn.LSTM(256, 128)

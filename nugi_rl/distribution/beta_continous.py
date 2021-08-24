@@ -4,15 +4,12 @@ from torch.distributions.kl import kl_divergence
 from distribution.basic_continous import BasicContinous
 from helpers.pytorch_utils import set_device, to_list
 
-class BetaContinous(BasicContinous):
-    def __init__(self, use_gpu):
-        self.use_gpu = use_gpu
-        
+class BetaContinous(BasicContinous):        
     def sample(self, datas):
         alpha, beta = datas
 
         distribution    = Beta(alpha, beta)
-        action          = distribution.sample().float().to(set_device(self.use_gpu))
+        action          = distribution.sample()
 
         return action
         
@@ -20,13 +17,13 @@ class BetaContinous(BasicContinous):
         alpha, beta = datas
 
         distribution = Beta(alpha, beta)
-        return distribution.entropy().float().to(set_device(self.use_gpu))
+        return distribution.entropy()
         
     def logprob(self, datas, value_data):
         alpha, beta = datas
 
         distribution = Beta(alpha, beta)
-        return distribution.log_prob(value_data).float().to(set_device(self.use_gpu))
+        return distribution.log_prob(value_data)
 
     def kldivergence(self, datas1, datas2):
         alpha1, beta1 = datas1
@@ -34,4 +31,4 @@ class BetaContinous(BasicContinous):
 
         distribution1 = Beta(alpha1, beta1)
         distribution2 = Beta(alpha2, beta2)
-        return kl_divergence(distribution1, distribution2).float().to(set_device(self.use_gpu))
+        return kl_divergence(distribution1, distribution2)

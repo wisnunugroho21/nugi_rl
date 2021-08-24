@@ -13,7 +13,7 @@ class Policy_Model(nn.Module):
           nn.ReLU(),
           nn.Linear(64, action_dim),
           nn.Tanh()
-        ).float().to(set_device(use_gpu))
+        )
         
     def forward(self, states, detach = False):
       action = self.nn_layer(states)
@@ -33,7 +33,7 @@ class Q_Model(nn.Module):
           nn.Linear(128, 64),
           nn.ReLU(),
           nn.Linear(64, 1)
-        ).float().to(set_device(use_gpu))
+        )
         
     def forward(self, states, actions, detach = False):
       x   = torch.cat((states, actions), -1)
@@ -53,7 +53,7 @@ class Value_Model(nn.Module):
           nn.Linear(128, 64),
           nn.ReLU(),
           nn.Linear(64, 1)
-        ).float().to(set_device(use_gpu))
+        )
         
     def forward(self, states, detach = False):
       if detach:

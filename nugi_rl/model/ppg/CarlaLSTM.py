@@ -46,15 +46,15 @@ class Policy_Model(nn.Module):
 
       self.std                  = torch.FloatTensor([1.0, 0.5, 0.5]).to(set_device(use_gpu))
 
-      self.conv                 = CnnModel().float().to(set_device(use_gpu))
-      self.memory_layer         = nn.LSTM(256, 256).float().to(set_device(use_gpu))
+      self.conv                 = CnnModel()
+      self.memory_layer         = nn.LSTM(256, 256)
 
-      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() ).float().to(set_device(use_gpu))      
-      self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
+      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() )      
+      self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() )
 
-      self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
-      self.actor_tanh_layer     = nn.Sequential( nn.Linear(64, 1), nn.Tanh() ).float().to(set_device(use_gpu))
-      self.actor_sigmoid_layer  = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() ).float().to(set_device(use_gpu))            
+      self.critic_layer         = nn.Sequential( nn.Linear(64, 1) )
+      self.actor_tanh_layer     = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
+      self.actor_sigmoid_layer  = nn.Sequential( nn.Linear(64, 2), nn.Sigmoid() )            
         
     def forward(self, datas, detach = False):
       i   = datas[0]
@@ -86,13 +86,13 @@ class Value_Model(nn.Module):
     def __init__(self, state_dim, use_gpu = True):
       super(Value_Model, self).__init__()
 
-      self.conv                 = CnnModel().float().to(set_device(use_gpu))
-      self.memory_layer         = nn.LSTM(256, 256).float().to(set_device(use_gpu))
+      self.conv                 = CnnModel()
+      self.memory_layer         = nn.LSTM(256, 256)
 
-      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() ).float().to(set_device(use_gpu))
-      self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() ).float().to(set_device(use_gpu))
+      self.state_extractor      = nn.Sequential( nn.Linear(2, 64), nn.ReLU() )
+      self.nn_layer             = nn.Sequential( nn.Linear(320, 64), nn.ReLU() )
 
-      self.critic_layer         = nn.Sequential( nn.Linear(64, 1) ).float().to(set_device(use_gpu))
+      self.critic_layer         = nn.Sequential( nn.Linear(64, 1) )
         
     def forward(self, datas, detach = False):
       i   = datas[0]

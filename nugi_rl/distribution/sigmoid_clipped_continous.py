@@ -13,6 +13,6 @@ class SigmoidClippedContinous(BasicContinous):
         mean, std = datas
 
         distribution    = Normal(mean, std)
-        old_logprob     = distribution.log_prob(value_data).float().to(set_device(self.use_gpu))
+        old_logprob     = distribution.log_prob(value_data)
 
         return old_logprob - (1.0 - value_data.sigmoid().pow(2)).log()
