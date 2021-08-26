@@ -37,7 +37,7 @@ class IterRunner():
             reward = self.coef_task_reward * task_reward + self.coef_imitation_reward * imitation_reward
             
             if self.is_save_memory:
-                self.agent.memory.save_obs(self.states.tolist(), self.goal, action, reward, float(done), next_state.tolist())
+                self.agent.save_obs(self.states.tolist(), self.goal, action, reward, float(done), next_state.tolist())
                 self.teacher.memory.save_policy_obs(self.states.tolist(), self.goal, next_state.tolist())
                 
             self.states         = next_state

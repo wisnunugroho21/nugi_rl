@@ -26,7 +26,7 @@ class AgentTD3():
         self.target_soft_q1     = target_soft_q1
         self.target_soft_q2     = target_soft_q2
 
-        self.memory             = memory        
+        self.agent_memory       = memory        
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
@@ -47,7 +47,7 @@ class AgentTD3():
 
     @property
     def memory(self):
-        return self.memory
+        return self.agent_memory
 
     def _training_q(self, states, actions, rewards, dones, next_states):
         predicted_next_actions      = self.policy(next_states, True)
@@ -76,8 +76,8 @@ class AgentTD3():
 
     def _update_offpolicy(self):        
         for _ in range(self.epochs):
-            indices     = torch.randperm(len(self.memory))[:self.batch_size]
-            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)
+            indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
+            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices))
             
             if self.q_update == 1:
                 for states, actions, rewards, dones, next_states in dataloader:
@@ -96,20 +96,19 @@ class AgentTD3():
                 self.target_next_q1 = copy_parameters(self.soft_q1, self.target_next_q1, self.soft_tau)
                 self.target_next_q2 = copy_parameters(self.soft_q2, self.target_next_q2, self.soft_tau)
                 self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
-
-    def save_memory(self, policy_memory):
-        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
-        
+            
+    def update(self):
+        if len(self.agent_memory) > self.batch_size:
+            self._update_offpolicy()
+    
     def act(self, state):
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action  = self.policy(state)
                       
-        return to_list(action.squeeze(), self.use_gpu)
+        return action.squeeze().detach().tolist()
 
-    def update(self):
-        if len(self.memory) > self.batch_size:
-            self._update_offpolicy()
+    def save_obs(self, state, action, reward, done, next_state):
+        self.agent_memory.save_obs(state, action, reward, done, next_state)
         
     def save_weights(self):
         torch.save({

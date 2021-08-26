@@ -170,10 +170,6 @@ class AgentPPGClr():
             self._update_aux_clr()
             self.i_update = 0
 
-    def save_memory(self, ppo_memory):
-        states, actions, rewards, dones, next_states = ppo_memory.get_all_items()
-        self.ppo_memory.save_all(states, actions, rewards, dones, next_states)
-
     def act(self, state):
         state           = self.ppo_memory.transform(state).unsqueeze(0).to(self.device)
 
@@ -196,6 +192,9 @@ class AgentPPGClr():
 
         logprobs        = self.distribution.logprob(action_datas, action)
         return logprobs.squeeze().detach().tolist()
+
+    def save_obs(self, state, action, reward, done, next_state):
+        self.ppo_memory.save_obs(state, action, reward, done, next_state)
 
     def save_weights(self, folder = None):
         if folder == None:

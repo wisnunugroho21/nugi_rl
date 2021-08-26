@@ -62,6 +62,29 @@ class AgentPpoRnd():
     def memory(self):
         return self.ppo_memory
 
+    def _compute_intrinsic_reward(self, obs, mean_obs, std_obs):
+        obs             = normalize(obs, mean_obs, std_obs)
+        
+        state_pred      = self.rnd_predict(obs)
+        state_target    = self.rnd_target(obs)
+
+        return (state_target - state_pred)
+
+    def _update_obs_normalization_param(self, obs):
+        obs                 = torch.FloatTensor(obs).to(self.device)
+
+        mean_obs            = count_new_mean(self.rnd_memory.mean_obs, self.rnd_memory.total_number_obs, obs)
+        std_obs             = count_new_std(self.rnd_memory.std_obs, self.rnd_memory.total_number_obs, obs)
+        total_number_obs    = len(obs) + self.rnd_memory.total_number_obs
+        
+        self.rnd_memory.save_observation_normalize_parameter(mean_obs, std_obs, total_number_obs)
+    
+    def _update_rwd_normalization_param(self, in_rewards):
+        std_in_rewards      = count_new_std(self.rnd_memory.std_in_rewards, self.rnd_memory.total_number_rwd, in_rewards)
+        total_number_rwd    = len(in_rewards) + self.rnd_memory.total_number_rwd
+        
+        self.rnd_memory.save_rewards_normalize_parameter(std_in_rewards, total_number_rwd)
+
     def _training_ppo(self, states, actions, ex_rewards, dones, next_states, mean_obs, std_obs, std_in_rewards): 
         action_datas        = self.policy(states)
         old_action_datas    = self.policy_old(states, True)
@@ -117,10 +140,10 @@ class AgentPpoRnd():
             for obs in dataloader:
                 self._training_rnd(obs.to(self.device), self.rnd_memory.mean_obs.to(self.device), self.rnd_memory.std_obs.to(self.device))
 
-        intrinsic_rewards = self.compute_intrinsic_reward(self.rnd_memory.get_all_tensor().to(self.device), self.rnd_memory.mean_obs.to(self.device), self.rnd_memory.std_obs.to(self.device))
+        intrinsic_rewards = self._compute_intrinsic_reward(self.rnd_memory.get_all_tensor().to(self.device), self.rnd_memory.mean_obs.to(self.device), self.rnd_memory.std_obs.to(self.device))
         
-        self.update_obs_normalization_param(self.rnd_memory.observations)
-        self.update_rwd_normalization_param(intrinsic_rewards)
+        self._update_obs_normalization_param(self.rnd_memory.observations)
+        self._update_rwd_normalization_param(intrinsic_rewards)
 
         self.rnd_memory.clear_memory()           
 
@@ -131,33 +154,6 @@ class AgentPpoRnd():
             self._update_rnd()            
         else:
             raise Error('choose type update properly')
-
-    def compute_intrinsic_reward(self, obs, mean_obs, std_obs):
-        obs             = normalize(obs, mean_obs, std_obs)
-        
-        state_pred      = self.rnd_predict(obs)
-        state_target    = self.rnd_target(obs)
-
-        return (state_target - state_pred)
-
-    def update_obs_normalization_param(self, obs):
-        obs                 = torch.FloatTensor(obs).to(self.device)
-
-        mean_obs            = count_new_mean(self.rnd_memory.mean_obs, self.rnd_memory.total_number_obs, obs)
-        std_obs             = count_new_std(self.rnd_memory.std_obs, self.rnd_memory.total_number_obs, obs)
-        total_number_obs    = len(obs) + self.rnd_memory.total_number_obs
-        
-        self.rnd_memory.save_observation_normalize_parameter(mean_obs, std_obs, total_number_obs)
-    
-    def update_rwd_normalization_param(self, in_rewards):
-        std_in_rewards      = count_new_std(self.rnd_memory.std_in_rewards, self.rnd_memory.total_number_rwd, in_rewards)
-        total_number_rwd    = len(in_rewards) + self.rnd_memory.total_number_rwd
-        
-        self.rnd_memory.save_rewards_normalize_parameter(std_in_rewards, total_number_rwd)
-
-    def save_obs(self, state, action, reward, done, next_state):
-        self.ppo_memory.save_obs(state, action, reward, done, next_state)
-        self.rnd_memory.save_obs(next_state)
 
     def act(self, state):
         state           = torch.FloatTensor(state).unsqueeze(0).to(self.device)
@@ -178,6 +174,10 @@ class AgentPpoRnd():
         logprobs        = self.distribution.logprob(action_datas, action)
 
         return logprobs.squeeze().detach().tolist()
+
+    def save_obs(self, state, action, reward, done, next_state):
+        self.ppo_memory.save_obs(state, action, reward, done, next_state)
+        self.rnd_memory.save_obs(next_state)
 
     def save_weights(self, folder = None):
         if folder == None:

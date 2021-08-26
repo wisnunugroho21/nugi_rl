@@ -30,7 +30,7 @@ class FrozenlakeRunner():
             next_state                  = to_categorical(next_state, num_classes = self.state_dim)
             
             if self.is_save_memory:
-                self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.agent.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 

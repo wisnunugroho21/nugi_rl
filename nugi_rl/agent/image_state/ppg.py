@@ -82,10 +82,6 @@ class AgentImageStatePPG(AgentPPG):
 
         self.aux_ppg_memory.clear_memory()        
 
-    def save_memory(self, policy_memory):
-        images, states, actions, rewards, dones, next_images, next_states = policy_memory.get_all_items()
-        self.ppo_memory.save_all(images, states, actions, rewards, dones, next_images, next_states)
-
     def act(self, image, state):
         image, state        = self.ppo_memory.transform(image).unsqueeze(0).to(self.device), torch.FloatTensor(state).unsqueeze(0).to(self.device)
         
@@ -108,6 +104,9 @@ class AgentImageStatePPG(AgentPPG):
 
         logprobs        = self.distribution.logprob(action_datas, action)
         return logprobs.squeeze().detach().tolist()
+
+    def save_obs(self, image, state, action, reward, done, next_image, next_state):
+        self.ppo_memory.save_obs(image, state, action, reward, done, next_image, next_state)
 
     def save_weights(self):
         torch.save({

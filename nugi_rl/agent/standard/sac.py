@@ -89,7 +89,7 @@ class AgentSAC():
             indices[-1] = torch.IntTensor([len(self.agent_memory) - 1])
             # indices     = torch.arange(-self.batch_size, 0)
 
-            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
+            dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
             for states, actions, rewards, dones, next_states in dataloader:                
                 self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
                 self._training_value(states.to(self.device))
@@ -124,6 +124,9 @@ class AgentSAC():
         logprobs        = self.distribution.logprob(action_datas, action)
 
         return logprobs.squeeze().detach().tolist()
+
+    def save_obs(self, state, action, reward, done, next_state):
+        self.agent_memory.save_obs(state, action, reward, done, next_state)
 
     def save_weights(self):
         torch.save({

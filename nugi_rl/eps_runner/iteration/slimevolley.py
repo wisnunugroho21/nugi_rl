@@ -24,7 +24,7 @@ class SlimeVolleyRunner(IterRunner):
             next_state, reward, done, _ =  self.env.step(action_gym)
             
             if self.training_mode:
-                self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.agent.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 

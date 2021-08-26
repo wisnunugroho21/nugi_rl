@@ -41,7 +41,7 @@ class VectorizedRunner(IterRunner):
                     next_state, reward, done, _ = env.step(action)
 
                 if self.training_mode:
-                    self.agent.memory.save_obs(self.states[index].tolist(), action, reward, float(done), next_state.tolist())
+                    self.agent.save_obs(self.states[index].tolist(), action, reward, float(done), next_state.tolist())
 
                 self.states[index]           = next_state
                 self.total_rewards[index]    += reward

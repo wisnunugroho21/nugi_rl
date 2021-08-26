@@ -33,7 +33,7 @@ class CarlaRunner(IterRunner):
             next_image, next_state, reward, done, _ = self.env.step(action_gym)
             
             if self.training_mode:
-                self.agent.memory.save_obs(self.images, self.states.tolist(), action, reward, float(done), next_image, next_state.tolist())
+                self.agent.save_obs(self.images, self.states.tolist(), action, reward, float(done), next_image, next_state.tolist())
                 
             self.images         = next_image
             self.states         = next_state

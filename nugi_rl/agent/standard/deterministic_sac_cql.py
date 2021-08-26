@@ -102,16 +102,15 @@ class AgentCQL():
     def update(self):
         if len(self.agent_memory) > self.batch_size:
             self._update_cql()
-
-    def save_memory(self, policy_memory):
-        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.agent_memory.save_all(states, actions, rewards, dones, next_states)
         
     def act(self, state):
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action  = self.policy(state)
               
         return action.squeeze().detach().tolist()
+
+    def save_obs(self, state, action, reward, done, next_state):
+        self.agent_memory.save_obs(state, action, reward, done, next_state)
 
     def save_weights(self):
         torch.save({

@@ -127,6 +127,9 @@ class AgentGoalPPG():
 
         return logprobs.squeeze().detach().tolist()
 
+    def save_obs(self, state, goal, action, reward, done, next_state):
+        self.ppo_memory.save_obs(state, goal, action, reward, done, next_state)
+
     def save_weights(self, folder = None):
         if folder == None:
             folder = self.folder

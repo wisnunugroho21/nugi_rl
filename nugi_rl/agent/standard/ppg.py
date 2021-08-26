@@ -82,7 +82,7 @@ class AgentPPG():
         self.value_old.load_state_dict(self.value.state_dict())
 
         for _ in range(self.ppo_epochs):
-            dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False, num_workers = 8)
+            dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False)
             for states, actions, rewards, dones, next_states in dataloader:
                 self._training_ppo(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
@@ -94,7 +94,7 @@ class AgentPPG():
         self.policy_old.load_state_dict(self.policy.state_dict())
 
         for _ in range(self.aux_ppg_epochs):
-            dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False, num_workers = 8)
+            dataloader  = DataLoader(self.aux_ppg_memory, self.batch_size, shuffle = False)
             for states in dataloader:
                 self._training_aux_ppg(states.float().to(self.device))
 
@@ -127,6 +127,9 @@ class AgentPPG():
         logprobs        = self.distribution.logprob(action_datas, action)
 
         return logprobs.squeeze().detach().tolist()
+
+    def save_obs(self, state, action, reward, done, next_state):
+        self.ppo_memory.save_obs(state, action, reward, done, next_state)
 
     def save_weights(self, folder = None):
         if folder == None:

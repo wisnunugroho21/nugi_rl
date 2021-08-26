@@ -27,7 +27,7 @@ class AgentDDPG():
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
 
-        self.memory             = memory
+        self.agent_memory             = memory
         self.device             = device
         self.q_update           = 1
         
@@ -42,7 +42,7 @@ class AgentDDPG():
 
     @property
     def memory(self):
-        return self.memory
+        return self.agent_memory
 
     def _training_q(self, states, actions, rewards, dones, next_states):
         self.soft_q_optimizer.zero_grad()
@@ -71,12 +71,12 @@ class AgentDDPG():
         self.policy_scaler.update()
 
     def _update_offpolicy(self):
-        if len(self.memory) > self.batch_size:
+        if len(self.agent_memory) > self.batch_size:
             for _ in range(self.epochs):
-                indices     = torch.randperm(len(self.memory))[:self.batch_size]
-                indices     = len(self.memory) - indices - 1
+                indices     = torch.randperm(len(self.agent_memory))[:self.batch_size]
+                indices     = len(self.agent_memory) - indices - 1
 
-                dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
+                dataloader  = DataLoader(self.agent_memory, self.batch_size, sampler = SubsetRandomSampler(indices), num_workers = 8)                
                 for states, actions, rewards, dones, next_states in dataloader:
                     self._training_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
                     self._training_policy(states.to(self.device))
@@ -84,9 +84,9 @@ class AgentDDPG():
                     self.target_soft_q = copy_parameters(self.soft_q, self.target_soft_q, self.soft_tau)
                     self.target_policy = copy_parameters(self.policy, self.target_policy, self.soft_tau)
 
-    def save_memory(self, policy_memory):
-        states, actions, rewards, dones, next_states = policy_memory.get_all_items()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
+    def update(self):
+        if len(self.agent_memory) > self.batch_size:
+            self._update_offpolicy()
         
     def act(self, state):
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
@@ -94,8 +94,8 @@ class AgentDDPG():
                       
         return to_list(action.squeeze(), self.use_gpu)
 
-    def update(self):
-        self._update_offpolicy()
+    def save_obs(self, state, action, reward, done, next_state):
+        self.agent_memory.save_obs(state, action, reward, done, next_state)
         
     def save_weights(self):
         torch.save({

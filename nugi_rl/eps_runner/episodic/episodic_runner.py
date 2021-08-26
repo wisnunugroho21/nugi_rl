@@ -36,7 +36,7 @@ class EpisodicRunner():
                     next_state, reward, done, _ = self.env.step(action)
                 
                 if self.is_save_memory:
-                    self.agent.memory.save_obs(state.tolist(), action, reward, float(done), next_state.tolist())
+                    self.agent.save_obs(state.tolist(), action, reward, float(done), next_state.tolist())
                     
                 state           = next_state
                 eps_time        += 1 
