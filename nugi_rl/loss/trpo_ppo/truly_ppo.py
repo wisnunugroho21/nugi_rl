@@ -26,6 +26,7 @@ class TrulyPPO():
             ratios * advantages - self.policy_params * Kl,
             ratios * advantages
         )
+        
         pg_loss         = pg_targets.mean()
         dist_entropy    = self.distribution.entropy(action_datas).mean()
 

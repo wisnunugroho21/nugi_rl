@@ -1,8 +1,9 @@
 import numpy as np
 from copy import deepcopy
+from tensorflow.keras.utils import to_categorical
 
-class IterRunner():
-    def __init__(self, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+class FrozenlakeRunner():
+    def __init__(self, state_dim, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
         self.agent              = agent
         self.env                = env
 
@@ -19,12 +20,14 @@ class IterRunner():
         self.total_reward       = 0
         self.eps_time           = 0
 
-        self.states             = self.env.reset()
+        self.state_dim          = state_dim
+        self.states             = to_categorical(env.reset(), num_classes = self.state_dim)
 
     def run(self):
         for _ in range(self.n_update):
             action                      = self.agent.act(self.states)
             next_state, reward, done, _ = self.env.step(action)
+            next_state                  = to_categorical(next_state, num_classes = self.state_dim)
             
             if self.is_save_memory:
                 self.agent.memory.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
@@ -44,7 +47,7 @@ class IterRunner():
                     self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
                     self.writer.add_scalar('Times', self.eps_time, self.i_episode)
 
-                self.states         = self.env.reset()
+                self.states         = to_categorical(self.env.reset(), num_classes = self.state_dim)
                 self.total_reward   = 0
                 self.eps_time       = 0    
 

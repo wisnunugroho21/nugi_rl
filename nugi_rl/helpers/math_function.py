@@ -2,9 +2,16 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-def normalize(data):
-    data_normalized = (data - data.mean()) / (data.std() + 1e-6)
-    return data_normalized   
+def normalize(data, mean = None, std = None, clip = None):
+    if mean is not None and std is not None:
+        data_normalized = (data - mean) / (std + 1e-8)
+    else:
+        data_normalized = (data - data.mean()) / (data.std() + 1e-8)
+                
+    if clip:
+        data_normalized = data_normalized.clamp(-1 * clip, clip)
+
+    return data_normalized 
 
 def prepro_half(I):
     I = I[35:195] # crop
@@ -66,3 +73,9 @@ def new_std_from_rewards(rewards, reward_target):
         new_std = 1.0
 
     return new_std
+
+def count_new_mean(prevMean, prevLen, newData):
+    return ((prevMean * prevLen) + newData.sum(0)) / (prevLen + newData.shape[0])
+      
+def count_new_std(prevStd, prevLen, newData):
+    return (((prevStd.pow(2) * prevLen) + (newData.var(0) * newData.shape[0])) / (prevLen + newData.shape[0])).sqrt()
