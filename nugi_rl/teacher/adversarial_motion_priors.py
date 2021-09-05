@@ -5,7 +5,7 @@ class TeacherAdvMtnPrio():
     def __init__(self, discrim_model, loss_fn, memory, optimizer, epochs = 10, device = torch.device('cuda:0'), is_training_mode = True, batch_size = 32):
         self.discrim_model      = discrim_model
 
-        self.memory             = memory
+        self.teacher_memory     = memory
         self.optimizer          = optimizer
         self.loss_fn            = loss_fn
 
@@ -16,7 +16,7 @@ class TeacherAdvMtnPrio():
 
     @property
     def memory(self):
-        return self.memory
+        return self.teacher_memory
 
     def _training_rewards(self, expert_states, expert_next_states, policy_states, policy_next_states, goals):
         dis_expert  = self.discrim_model(expert_states, expert_next_states, goals)
@@ -30,16 +30,16 @@ class TeacherAdvMtnPrio():
 
     def _update_rewards(self):
         for _ in range(self.epochs):
-            dataloader = DataLoader(self.memory, self.batch_size, shuffle = False, num_workers = 8)
+            dataloader = DataLoader(self.teacher_memory, self.batch_size, shuffle = False, num_workers = 8)
 
             for expert_states, expert_next_states, policy_states, policy_next_states, goals in dataloader:
                 self._training_rewards(expert_states.to(self.device), expert_next_states.to(self.device),
                     policy_states.to(self.device), policy_next_states.to(self.device), goals.to(self.device))
 
-        self.memory.clear_policy_memory()
+        self.teacher_memory.clear_policy_memory()
 
     def update(self):
-        if len(self.memory) >= self.batch_size:
+        if len(self.teacher_memory) >= self.batch_size:
             self._update_rewards()
 
     def teach(self, state, next_state, goal):
@@ -52,6 +52,9 @@ class TeacherAdvMtnPrio():
         
         return reward.squeeze().detach().tolist()
 
+    def save_obs(self, state, goal, next_state):
+        self.teacher_memory.save_policy_obs(state, goal, next_state)
+
     def save_weights(self, folder = None):
         if folder == None:
             folder = self.folder
@@ -59,7 +62,7 @@ class TeacherAdvMtnPrio():
         torch.save({
             'discrim_model_state_dict': self.discrim_model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
-        }, self.folder + '/ppg.tar')
+        }, self.folder + '/amp.tar')
         
     def load_weights(self, folder = None, device = None):
         if device == None:
@@ -68,7 +71,7 @@ class TeacherAdvMtnPrio():
         if folder == None:
             folder = self.folder
 
-        model_checkpoint = torch.load(self.folder + '/ppg.tar', map_location = device)
+        model_checkpoint = torch.load(self.folder + '/amp.tar', map_location = device)
         self.discrim_model.load_state_dict(model_checkpoint['discrim_model_state_dict'])
         self.optimizer.load_state_dict(model_checkpoint['optimizer_state_dict'])
 
@@ -77,5 +80,10 @@ class TeacherAdvMtnPrio():
         else:
             self.discrim_model.eval()
 
+    def get_weights(self):
+        return self.discrim_model.state_dict()
+
+    def set_weights(self, discrim_weights):
+        self.discrim_model.load_state_dict(discrim_weights)
     
     

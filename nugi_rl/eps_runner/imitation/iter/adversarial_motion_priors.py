@@ -3,7 +3,7 @@ from copy import deepcopy
 
 class IterRunner():
     def __init__(self, agent, teacher, env, goal, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100, 
-        coef_task_reward = 1, coef_imitation_reward = 1):
+        coef_task_reward = 0.5, coef_imitation_reward = 0.5):
 
         self.agent              = agent
         self.env                = env
@@ -38,7 +38,7 @@ class IterRunner():
             
             if self.is_save_memory:
                 self.agent.save_obs(self.states.tolist(), self.goal, action, reward, float(done), next_state.tolist())
-                self.teacher.memory.save_policy_obs(self.states.tolist(), self.goal, next_state.tolist())
+                self.teacher.save_obs(self.states.tolist(), self.goal, next_state.tolist())
                 
             self.states         = next_state
             self.eps_time       += 1 
