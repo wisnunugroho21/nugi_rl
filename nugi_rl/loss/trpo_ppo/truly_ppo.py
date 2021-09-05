@@ -24,7 +24,7 @@ class TrulyPPO():
         pg_targets  = torch.where(
             (Kl >= self.policy_kl_range) & (ratios > 1.0),
             ratios * advantages - self.policy_params * Kl,
-            ratios * advantages
+            ratios * advantages - self.policy_kl_range
         )
         
         pg_loss         = pg_targets.mean()

@@ -10,7 +10,6 @@ class TRPO():
         self.advantage_function = advantage_function
         self.distribution       = distribution
 
-    # Loss for PPO  
     def compute_loss(self, action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones):
         advantages      = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()
         returns         = (advantages + values).detach()
