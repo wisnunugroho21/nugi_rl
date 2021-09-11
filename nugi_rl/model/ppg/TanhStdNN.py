@@ -6,31 +6,31 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 1024),
+          nn.Linear(state_dim, 192),
           nn.ReLU(),
-          nn.Linear(1024, 768),
+          nn.Linear(192, 192),
           nn.ReLU(),
         )
 
         self.actor_mean_layer = nn.Sequential(
-          nn.Linear(256, action_dim)
+          nn.Linear(64, action_dim)
         )
 
         self.actor_std_layer = nn.Sequential(
-          nn.Linear(256, action_dim),
+          nn.Linear(64, action_dim),
           nn.Sigmoid()
         )
 
         self.critic_layer = nn.Sequential(
-          nn.Linear(256, 1)
+          nn.Linear(64, 1)
         )
         
     def forward(self, states, detach = False):
       x = self.nn_layer(states)
 
-      mean    = self.actor_mean_layer(x[:, :256])
-      std     = self.actor_std_layer(x[:, 256:512])
-      critic  = self.critic_layer(x[:, 512:768])
+      mean    = self.actor_mean_layer(x[:, :64])
+      std     = self.actor_std_layer(x[:, 64:128])
+      critic  = self.critic_layer(x[:, 128:])
       
       if detach:
         return (mean.detach(), std.detach()), critic.detach()
@@ -42,11 +42,11 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 1024),
+          nn.Linear(state_dim, 192),
           nn.ReLU(),
-          nn.Linear(1024, 256),
+          nn.Linear(192, 64),
           nn.ReLU(),
-          nn.Linear(256, 1)
+          nn.Linear(64, 1)
         )
         
     def forward(self, states, detach = False):

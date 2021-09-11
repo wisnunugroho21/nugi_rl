@@ -107,7 +107,7 @@ class AgentCQL():
         state   = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action  = self.policy(state)
               
-        return action.squeeze().detach().tolist()
+        return action.squeeze(0).detach().tolist()
 
     def save_obs(self, state, action, reward, done, next_state):
         self.agent_memory.save_obs(state, action, reward, done, next_state)

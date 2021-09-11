@@ -114,7 +114,7 @@ class AgentSAC():
         else:
             action = self.distribution.act_deterministic(action_datas)
               
-        return action.squeeze().detach().tolist()
+        return action.squeeze(0).detach().tolist()
 
     def logprobs(self, state, action):
         state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
@@ -123,7 +123,7 @@ class AgentSAC():
         action_datas, _ = self.policy(state)
         logprobs        = self.distribution.logprob(action_datas, action)
 
-        return logprobs.squeeze().detach().tolist()
+        return logprobs.squeeze(0).detach().tolist()
 
     def save_obs(self, state, action, reward, done, next_state):
         self.agent_memory.save_obs(state, action, reward, done, next_state)

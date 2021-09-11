@@ -117,7 +117,7 @@ class AgentPPG():
         else:
             action = self.distribution.deterministic(action_datas)
               
-        return action.squeeze().detach().tolist()
+        return action.squeeze(0).detach().tolist()
 
     def logprobs(self, state, action):
         state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
@@ -126,7 +126,7 @@ class AgentPPG():
         action_datas, _ = self.policy(state)
         logprobs        = self.distribution.logprob(action_datas, action)
 
-        return logprobs.squeeze().detach().tolist()
+        return logprobs.squeeze(0).detach().tolist()
 
     def save_obs(self, state, action, reward, done, next_state):
         self.ppo_memory.save_obs(state, action, reward, done, next_state)
@@ -152,8 +152,10 @@ class AgentPPG():
         model_checkpoint = torch.load(self.folder + '/ppg.tar', map_location = device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
-        self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
-        self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])
+
+        if self.ppo_optimizer is not None and self.aux_ppg_optimizer is not None:
+            self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])        
+            self.aux_ppg_optimizer.load_state_dict(model_checkpoint['aux_ppg_optimizer_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()

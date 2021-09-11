@@ -29,7 +29,7 @@ class EpisodicIterExecutor():
                 _, _, _, dones, _ = self.runner.run()
 
                 if self.is_training_mode:
-                    if dones[0] == 1:
+                    if dones[-1] == 1:
                         if self.i_episodic % self.n_update_episodic == 0:
                             self.agent.update('episodic')                         
                         self.i_episodic += 1

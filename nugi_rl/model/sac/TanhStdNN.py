@@ -15,7 +15,6 @@ class Policy_Model(nn.Module):
 
         self.actor_layer = nn.Sequential(
           nn.Linear(64, action_dim),
-          nn.Tanh()
         )
 
         self.actor_std_layer = nn.Sequential(

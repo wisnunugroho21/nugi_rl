@@ -21,16 +21,8 @@ class SingleStepRunner():
         self.states             = self.env.reset()
 
     def run(self):             
-        action  = self.agent.act(self.states)
-
-        if self.is_discrete:
-            action = int(action)
-
-        if self.max_action is not None and not self.is_discrete:
-            action_gym  =  np.clip(action, -1, 1) * self.max_action
-            next_state, reward, done, _ = self.env.step(action_gym)
-        else:
-            next_state, reward, done, _ = self.env.step(action)
+        action                      = self.agent.act(self.states)
+        next_state, reward, done, _ = self.env.step(action)
         
         if self.is_save_memory:
             self.agent.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
