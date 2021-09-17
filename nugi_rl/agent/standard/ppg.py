@@ -109,15 +109,17 @@ class AgentPPG():
             self.i_update = 0    
 
     def act(self, state):
-        state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-        action_datas, _ = self.policy(state)
-        
-        if self.is_training_mode:
-            action = self.distribution.sample(action_datas)
-        else:
-            action = self.distribution.deterministic(action_datas)
-              
-        return action.squeeze(0).detach().tolist()
+        with torch.inference_mode():
+            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            action_datas, _ = self.policy(state)
+            
+            if self.is_training_mode:
+                action = self.distribution.sample(action_datas)
+            else:
+                action = self.distribution.deterministic(action_datas)
+                
+            action = action.squeeze(0).detach().tolist()
+        return action
 
     def logprobs(self, state, action):
         state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)

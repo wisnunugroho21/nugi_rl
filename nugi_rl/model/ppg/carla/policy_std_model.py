@@ -11,8 +11,8 @@ class PolicyModel(nn.Module):
       self.image_extractor  = nn.Sequential( nn.Linear(128, 128), nn.ReLU() )
       self.nn_layer         = nn.Sequential( nn.Linear(160, 320), nn.ReLU() )
       
-      self.actor_steer      = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
-      self.actor_gas_break  = nn.Sequential( nn.Linear(64, 1), nn.Tanh() )
+      self.actor_steer      = nn.Sequential( nn.Linear(64, 1) )
+      self.actor_gas_break  = nn.Sequential( nn.Linear(64, 1) )
 
       self.std_steer        = nn.Sequential( nn.Linear(64, 1), nn.Sigmoid() )
       self.std_gas_break    = nn.Sequential( nn.Linear(64, 1), nn.Sigmoid() )
