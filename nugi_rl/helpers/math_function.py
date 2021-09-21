@@ -79,3 +79,6 @@ def count_new_mean(prevMean, prevLen, newData):
       
 def count_new_std(prevStd, prevLen, newData):
     return (((prevStd.pow(2) * prevLen) + (newData.var(0) * newData.shape[0])) / (prevLen + newData.shape[0])).sqrt()
+
+def ceiling_division(n, d):
+    return -(n // -d)

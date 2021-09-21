@@ -39,6 +39,26 @@ class MultivariateContinous(BasicContinous):
         distribution2 = MultivariateNormal(mean2, std2)
         return kl_divergence(distribution1, distribution2)
 
+    def kldivergence_mean(self, datas1, datas2):
+        mean1, cov1     = datas1
+        mean2, _        = datas2
+
+        mean1, mean2    = mean1.unsqueeze(-1), mean2.unsqueeze(-1)
+        cov1            = torch.diag_embed(cov1)       
+
+        Kl_mean = 0.5 * (mean2 - mean1).transpose(-2, -1) @ cov1.inverse() @ (mean2 - mean1)
+        return Kl_mean
+
+    def kldivergence_cov(self, datas1, datas2):
+        mean1, cov1     = datas1
+        _, cov2         = datas2
+
+        d               = mean1.shape[-1]
+        cov1, cov2      = torch.diag_embed(cov1), torch.diag_embed(cov2)
+
+        Kl_cov  = 0.5 * ((cov2.inverse() @ cov1).diagonal(dim1 = -2, dim2 = -1).sum(-1) - d + (torch.linalg.det(cov2) / (torch.linalg.det(cov1) + 1e-3)).log())
+        return Kl_cov
+
     def act_deterministic(self, datas):
         mean, _ = datas
         return mean.squeeze(0)

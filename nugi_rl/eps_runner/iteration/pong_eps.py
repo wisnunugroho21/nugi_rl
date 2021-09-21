@@ -11,9 +11,9 @@ class PongRunner(IterRunner):
         self.obs    = prepro_half_one_dim(obs)
         self.states = self.obs
 
-    def run(self, agent):
+    def run(self):
         for _ in range(self.n_update):
-            action      = agent.act(self.states)
+            action      = self.agent.act(self.states)
             action_gym  = action + 1 if action != 0 else 0
 
             next_obs, reward, done, _ = self.env.step(action_gym)
