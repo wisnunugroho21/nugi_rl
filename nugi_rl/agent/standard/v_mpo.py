@@ -63,16 +63,6 @@ class AgentVMPO():
         self.policy_optimizer.step()
         self.value_optimizer.step()
 
-    """ def _training_value(self, states, rewards, dones, next_states):
-        values      = self.value(states)
-        next_values = self.value(next_states, True)
-
-        loss        = self.value_loss.compute_loss(values, next_values, rewards, dones)
-
-        self.value_optimizer.zero_grad()
-        loss.backward()
-        self.value_optimizer.step() """
-
     def update(self):
         self.old_policy.load_state_dict(self.policy.state_dict())
 
@@ -80,9 +70,8 @@ class AgentVMPO():
             dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
             for states, actions, rewards, dones, next_states in dataloader:
                 self._training(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
-                # self._training_value(states.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
-        self.policy_memory.clear_memory()           
+        self.policy_memory.clear_memory()
 
     def act(self, state):
         with torch.inference_mode():

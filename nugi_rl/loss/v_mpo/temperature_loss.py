@@ -11,7 +11,7 @@ class TemperatureLoss():
         top_adv, _  = torch.topk(advantages, math.ceil(len(advantages) / 2), 0)        
 
         ratio       = top_adv / (temperature + 1e-3)
-        ratio_max   = ratio.max(0)[0]
+        ratio_max   = (ratio.max(0)[0]).detach()
 
         logmeanexp  = ratio_max + (ratio - ratio_max).exp().mean().log()
         loss        = temperature * self.coef_temp + temperature * logmeanexp
