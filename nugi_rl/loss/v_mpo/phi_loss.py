@@ -16,9 +16,7 @@ class PhiLoss():
         top_logprobs        = logprobs[top_idx]        
 
         ratio               = top_adv / (temperature + 1e-3)
-        ratio_max           = (ratio.max(0)[0]).detach()
+        psi                 = torch.nn.functional.softmax(ratio, dim = 0)
 
-        psi                 = (ratio - ratio_max).exp() / (ratio - ratio_max).exp().sum()    
         loss                = -1 * (psi * top_logprobs).sum()
-
         return loss
