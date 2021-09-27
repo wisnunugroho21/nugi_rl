@@ -43,7 +43,7 @@ class AgentPPO():
     def memory(self):
         return self.ppo_memory
 
-    def _training_ppo(self, states, actions, rewards, dones, next_states): 
+    def _training(self, states, actions, rewards, dones, next_states): 
         action_datas        = self.policy(states)
         values              = self.value(states)
 
@@ -57,19 +57,16 @@ class AgentPPO():
         loss.backward()
         self.ppo_optimizer.step()
 
-    def _update_ppo(self):
+    def update(self):
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
         for _ in range(self.ppo_epochs):
             dataloader = DataLoader(self.ppo_memory, self.batch_size, shuffle = False)
             for states, actions, rewards, dones, next_states in dataloader:
-                self._training_ppo(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
+                self._training(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
-        self.ppo_memory.clear_memory()           
-
-    def update(self):
-        self._update_ppo()  
+        self.ppo_memory.clear_memory()  
 
     def act(self, state):
         state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)

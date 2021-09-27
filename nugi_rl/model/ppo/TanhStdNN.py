@@ -6,26 +6,21 @@ class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Policy_Model, self).__init__()
 
-        self.actor_std = nn.parameter.Parameter(
-          torch.zeros(action_dim)
-        )
+        self.action_dim = action_dim
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 128),
+          nn.Linear(state_dim, 256),
           nn.ReLU(),
-          nn.Linear(128, 64),
+          nn.Linear(256, 64),
           nn.ReLU(),
-        )
-
-        self.actor_mean_layer = nn.Sequential(
-          nn.Linear(64, action_dim)
+          nn.Linear(64, 2 * action_dim)
         )
         
     def forward(self, states, detach = False):
-      x = self.nn_layer(states)
+      x     = self.nn_layer(states)
 
-      mean    = self.actor_mean_layer(x)
-      std     = self.actor_std.exp()
+      mean  = x[:, :self.action_dim]
+      std   = x[:, self.action_dim:].exp()
       
       if detach:
         return (mean.detach(), std.detach())
@@ -37,9 +32,9 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 128),
+          nn.Linear(state_dim, 256),
           nn.ReLU(),
-          nn.Linear(128, 64),
+          nn.Linear(256, 64),
           nn.ReLU(),
           nn.Linear(64, 1)
         )

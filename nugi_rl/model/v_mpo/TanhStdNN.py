@@ -19,9 +19,9 @@ class Policy_Model(nn.Module):
         )
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 512),
           nn.ReLU(),
-          nn.Linear(256, 128),
+          nn.Linear(512, 128),
           nn.ReLU(),
         )
 
@@ -38,7 +38,8 @@ class Policy_Model(nn.Module):
       x = self.nn_layer(states)
 
       mean    = self.actor_mean_layer(x[:, :64])
-      std     = self.actor_std_layer(x[:, 64:128])
+      std     = self.actor_std_layer(x[:, 64:])
+      # std     = std.exp()
       
       if detach:
         return (mean.detach(), std.detach()), self.temperature.detach(), (self.alpha_mean.detach(), self.alpha_cov.detach())
@@ -50,9 +51,9 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 512),
           nn.ReLU(),
-          nn.Linear(256, 64),
+          nn.Linear(512, 64),
           nn.ReLU(),
           nn.Linear(64, 1)
         )

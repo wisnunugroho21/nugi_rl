@@ -29,6 +29,8 @@ class AgentVMPO():
         self.value_optimizer    = value_optimizer   
         self.device             = device
 
+        self.i_update           = 0
+
         if self.old_policy is None:
             self.old_policy  = deepcopy(self.policy)
 
@@ -64,8 +66,6 @@ class AgentVMPO():
         self.value_optimizer.step()
 
     def update(self):
-        self.old_policy.load_state_dict(self.policy.state_dict())
-
         for _ in range(self.policy_epochs):
             dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
             for states, actions, rewards, dones, next_states in dataloader:
@@ -73,10 +73,14 @@ class AgentVMPO():
 
         self.policy_memory.clear_memory()
 
+        if self.i_update % 5 == 0:
+            self.old_policy.load_state_dict(self.policy.state_dict())
+        self.i_update += 1
+
     def act(self, state):
         with torch.inference_mode():
             state               = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-            action_datas, _, _  = self.policy(state)
+            action_datas, _, _  = self.old_policy(state)
             
             if self.is_training_mode:
                 action = self.distribution.sample(action_datas)
@@ -90,7 +94,7 @@ class AgentVMPO():
     def logprobs(self, state, action):
         with torch.inference_mode():
             state               = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-            action_datas, _, _  = self.policy(state)
+            action_datas, _, _  = self.old_policy(state)
             
             logprobs        = self.distribution.logprob(action_datas, action)
             logprobs        = logprobs.squeeze(0).detach().tolist()

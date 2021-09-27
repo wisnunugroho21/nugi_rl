@@ -1,9 +1,18 @@
 import torch
 import torch.nn as nn
+from helpers.pytorch_utils import set_device
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Policy_Model, self).__init__()
+
+        self.alpha_temp = nn.Sequential(
+          nn.Linear(state_dim, 128),
+          nn.ReLU(),
+          nn.Linear(128, 64),
+          nn.ReLU(),
+          nn.Linear(64, 3)
+        )
 
         self.nn_layer = nn.Sequential(
           nn.Linear(state_dim, 256),
@@ -16,25 +25,25 @@ class Policy_Model(nn.Module):
           nn.Linear(64, action_dim)
         )
 
-        self.critic_layer = nn.Sequential(
-          nn.Linear(64, 1)
-        )
-
-        self.actor_std = nn.parameter.Parameter(
-          torch.zeros(action_dim)
+        self.actor_std_layer = nn.Sequential(
+          nn.Linear(64, action_dim),
+          nn.Sigmoid()
         )
         
     def forward(self, states, detach = False):
-      x       = self.nn_layer(states)
+      x     = self.nn_layer(states)
+      mean  = self.actor_mean_layer(x[:, :64])
+      std   = self.actor_std_layer(x[:, 64:128])
 
-      mean    = self.actor_mean_layer(x[:, :64])
-      std     = self.actor_std.exp()
-      critic  = self.critic_layer(x[:, 64:])
+      y           = self.alpha_temp(states)
+      temperature = y[:, 0]
+      alpha_mean  = y[:, 1]
+      alpha_cov   = y[:, 2]
       
       if detach:
-        return (mean.detach(), std.detach()), critic.detach()
+        return (mean.detach(), std.detach()),  temperature.detach(), (alpha_mean.detach(), alpha_cov.detach())
       else:
-        return (mean, std), critic
+        return (mean, std), temperature, (alpha_mean, alpha_cov)
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim):
