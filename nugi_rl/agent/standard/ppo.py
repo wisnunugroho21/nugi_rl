@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 
 class AgentPPO():  
-    def __init__(self, policy, value, distribution, ppo_loss, ppo_memory, ppo_optimizer, ppo_epochs = 10, is_training_mode = True, 
+    def __init__(self, policy, value, distribution, ppo_loss, ppo_memory, optimizer, ppo_epochs = 10, is_training_mode = True, 
                 batch_size = 32,  folder = 'model', device = torch.device('cuda:0'), policy_old = None, value_old = None):   
 
         self.batch_size         = batch_size  
@@ -22,7 +22,7 @@ class AgentPPO():
         self.ppo_memory         = ppo_memory
         
         self.ppoLoss            = ppo_loss
-        self.ppo_optimizer      = ppo_optimizer    
+        self.optimizer          = optimizer
 
         self.device             = device
 
@@ -53,9 +53,9 @@ class AgentPPO():
 
         loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
 
-        self.ppo_optimizer.zero_grad()
+        self.optimizer.zero_grad()
         loss.backward()
-        self.ppo_optimizer.step()
+        self.optimizer.step()
 
     def update(self):
         self.policy_old.load_state_dict(self.policy.state_dict())
@@ -69,24 +69,30 @@ class AgentPPO():
         self.ppo_memory.clear_memory()  
 
     def act(self, state):
-        state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-        action_datas    = self.policy(state)
-        
-        if self.is_training_mode:
-            action = self.distribution.sample(action_datas)
-        else:
-            action = self.distribution.deterministic(action_datas)
+        with torch.inference_mode():
+            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            action_datas    = self.policy(state)
+            
+            if self.is_training_mode:
+                action = self.distribution.sample(action_datas)
+            else:
+                action = self.distribution.deterministic(action_datas)
+
+            action = action.squeeze(0).detach().tolist()
               
-        return action.squeeze(0).detach().tolist()
+        return action
 
     def logprobs(self, state, action):
-        state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-        action          = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
+        with torch.inference_mode():
+            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            action          = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
 
-        action_datas    = self.policy(state)
-        logprobs        = self.distribution.logprob(action_datas, action)
+            action_datas    = self.policy(state)
+            logprobs        = self.distribution.logprob(action_datas, action)
 
-        return logprobs.squeeze(0).detach().tolist()
+            logprobs = logprobs.squeeze(0).detach().tolist()
+
+        return logprobs
 
     def save_obs(self, state, action, reward, done, next_state):
         self.ppo_memory.save_obs(state, action, reward, done, next_state)
@@ -112,8 +118,8 @@ class AgentPPO():
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         
-        if self.ppo_optimizer is not None:
-            self.ppo_optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])
+        if self.optimizer is not None:
+            self.optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()

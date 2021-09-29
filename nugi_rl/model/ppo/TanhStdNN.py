@@ -20,7 +20,7 @@ class Policy_Model(nn.Module):
       x     = self.nn_layer(states)
 
       mean  = x[:, :self.action_dim]
-      std   = x[:, self.action_dim:].exp()
+      std   = (x[:, self.action_dim:]).exp()
       
       if detach:
         return (mean.detach(), std.detach())

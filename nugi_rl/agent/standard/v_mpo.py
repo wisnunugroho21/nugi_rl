@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 class AgentVMPO():  
     def __init__(self, policy, value, distribution, alpha_loss, phi_loss, temperature_loss, value_loss,
             policy_memory, policy_optimizer, value_optimizer, policy_epochs = 1, is_training_mode = True, batch_size = 32, folder = 'model', 
-            device = torch.device('cuda:0'), old_policy = None):   
+            device = torch.device('cuda:0'), old_policy = None, old_value = None):   
 
         self.batch_size         = batch_size  
         self.policy_epochs      = policy_epochs
@@ -16,6 +16,7 @@ class AgentVMPO():
         self.policy             = policy
         self.old_policy         = old_policy
         self.value              = value
+        self.old_value          = old_value
 
         self.distribution       = distribution
         self.policy_memory      = policy_memory
@@ -34,6 +35,9 @@ class AgentVMPO():
         if self.old_policy is None:
             self.old_policy  = deepcopy(self.policy)
 
+        if self.old_value is None:
+            self.old_value  = deepcopy(self.value)
+
         if is_training_mode:
           self.policy.train()
           self.value.train()
@@ -49,12 +53,13 @@ class AgentVMPO():
         action_datas, temperature, alpha    = self.policy(states)
         old_action_datas, _, _              = self.old_policy(states, True)       
         values                              = self.value(states)
+        old_values                          = self.old_value(states, True)
         next_values                         = self.value(next_states, True) 
         
         loss    = self.phi_loss.compute_loss(action_datas, values, next_values, actions, rewards, dones, temperature) + \
                     self.temperature_loss.compute_loss(values, next_values, rewards, dones, temperature) + \
                     self.alpha_loss.compute_loss(action_datas, old_action_datas, alpha) + \
-                    self.value_loss.compute_loss(values, next_values, rewards, dones) - \
+                    self.value_loss.compute_loss(values, old_values, next_values, rewards, dones) - \
                     0.1 * self.distribution.entropy(action_datas).mean()
 
         self.policy_optimizer.zero_grad()
@@ -66,16 +71,15 @@ class AgentVMPO():
         self.value_optimizer.step()
 
     def update(self):
+        self.old_policy.load_state_dict(self.policy.state_dict())
+        self.old_value.load_state_dict(self.value.state_dict())
+
         for _ in range(self.policy_epochs):
             dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
             for states, actions, rewards, dones, next_states in dataloader:
                 self._training(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
 
         self.policy_memory.clear_memory()
-
-        if self.i_update % 5 == 0:
-            self.old_policy.load_state_dict(self.policy.state_dict())
-        self.i_update += 1
 
     def act(self, state):
         with torch.inference_mode():

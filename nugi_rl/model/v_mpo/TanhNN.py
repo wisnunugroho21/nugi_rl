@@ -18,22 +18,21 @@ class Policy_Model(nn.Module):
           torch.Tensor([1.0])
         )
 
-        self.action_dim = action_dim
+        self.actor_std = nn.parameter.Parameter(
+          torch.zeros(action_dim)
+        )
 
         self.nn_layer = nn.Sequential(
           nn.Linear(state_dim, 256),
           nn.ReLU(),
           nn.Linear(256, 64),
           nn.ReLU(),
-          nn.Linear(64, 2 * action_dim)
+          nn.Linear(64, action_dim)
         )
         
     def forward(self, states, detach = False):
-      x     = self.nn_layer(states)
-
-      mean  = x[:, :self.action_dim]
-      std   = (x[:, self.action_dim:]).exp()
-      # std     = std.exp()
+      mean    = self.nn_layer(states)
+      std     = self.actor_std.exp()
       
       if detach:
         return (mean.detach(), std.detach()), self.temperature.detach(), (self.alpha_mean.detach(), self.alpha_cov.detach())
