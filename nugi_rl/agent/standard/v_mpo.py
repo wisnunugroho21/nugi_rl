@@ -116,7 +116,8 @@ class AgentVMPO():
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
-        }, self.folder + '/ppg.tar')
+            'value_optimizer_state_dict': self.value_optimizer.state_dict(),
+        }, self.folder + '/v_mpo.tar')
         
     def load_weights(self, folder = None, device = None):
         if device == None:
@@ -125,12 +126,15 @@ class AgentVMPO():
         if folder == None:
             folder = self.folder
 
-        model_checkpoint = torch.load(self.folder + '/ppg.tar', map_location = device)
+        model_checkpoint = torch.load(self.folder + '/v_mpo.tar', map_location = device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         
         if self.policy_optimizer is not None:
             self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
+
+        if self.value_optimizer is not None:
+            self.value_optimizer.load_state_dict(model_checkpoint['value_optimizer_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()

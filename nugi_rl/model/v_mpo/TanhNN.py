@@ -23,11 +23,11 @@ class Policy_Model(nn.Module):
         )
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 512),
           nn.ReLU(),
-          nn.Linear(256, 64),
+          nn.Linear(512, 128),
           nn.ReLU(),
-          nn.Linear(64, action_dim)
+          nn.Linear(128, action_dim)
         )
         
     def forward(self, states, detach = False):
@@ -44,11 +44,11 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 512),
           nn.ReLU(),
-          nn.Linear(256, 64),
+          nn.Linear(512, 128),
           nn.ReLU(),
-          nn.Linear(64, 1)
+          nn.Linear(128, 1)
         )
         
     def forward(self, states, detach = False):
