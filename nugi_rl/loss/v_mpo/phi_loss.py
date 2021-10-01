@@ -10,9 +10,9 @@ class PhiLoss():
         temperature         = temperature.detach()
 
         advantages          = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()
-        logprobs            = self.distribution.logprob(action_datas, actions)
-
         top_adv, top_idx    = torch.topk(advantages, math.ceil(len(advantages) / 2), 0)
+
+        logprobs            = self.distribution.logprob(action_datas, actions)
         top_logprobs        = logprobs[top_idx]        
 
         ratio               = top_adv / (temperature + 1e-3)

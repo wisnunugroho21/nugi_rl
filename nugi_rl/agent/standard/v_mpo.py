@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 
 class AgentVMPO():  
-    def __init__(self, policy, value, distribution, alpha_loss, phi_loss, temperature_loss, value_loss,
+    def __init__(self, policy, value, distribution, alpha_loss, phi_loss, entropy_loss, temperature_loss, value_loss,
             policy_memory, policy_optimizer, value_optimizer, policy_epochs = 1, is_training_mode = True, batch_size = 32, folder = 'model', 
             device = torch.device('cuda:0'), old_policy = None, old_value = None):   
 
@@ -25,6 +25,7 @@ class AgentVMPO():
         self.phi_loss           = phi_loss
         self.temperature_loss   = temperature_loss
         self.value_loss         = value_loss
+        self.entropy_loss       = entropy_loss        
 
         self.policy_optimizer   = policy_optimizer
         self.value_optimizer    = value_optimizer   
@@ -59,8 +60,8 @@ class AgentVMPO():
         loss    = self.phi_loss.compute_loss(action_datas, values, next_values, actions, rewards, dones, temperature) + \
                     self.temperature_loss.compute_loss(values, next_values, rewards, dones, temperature) + \
                     self.alpha_loss.compute_loss(action_datas, old_action_datas, alpha) + \
-                    self.value_loss.compute_loss(values, old_values, next_values, rewards, dones) - \
-                    0.1 * self.distribution.entropy(action_datas).mean()
+                    self.value_loss.compute_loss(values, old_values, next_values, rewards, dones) + \
+                    self.entropy_loss.compute_loss(action_datas)
 
         self.policy_optimizer.zero_grad()
         self.value_optimizer.zero_grad()
