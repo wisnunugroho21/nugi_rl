@@ -51,21 +51,22 @@ class AgentVMPO():
         return self.policy_memory
 
     def _training(self, states, actions, rewards, dones, next_states):
+        self.policy_optimizer.zero_grad()
+        self.value_optimizer.zero_grad()
+
         action_datas, temperature, alpha    = self.policy(states)
         old_action_datas, _, _              = self.old_policy(states, True)       
         values                              = self.value(states)
         old_values                          = self.old_value(states, True)
-        next_values                         = self.value(next_states, True) 
+        next_values                         = self.value(next_states, True)        
         
-        loss    = self.phi_loss.compute_loss(action_datas, values, next_values, actions, rewards, dones, temperature) + \
-                    self.temperature_loss.compute_loss(values, next_values, rewards, dones, temperature) + \
-                    self.alpha_loss.compute_loss(action_datas, old_action_datas, alpha) + \
-                    self.value_loss.compute_loss(values, old_values, next_values, rewards, dones) + \
-                    self.entropy_loss.compute_loss(action_datas)
+        phi_loss    = self.phi_loss.compute_loss(action_datas, values, next_values, actions, rewards, dones, temperature)
+        temp_loss   = self.temperature_loss.compute_loss(values, next_values, rewards, dones, temperature)
+        alpha_loss  = self.alpha_loss.compute_loss(action_datas, old_action_datas, alpha)
+        value_loss  = self.value_loss.compute_loss(values, old_values, next_values, rewards, dones)
+        ent_loss    = self.entropy_loss.compute_loss(action_datas)
 
-        self.policy_optimizer.zero_grad()
-        self.value_optimizer.zero_grad()
-
+        loss    = phi_loss + temp_loss + alpha_loss + value_loss + ent_loss
         loss.backward()
 
         self.policy_optimizer.step()
