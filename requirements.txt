@@ -1,0 +1,7 @@
+gym
+opencv-python
+torch 
+torchvision 
+torchaudio
+numpy
+ray
