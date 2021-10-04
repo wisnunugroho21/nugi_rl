@@ -86,7 +86,7 @@ class AgentVMPO():
     def act(self, state):
         with torch.inference_mode():
             state               = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-            action_datas, _, _  = self.old_policy(state)
+            action_datas, _, _  = self.policy(state)
             
             if self.is_training_mode:
                 action = self.distribution.sample(action_datas)
@@ -100,7 +100,7 @@ class AgentVMPO():
     def logprobs(self, state, action):
         with torch.inference_mode():
             state               = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-            action_datas, _, _  = self.old_policy(state)
+            action_datas, _, _  = self.policy(state)
             
             logprobs        = self.distribution.logprob(action_datas, action)
             logprobs        = logprobs.squeeze(0).detach().tolist()
@@ -119,16 +119,16 @@ class AgentVMPO():
             'value_state_dict': self.value.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
             'value_optimizer_state_dict': self.value_optimizer.state_dict(),
-        }, self.folder + '/v_mpo.tar')
+        }, self.folder + '/v_mpo.pth')
         
     def load_weights(self, folder = None, device = None):
-        if device == None:
+        if device is None:
             device = self.device
 
-        if folder == None:
+        if folder is None:
             folder = self.folder
 
-        model_checkpoint = torch.load(self.folder + '/v_mpo.tar', map_location = device)
+        model_checkpoint = torch.load(self.folder + '/v_mpo.pth', map_location = device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         

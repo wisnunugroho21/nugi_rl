@@ -31,8 +31,8 @@ class Policy_Model(nn.Module):
         )
         
     def forward(self, states, detach = False):
-      mean    = self.nn_layer(states)
-      std     = self.actor_std.exp()
+      mean  = self.nn_layer(states)
+      std   = self.actor_std.exp()
       
       if detach:
         return (mean.detach(), std.detach()), self.temperature.detach(), (self.alpha_mean.detach(), self.alpha_cov.detach())

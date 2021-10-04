@@ -104,8 +104,8 @@ class AgentPPO():
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
-            'ppo_optimizer_state_dict': self.ppo_optimizer.state_dict(),
-        }, self.folder + '/ppg.tar')
+            'ppo_optimizer_state_dict': self.optimizer.state_dict(),
+        }, self.folder + '/ppg.pth')
         
     def load_weights(self, folder = None, device = None):
         if device == None:
@@ -114,7 +114,7 @@ class AgentPPO():
         if folder == None:
             folder = self.folder
 
-        model_checkpoint = torch.load(self.folder + '/ppg.tar', map_location = device)
+        model_checkpoint = torch.load(self.folder + '/ppg.pth', map_location = device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         
