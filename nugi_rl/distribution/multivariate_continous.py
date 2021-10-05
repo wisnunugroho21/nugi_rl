@@ -59,6 +59,6 @@ class MultivariateContinous(BasicContinous):
         Kl_cov  = 0.5 * ((cov2.inverse() @ cov1).diagonal(dim1 = -2, dim2 = -1).sum(-1) - d + (torch.linalg.det(cov2) / (torch.linalg.det(cov1) + 1e-3)).log())
         return Kl_cov
 
-    def act_deterministic(self, datas):
+    def deterministic(self, datas):
         mean, _ = datas
         return mean.squeeze(0)
