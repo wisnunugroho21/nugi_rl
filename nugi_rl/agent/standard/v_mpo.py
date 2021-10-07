@@ -99,7 +99,9 @@ class AgentVMPO():
 
     def logprobs(self, state, action):
         with torch.inference_mode():
-            state               = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            action          = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
+            
             action_datas, _, _  = self.policy(state)
             
             logprobs        = self.distribution.logprob(action_datas, action)
