@@ -44,6 +44,8 @@ class AgentPPO():
         return self.ppo_memory
 
     def _training(self, states, actions, rewards, dones, next_states): 
+        self.optimizer.zero_grad()
+
         action_datas        = self.policy(states)
         values              = self.value(states)
 
@@ -52,8 +54,7 @@ class AgentPPO():
         next_values         = self.value(next_states, True)
 
         loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
-
-        self.optimizer.zero_grad()
+        
         loss.backward()
         self.optimizer.step()
 
@@ -88,9 +89,9 @@ class AgentPPO():
             action          = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
 
             action_datas    = self.policy(state)
-            logprobs        = self.distribution.logprob(action_datas, action)
 
-            logprobs = logprobs.squeeze(0).detach().tolist()
+            logprobs        = self.distribution.logprob(action_datas, action)
+            logprobs        = logprobs.squeeze(0).detach().tolist()
 
         return logprobs
 
