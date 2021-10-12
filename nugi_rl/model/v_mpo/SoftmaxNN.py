@@ -15,35 +15,30 @@ class Policy_Model(nn.Module):
         )
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 64),
+          nn.Linear(state_dim, 640),
           nn.ReLU(),
-          nn.Linear(64, 64),
-          nn.ReLU()
-        )
-
-        self.actor_layer = nn.Sequential(
-          nn.Linear(64, action_dim),
+          nn.Linear(640, 640),
+          nn.ReLU(),
+          nn.Linear(640, action_dim),
           nn.Softmax(-1)
         )
         
     def forward(self, states, detach = False):
-      x = self.nn_layer(states)
-
       if detach:
-        return self.actor_layer(x).detach(), self.temperature.detach(), self.alpha.detach()
+        return self.nn_layer(states).detach(), self.temperature.detach(), self.alpha.detach()
       else:
-        return self.actor_layer(x), self.temperature, self.alpha
+        return self.nn_layer(states), self.temperature, self.alpha
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim, use_gpu = True):
         super(Value_Model, self).__init__()   
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 64),
+          nn.Linear(state_dim, 640),
           nn.ReLU(),
-          nn.Linear(64, 64),
+          nn.Linear(640, 640),
           nn.ReLU(),
-          nn.Linear(64, 1)
+          nn.Linear(640, 1)
         )
         
     def forward(self, states, detach = False):
