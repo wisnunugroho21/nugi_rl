@@ -16,19 +16,17 @@ class Policy_Model(nn.Module):
         )
 
         self.mean_layer = nn.Sequential(
-          nn.Linear(64, action_dim),
-          nn.Tanh()
+          nn.Linear(64, action_dim)
         )
 
         self.std_layer = nn.Sequential(
-          nn.Linear(64, action_dim),
-          nn.Sigmoid()
+          nn.Linear(64, action_dim)
         )
         
     def forward(self, states, detach = False):
       x     = self.nn_layer(states)
       mean  = self.mean_layer(x[:, :64])
-      std   = self.std_layer(x[:, 64:])
+      std   = self.std_layer(x[:, 64:]).exp()
       
       if detach:
         return (mean.detach(), std.detach())
