@@ -1,10 +1,9 @@
 from torch.distributions import Beta
 from torch.distributions.kl import kl_divergence
 
-from distribution.basic_continous import BasicContinous
 from helpers.pytorch_utils import set_device, to_list
 
-class BetaContinous(BasicContinous):        
+class BetaContinous():        
     def sample(self, datas):
         alpha, beta = datas
 
