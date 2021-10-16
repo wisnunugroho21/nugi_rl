@@ -8,14 +8,14 @@ import pybullet_envs
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adamw import AdamW
 
-from nugi_rl.eps_runner.iteration.iter_runner import IterRunner
-from nugi_rl.train_executor.executor import Executor
+from nugi_rl.train.runner.iteration.iter_runner import IterRunner
+from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.standard.ppo import AgentPPO
-from nugi_rl.distribution.basic_continous import BasicContinous
+from nugi_rl.distribution.continous.basic_continous import BasicContinous
 from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
-from nugi_rl.loss.trpo_ppo.ppo_clip import PPOClip
+from nugi_rl.loss.ppo.ppo_clip import PPOClip
 from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from nugi_rl.model.ppo.TanhStdNN import Policy_Model, Value_Model
+from nugi_rl.model.ppo.TanhNN import Policy_Model, Value_Model
 from nugi_rl.memory.policy.standard import PolicyMemory
 
 ############## Hyperparameters ##############
@@ -33,7 +33,7 @@ n_saved                 = 1
 
 policy_clip             = 0.2
 value_clip              = None
-entropy_coef            = 0.2
+entropy_coef            = 0.1
 vf_loss_coef            = 1.0
 batch_size              = 32
 ppo_epochs              = 10
@@ -86,7 +86,7 @@ ppo_optimizer       = AdamW(list(policy.parameters()) + list(value.parameters())
 agent   = AgentPPO(policy, value, distribution, ppo_loss, ppo_memory, ppo_optimizer, ppo_epochs, 
             is_training_mode, batch_size,  folder, device)
 
-runner      = IterRunner(agent, environment, is_training_mode, render, n_update, environment.is_discrete(), max_action, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = IterRunner(agent, environment, is_training_mode, render, n_update, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()
