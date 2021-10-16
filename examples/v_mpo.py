@@ -9,19 +9,19 @@ import pybullet_envs
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adamw import AdamW
 
-from eps_runner.iteration.iter_runner import IterRunner
-from train_executor.executor import Executor
-from agent.standard.v_mpo import AgentVMPO
-from distribution.multivariate_continous import MultivariateContinous
-from environment.wrapper.gym_wrapper import GymWrapper
-from loss.v_mpo.phi_loss import PhiLoss
-from loss.v_mpo.temperature_loss import TemperatureLoss
-from loss.v_mpo.continous_alpha_loss import AlphaLoss
-from loss.v_mpo.value_loss import ValueLoss
-from loss.v_mpo.entropy_loss import EntropyLoss
-from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from model.v_mpo.TanhNN import Policy_Model, Value_Model
-from memory.policy.standard import PolicyMemory
+from nugi_rl.eps_runner.iteration.iter_runner import IterRunner
+from nugi_rl.train_executor.executor import Executor
+from nugi_rl.agent.standard.v_mpo import AgentVMPO
+from nugi_rl.distribution.multivariate_continous import MultivariateContinous
+from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.loss.v_mpo.phi_loss import PhiLoss
+from nugi_rl.loss.v_mpo.temperature_loss import TemperatureLoss
+from nugi_rl.loss.v_mpo.continous_alpha_loss import AlphaLoss
+from nugi_rl.loss.v_mpo.value_loss import ValueLoss
+from nugi_rl.loss.v_mpo.entropy_loss import EntropyLoss
+from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
+from nugi_rl.model.v_mpo.TanhNN import Policy_Model, Value_Model
+from nugi_rl.memory.policy.standard import PolicyMemory
 
 ############## Hyperparameters ##############
 

@@ -1,20 +1,25 @@
+from torch.utils.tensorboard import SummaryWriter
 
-class EpisodicRunner():
-    def __init__(self, agent, env, is_save_memory, render, n_update, is_discrete, max_action, writer = None, n_plot_batch = 100):
+from nugi_rl.agent.base import Agent
+from nugi_rl.environment.base import Environment
+from nugi_rl.train.runner.base import Runner
+
+class EpisodicRunner(Runner):
+    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, 
+        writer: SummaryWriter = None, n_plot_batch: int = 100) -> None:
+        
         self.agent              = agent
         self.env                = env
 
         self.render             = render
         self.is_save_memory     = is_save_memory
         self.n_update           = n_update
-        self.max_action         = max_action
         self.writer             = writer
         self.n_plot_batch       = n_plot_batch
-        self.is_discrete        = is_discrete
 
         self.i_episode          = 0
 
-    def run(self):
+    def run(self) -> tuple:
         for _ in range(self.n_update):            
             state           = self.env.reset()
             done            = False
@@ -42,4 +47,4 @@ class EpisodicRunner():
                 self.writer.add_scalar('Rewards', total_reward, self.i_episode)
                 self.writer.add_scalar('Times', eps_time, self.i_episode)
 
-        return self.agent.memory.get_ranged_items(-eps_time)
+        return self.agent.get_obs(-eps_time)

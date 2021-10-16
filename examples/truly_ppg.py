@@ -13,7 +13,7 @@ from nugi_rl.agent.standard.ppg import AgentPPG
 from nugi_rl.distribution.basic_continous import BasicContinous
 from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
 from nugi_rl.loss.other.aux_ppg import AuxPPG
-from nugi_rl.loss.ppo.truly_ppo import TrulyPPO
+from nugi_rl.loss.trpo_ppo.truly_ppo import TrulyPPO
 from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
 from nugi_rl.model.ppg.TanhStdNN import Policy_Model, Value_Model
 from nugi_rl.memory.policy.standard import PolicyMemory

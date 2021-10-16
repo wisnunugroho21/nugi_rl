@@ -1,6 +1,8 @@
 import gym
 
-class GymWrapper():
+from nugi_rl.environment.base import Environment
+
+class GymWrapper(Environment):
     def __init__(self, env):
         self.env = env        
 

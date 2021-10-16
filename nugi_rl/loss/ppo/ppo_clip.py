@@ -1,5 +1,5 @@
 import torch
-from torch.tensor import Tensor
+from torch import Tensor
 
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation

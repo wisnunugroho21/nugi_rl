@@ -1,12 +1,12 @@
 import torch
-from torch.tensor import Tensor
+from torch import Tensor
 from torch.distributions import MultivariateNormal
 from torch.distributions.kl import kl_divergence
 
 from nugi_rl.distribution.continous.basic_continous import BasicContinous
 
 class MultivariateContinous(BasicContinous):
-    def sample(self, datas):
+    def sample(self, datas: tuple) -> Tensor:
         mean, std = datas
         std = torch.diag_embed(std)
 

@@ -1,17 +1,19 @@
-import numpy as np
-from copy import deepcopy
+from torch.utils.tensorboard import SummaryWriter
 
-class SingleStepRunner():
-    def __init__(self, agent, env, is_save_memory, render, is_discrete, max_action, writer = None, n_plot_batch = 100):
+from nugi_rl.agent.base import Agent
+from nugi_rl.environment.base import Environment
+from nugi_rl.train.runner.base import Runner
+
+class SingleStepRunner(Runner):
+    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, 
+        writer: SummaryWriter = None, n_plot_batch: int = 100) -> None:
         self.agent              = agent
         self.env                = env
 
         self.render             = render
         self.is_save_memory     = is_save_memory
-        self.max_action         = max_action
         self.writer             = writer
         self.n_plot_batch       = n_plot_batch
-        self.is_discrete        = is_discrete
 
         self.t_updates          = 0
         self.i_episode          = 0
@@ -20,7 +22,7 @@ class SingleStepRunner():
 
         self.states             = self.env.reset()
 
-    def run(self):             
+    def run(self) -> tuple:             
         action                      = self.agent.act(self.states)
         next_state, reward, done, _ = self.env.step(action)
         
@@ -46,4 +48,4 @@ class SingleStepRunner():
             self.total_reward   = 0
             self.eps_time       = 0
 
-        return self.agent.memory.get_ranged_items(-1)
+        return self.agent.get_obs(-1)
