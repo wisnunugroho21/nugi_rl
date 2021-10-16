@@ -25,15 +25,15 @@ from memory.policy.standard import PolicyMemory
 
 ############## Hyperparameters ##############
 
-load_weights            = True # If you want to load the agent, set this to True
-save_weights            = True # If you want to save the agent, set this to True
+load_weights            = False # If you want to load the agent, set this to True
+save_weights            = False # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 1000 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 100000000 # How many episode you want to run
-n_update                = 1024 # How many episode before you update the Policy
+n_update                = 2048 # How many episode before you update the Policy
 n_saved                 = 1
 n_agents                = 4
 
@@ -57,7 +57,7 @@ entropy_coef            = 0.1
 device                  = torch.device('cuda')
 folder                  = 'weights/v_mpo_humanoid'
 
-environments            =  [GymWrapper(gym.make('HumanoidBulletEnv-v0')) for _ in range(n_agents)]
+environments            =  [GymWrapper(gym.make('BipedalWalker-v3')) for _ in range(n_agents)]
 
 state_dim               = None
 action_dim              = None

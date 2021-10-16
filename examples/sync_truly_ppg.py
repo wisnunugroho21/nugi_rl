@@ -8,11 +8,11 @@ from pybullet_envs.deep_mimic.gym_env.deep_mimic_env import HumanoidDeepMimicWal
 
 from torch.optim.adamw import AdamW
 
-from nugi_rl.eps_runner.iteration.sync import SyncRunner
-from nugi_rl.train_executor.sync import SyncExecutor
-from nugi_rl.agent.standard.ppg import AgentPPG
-from nugi_rl.distribution.basic_continous import BasicContinous
-from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from eps_runner.iteration.sync import SyncRunner
+from train_executor.sync import SyncExecutor
+from agent.standard.ppg import AgentPPG
+from distribution.basic_continous import BasicContinous
+from environment.wrapper.gym_wrapper import GymWrapper
 from loss.other.aux_ppg import AuxPPG
 from loss.trpo_ppo.truly_ppo import TrulyPPO
 from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
