@@ -1,9 +1,9 @@
 from copy import deepcopy
 import torch
-from torch.utils.data import Dataset
+from nugi_rl.memory.policy.base import Memory
 
-class PolicyMemory(Dataset):
-    def __init__(self, capacity = 100000, datas = None):
+class PolicyMemory(Memory):
+    def __init__(self, capacity: int = 100000, datas: tuple = None):
         self.capacity       = capacity
         self.position       = 0
 
@@ -26,7 +26,7 @@ class PolicyMemory(Dataset):
             torch.tensor([self.rewards[idx]], dtype = torch.float32), torch.tensor([self.dones[idx]], dtype = torch.float32), \
             torch.tensor(self.next_states[idx], dtype = torch.float32)
 
-    def save_obs(self, state, action, reward, done, next_state):
+    def save(self, state: list, action: list, reward: float, done: bool, next_state: list):
         if len(self) >= self.capacity:
             del self.states[0]
             del self.actions[0]
@@ -40,18 +40,7 @@ class PolicyMemory(Dataset):
         self.dones.append(done)
         self.next_states.append(deepcopy(next_state))
 
-    def save_replace_all(self, states, actions, rewards, dones, next_states):
-        self.clear_memory()
-        self.save_all(states, actions, rewards, dones, next_states)
-
-    def save_all(self, states, actions, rewards, dones, next_states):
-        for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
-            self.save_obs(state, action, reward, done, next_state)
-
-    def get_all_items(self):         
-        return self.states, self.actions, self.rewards, self.dones, self.next_states
-
-    def get_ranged_items(self, start_position = 0, end_position = None):   
+    def get(self, start_position: int, end_position: int) -> tuple:
         if end_position is not None and end_position != -1:
             states      = self.states[start_position:end_position + 1]
             actions     = self.actions[start_position:end_position + 1]
@@ -65,18 +54,18 @@ class PolicyMemory(Dataset):
             dones       = self.dones[start_position:]
             next_states = self.next_states[start_position:]
 
-        return states, actions, rewards, dones, next_states 
+        return states, actions, rewards, dones, next_states
 
-    def clear_memory(self):
-        del self.states[:]
-        del self.actions[:]
-        del self.rewards[:]
-        del self.dones[:]
-        del self.next_states[:]
-
-    def clear_idx(self, idx):
-        del self.states[idx]
-        del self.actions[idx]
-        del self.rewards[idx]
-        del self.dones[idx]
-        del self.next_states[idx]
+    def clear(self, start_position: int = 0, end_position: int = None):
+        if end_position is not None and end_position != -1:
+            del self.states[start_position:end_position + 1]
+            del self.actions[start_position:end_position + 1]
+            del self.rewards[start_position:end_position + 1]
+            del self.dones[start_position:end_position + 1]
+            del self.next_states[start_position:end_position + 1]
+        else:
+            del self.states[start_position:]
+            del self.actions[start_position:]
+            del self.rewards[start_position:]
+            del self.dones[start_position:]
+            del self.next_states[start_position:]

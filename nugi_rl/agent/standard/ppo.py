@@ -1,10 +1,13 @@
-
 from copy import deepcopy
 import torch
+from torch.nn import Module
 from torch.utils.data import DataLoader
 
-class AgentPPO():  
-    def __init__(self, policy, value, distribution, ppo_loss, ppo_memory, optimizer, ppo_epochs = 10, is_training_mode = True, 
+from nugi_rl.distribution.base import Distribution
+from nugi_rl.agent.base import Agent
+
+class AgentPPO(Agent):  
+    def __init__(self, policy: Module, value: Module, distribution: Distribution, ppo_loss, ppo_memory, optimizer, ppo_epochs = 10, is_training_mode = True, 
                 batch_size = 32,  folder = 'model', device = torch.device('cuda:0'), policy_old = None, value_old = None):   
 
         self.batch_size         = batch_size  
@@ -38,6 +41,50 @@ class AgentPPO():
         else:
           self.policy.eval()
           self.value.eval()
+
+    def act(self, state: list) -> list:
+        with torch.inference_mode():
+            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            action_datas    = self.policy(state)
+            
+            if self.is_training_mode:
+                action = self.distribution.sample(action_datas)
+            else:
+                action = self.distribution.deterministic(action_datas)
+
+            action = action.squeeze(0).detach().tolist()
+              
+        return action
+
+    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list):
+        self.ppo_memory.save_obs(state, action, reward, done, next_state)
+        
+    def update(self):
+        raise NotImplementedError
+
+    def get_obs(self, start_idx: int = None, end_idx: int = None) -> tuple:
+        raise NotImplementedError
+
+    def load_weights(self):
+        raise NotImplementedError
+
+    def save_weights(self):
+        raise NotImplementedError
+
+    def _update_step(self, states, actions, rewards, dones, next_states):
+        self.optimizer.zero_grad()
+
+        action_datas        = self.policy(states)
+        values              = self.value(states)
+
+        old_action_datas    = self.policy_old(states, True)
+        old_values          = self.value_old(states, True)
+        next_values         = self.value(next_states, True)
+
+        loss = self.ppoLoss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones)
+        
+        loss.backward()
+        self.optimizer.step()
 
     @property
     def memory(self):

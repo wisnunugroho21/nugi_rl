@@ -1,10 +1,11 @@
 import torch
+from torch import Tensor
 
 class GeneralizedAdvantageEstimation():
     def __init__(self, gamma = 0.99):
         self.gamma  = gamma
 
-    def compute_advantages(self, rewards, values, next_values, dones):
+    def compute_advantages(self, rewards: Tensor, values: Tensor, next_values: Tensor, dones: Tensor) -> Tensor:
         gae     = 0
         adv     = []     
 
