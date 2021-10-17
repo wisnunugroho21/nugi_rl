@@ -89,7 +89,7 @@ class AgentPPO(Agent):
         for _ in range(self.ppo_epochs):
             dataloader = DataLoader(self.memory, self.batch_size, shuffle = False)
             for states, actions, rewards, dones, next_states in dataloader:
-                self._update_step(states.float().to(self.device), actions.float().to(self.device), rewards.float().to(self.device), dones.float().to(self.device), next_states.float().to(self.device))
+                self._update_step(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
 
         self.memory.clear()
 
