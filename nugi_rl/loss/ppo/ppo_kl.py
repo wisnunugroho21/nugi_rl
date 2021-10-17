@@ -7,7 +7,7 @@ from nugi_rl.loss.ppo.base import Ppo
 
 class PpoKl(Ppo):
     def __init__(self, distribution: Distribution, advantage_function: GeneralizedAdvantageEstimation, 
-        policy_params: float = 20):
+        policy_params: float = 1):
 
         self.policy_params  = policy_params
 

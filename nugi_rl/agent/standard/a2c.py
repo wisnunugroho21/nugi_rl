@@ -9,15 +9,15 @@ from copy import deepcopy
 
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
-from nugi_rl.loss.ppo.base import Ppo
+from nugi_rl.loss.a2c.base import A2C
 from nugi_rl.loss.value.base import ValueLoss
 from nugi_rl.loss.entropy.base import EntropyLoss
 from nugi_rl.memory.policy.base import Memory
 
-class AgentPPO(Agent):  
-    def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss,
+class AgentA2C(Agent):  
+    def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: A2C, value_loss: ValueLoss, entropy_loss: EntropyLoss, 
         memory: Memory, optimizer: Optimizer, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
-        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None):
+        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None):   
 
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
@@ -38,6 +38,7 @@ class AgentPPO(Agent):
         self.entropy_loss       = entropy_loss
 
         self.optimizer          = optimizer
+
         self.device             = device
 
         if self.policy_old is None:
@@ -125,11 +126,10 @@ class AgentPPO(Agent):
         action_datas        = self.policy(states)
         values              = self.value(states)
 
-        old_action_datas    = self.policy_old(states, True)
         old_values          = self.value_old(states, True)
         next_values         = self.value(next_states, True)
 
-        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones) + \
+        loss = self.policy_loss.compute_loss(action_datas, values, next_values, actions, rewards, dones) + \
             self.value_loss.compute_loss(values, next_values, rewards, dones, old_values) + \
             self.entropy_loss.compute_loss(action_datas)
         
