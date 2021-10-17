@@ -10,7 +10,6 @@ class PpoClip(Ppo):
         policy_clip: float = 0.2):
 
         self.policy_clip        = policy_clip
-        self.value_clip         = value_clip
 
         self.advantage_function = advantage_function
         self.distribution       = distribution
