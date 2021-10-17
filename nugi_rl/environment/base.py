@@ -14,5 +14,5 @@ class Environment():
     def step(self, action):
         raise NotImplementedError
 
-    def render(self):
+    def render(self) -> None:
         raise NotImplementedError

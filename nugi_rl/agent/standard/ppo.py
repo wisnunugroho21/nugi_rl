@@ -29,7 +29,7 @@ class AgentPPO(Agent):
         self.value_old          = value_old
 
         self.distribution       = distribution
-        self.memory         = memory
+        self.memory             = memory
         
         self.ppoLoss            = ppo_loss
         self.optimizer          = optimizer
@@ -92,7 +92,7 @@ class AgentPPO(Agent):
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         self.memory.get(start_position, end_position)
 
-    def load_weights(self):
+    def load_weights(self) -> None:
         model_checkpoint = torch.load(self.folder + '/ppg.pth', map_location = self.device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
@@ -108,14 +108,14 @@ class AgentPPO(Agent):
             self.policy.eval()
             self.value.eval()
 
-    def save_weights(self):            
+    def save_weights(self) -> None:            
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'ppo_optimizer_state_dict': self.optimizer.state_dict(),
         }, self.folder + '/ppg.pth')
 
-    def _update_step(self, states, actions, rewards, dones, next_states):
+    def _update_step(self, states: list, actions: list, rewards: float, dones: bool, next_states: list) -> None:
         self.optimizer.zero_grad()
 
         action_datas        = self.policy(states)

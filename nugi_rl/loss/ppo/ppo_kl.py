@@ -5,12 +5,11 @@ from nugi_rl.distribution.base import Distribution
 from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
 from nugi_rl.loss.ppo.base import Ppo
 
-class PpoClip(Ppo):
+class PpoKl(Ppo):
     def __init__(self, distribution: Distribution, advantage_function: GeneralizedAdvantageEstimation, 
-        policy_clip: float = 0.2):
+        policy_params: float = 20):
 
-        self.policy_clip        = policy_clip
-        self.value_clip         = value_clip
+        self.policy_params  = policy_params
 
         self.advantage_function = advantage_function
         self.distribution       = distribution
@@ -21,9 +20,10 @@ class PpoClip(Ppo):
         logprobs        = self.distribution.logprob(action_datas, actions) + 1e-5
         old_logprobs    = (self.distribution.logprob(old_action_datas, actions) + 1e-5).detach()
 
-        ratios          = (logprobs - old_logprobs).exp() 
-        surr1           = ratios * advantages
-        surr2           = ratios.clamp(1 - self.policy_clip, 1 + self.policy_clip) * advantages
-        loss            = torch.min(surr1, surr2).mean()
+        ratios          = (logprobs - old_logprobs).exp()
+        Kl              = self.distribution.kldivergence(old_action_datas, action_datas)
+
+        pg_target       = ratios * advantages - self.policy_params * Kl
+        loss            = pg_target.mean()
 
         return -1 * loss
