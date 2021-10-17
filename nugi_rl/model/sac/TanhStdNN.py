@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from helpers.pytorch_utils import set_device
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim):
@@ -13,18 +12,20 @@ class Policy_Model(nn.Module):
           nn.ReLU(),
         )
 
-        self.actor_layer = nn.Sequential(
+        self.mean_layer = nn.Sequential(
           nn.Linear(64, action_dim),
+          nn.Tanh()
         )
 
-        self.actor_std_layer = nn.Sequential(
-          nn.Linear(64, action_dim)
+        self.std_layer = nn.Sequential(
+          nn.Linear(64, action_dim),
+          nn.Sigmoid()
         )
         
     def forward(self, states, detach = False):
       x     = self.nn_layer(states)
-      mean  = self.actor_layer(x[:, :64])
-      std   = self.actor_std_layer(x[:, 64:]).exp()
+      mean  = self.mean_layer(x[:, :64])
+      std   = self.std_layer(x[:, 64:]).exp()
 
       if detach:
         return (mean.detach(), std.detach())

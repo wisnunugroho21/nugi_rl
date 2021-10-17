@@ -5,8 +5,7 @@ from nugi_rl.environment.base import Environment
 from nugi_rl.train.runner.base import Runner
 
 class SingleStepRunner(Runner):
-    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, 
-        writer: SummaryWriter = None, n_plot_batch: int = 100) -> None:
+    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, writer: SummaryWriter = None, n_plot_batch: int = 100) -> None:
         self.agent              = agent
         self.env                = env
 
