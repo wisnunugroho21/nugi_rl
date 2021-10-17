@@ -9,9 +9,9 @@ from copy import deepcopy
 
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
-from nugi_rl.loss.a2c.base import A2C
-from nugi_rl.loss.value.base import ValueLoss
-from nugi_rl.loss.entropy.base import EntropyLoss
+from nugi_rl.loss.a2c import A2C
+from nugi_rl.loss.value import ValueLoss
+from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.memory.policy.base import Memory
 
 class AgentA2C(Agent):  

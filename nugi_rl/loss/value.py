@@ -2,9 +2,8 @@ import torch
 from torch import Tensor
 
 from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from nugi_rl.loss.value.base import ValueLoss
 
-class ValueLoss(ValueLoss):
+class ValueLoss():
     def __init__(self, advantage_function: GeneralizedAdvantageEstimation, vf_loss_coef: float = 1.0, value_clip: float = None):
         self.value_clip         = value_clip
         self.vf_loss_coef       = vf_loss_coef

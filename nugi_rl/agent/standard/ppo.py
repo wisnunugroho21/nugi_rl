@@ -10,8 +10,8 @@ from copy import deepcopy
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
 from nugi_rl.loss.ppo.base import Ppo
-from nugi_rl.loss.value.base import ValueLoss
-from nugi_rl.loss.entropy.base import EntropyLoss
+from nugi_rl.loss.value import ValueLoss
+from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.memory.policy.base import Memory
 
 class AgentPPO(Agent):  

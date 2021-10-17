@@ -3,7 +3,6 @@ from torch import Tensor
 
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from nugi_rl.loss.a2c.base import A2C
 
 class A2C(A2C):
     def __init__(self, distribution: Distribution, advantage_function: GeneralizedAdvantageEstimation):

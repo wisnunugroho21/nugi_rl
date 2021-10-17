@@ -2,9 +2,8 @@ import torch
 from torch import Tensor
 
 from nugi_rl.distribution.base import Distribution
-from nugi_rl.loss.entropy.base import EntropyLoss
 
-class EntropyLoss(EntropyLoss):
+class EntropyLoss():
     def __init__(self, distribution: Distribution, entropy_coef: float = 0.01):
         self.entropy_coef       = entropy_coef
         self.distribution       = distribution
