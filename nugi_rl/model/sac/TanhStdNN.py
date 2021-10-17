@@ -25,7 +25,7 @@ class Policy_Model(nn.Module):
     def forward(self, states, detach = False):
       x     = self.nn_layer(states)
       mean  = self.mean_layer(x[:, :64])
-      std   = self.std_layer(x[:, 64:]).exp()
+      std   = self.std_layer(x[:, 64:])
 
       if detach:
         return (mean.detach(), std.detach())
