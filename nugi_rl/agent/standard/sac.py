@@ -96,7 +96,7 @@ class AgentSac(Agent):
         self.memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
-        model_checkpoint = torch.load(self.folder + '/cql.tar', map_location = self.device)
+        model_checkpoint = torch.load(self.folder + '/sac.tar', map_location = self.device)
         
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])
         self.soft_q1.load_state_dict(model_checkpoint['soft_q1_state_dict'])
