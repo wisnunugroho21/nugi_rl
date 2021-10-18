@@ -15,7 +15,7 @@ class TrulyPpo(Ppo):
         self.advantage_function = advantage_function
         self.distribution       = distribution
 
-    def compute_loss(self, action_datas: tuple, old_action_datas: tuple, values: Tensor, old_values: Tensor, next_values: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor) -> Tensor:
+    def compute_loss(self, action_datas: tuple, old_action_datas: tuple, values: Tensor, next_values: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor) -> Tensor:
         advantages      = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()
 
         logprobs        = self.distribution.logprob(action_datas, actions) + 1e-6
@@ -25,10 +25,9 @@ class TrulyPpo(Ppo):
         Kl              = self.distribution.kldivergence(old_action_datas, action_datas)
 
         pg_targets  = torch.where(
-            (Kl > self.policy_kl_range) & (ratios > 1.0),
+            (Kl >= self.policy_kl_range) & (ratios > 1.0),
             ratios * advantages - self.policy_params * Kl,
             ratios * advantages
         )
         
-        loss = pg_targets.mean()
-        return -1 * loss
+        return -1 * pg_targets.mean()

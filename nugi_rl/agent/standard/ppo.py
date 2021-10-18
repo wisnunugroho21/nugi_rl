@@ -129,7 +129,7 @@ class AgentPPO(Agent):
         old_values          = self.value_old(states, True)
         next_values         = self.value(next_states, True)
 
-        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, values, old_values, next_values, actions, rewards, dones) + \
+        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, values, next_values, actions, rewards, dones) + \
             self.value_loss.compute_loss(values, next_values, rewards, dones, old_values) + \
             self.entropy_loss.compute_loss(action_datas)
         

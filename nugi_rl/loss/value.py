@@ -10,7 +10,7 @@ class ValueLoss():
         self.advantage_function = advantage_function
  
     def compute_loss(self, values: Tensor, next_values: Tensor, rewards: Tensor, dones: Tensor, old_values: Tensor = None) -> Tensor:
-        advantages  = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()
+        advantages  = self.advantage_function.compute_advantages(rewards, values, next_values, dones)
         returns     = (advantages + values).detach()
 
         if self.value_clip is None or old_values is None:
@@ -19,4 +19,4 @@ class ValueLoss():
             vpredclipped    = old_values + torch.clamp(values - old_values, -self.value_clip, self.value_clip)
             loss            = ((returns - vpredclipped).pow(2) * 0.5).mean()
 
-        return loss * self.vf_loss_coef
+        return self.vf_loss_coef * loss
