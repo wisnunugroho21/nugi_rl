@@ -13,9 +13,11 @@ from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.standard.ppo import AgentPPO
 from nugi_rl.distribution.continous.basic_continous import BasicContinous
 from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
-from nugi_rl.loss.ppo.truly_ppo import TrulyPPO
+from nugi_rl.loss.ppo.truly_ppo import TrulyPpo
+from nugi_rl.loss.value import ValueLoss
+from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from nugi_rl.model.ppo.TanhNN import Policy_Model, Value_Model
+from nugi_rl.model.ppo.TanhStdNN import Policy_Model, Value_Model
 from nugi_rl.memory.policy.standard import PolicyMemory
 
 ############## Hyperparameters ##############
@@ -37,7 +39,7 @@ value_clip              = None
 entropy_coef            = 0.1
 vf_loss_coef            = 1.0
 batch_size              = 32
-ppo_epochs              = 10
+epochs                  = 10
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
@@ -76,15 +78,17 @@ print('action_dim: ', action_dim)
 distribution        = BasicContinous()
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
 
-ppo_memory          = PolicyMemory()
-ppo_loss            = TrulyPPO(distribution, advantage_function, policy_kl_range, policy_params, value_clip, vf_loss_coef, entropy_coef)
+memory          = PolicyMemory()
+ppo_loss        = TrulyPpo(distribution, advantage_function, policy_kl_range, policy_params)
+value_loss      = ValueLoss(advantage_function, vf_loss_coef, value_clip)
+entropy_loss    = EntropyLoss(distribution, entropy_coef)
 
-policy              = Policy_Model(state_dim, action_dim).float().to(device)
-value               = Value_Model(state_dim).float().to(device)
-ppo_optimizer       = AdamW(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)
+policy          = Policy_Model(state_dim, action_dim).float().to(device)
+value           = Value_Model(state_dim).float().to(device)
+optimizer       = AdamW(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)
 
-agent   = AgentPPO(policy, value, distribution, ppo_loss, ppo_memory, ppo_optimizer, ppo_epochs, 
-            is_training_mode, batch_size,  folder, device)
+agent   = AgentPPO(policy, value, distribution, ppo_loss, value_loss, entropy_loss, memory, optimizer, 
+    epochs, is_training_mode, batch_size, folder, device)
 
 runner      = IterRunner(agent, environment, is_training_mode, render, n_update, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
