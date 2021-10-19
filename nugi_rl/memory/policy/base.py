@@ -7,11 +7,11 @@ class Memory(Dataset):
     def __getitem__(self, idx):
         raise NotImplementedError
 
-    def save(self, state: list, action: list, reward: float, done: bool, next_state: list):
+    def save(self, state, action, reward, done, next_state) -> None:
         raise NotImplementedError
 
-    def get(self, start_position: int = 0, end_position: int = None) -> tuple:
+    def get(self, start_position: int = 0, end_position: int = None):
         raise NotImplementedError
 
-    def clear(self, start_position: int = 0, end_position: int = None):
+    def clear(self, start_position: int = 0, end_position: int = None) -> None:
         raise NotImplementedError
