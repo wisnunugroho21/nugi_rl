@@ -53,6 +53,23 @@ class AgentPPO(Agent):
           self.policy.eval()
           self.value.eval()
 
+    def _update_step(self, states: list, actions: list, rewards: float, dones: bool, next_states: list) -> None:
+        self.optimizer.zero_grad()
+
+        action_datas        = self.policy(states)
+        values              = self.value(states)
+
+        old_action_datas    = self.policy_old(states, True)
+        old_values          = self.value_old(states, True)
+        next_values         = self.value(next_states, True)
+
+        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, values, next_values, actions, rewards, dones) + \
+            self.value_loss.compute_loss(values, next_values, rewards, dones, old_values) + \
+            self.entropy_loss.compute_loss(action_datas)
+        
+        loss.backward()
+        self.optimizer.step()
+
     def act(self, state: list) -> list:
         with torch.inference_mode():
             state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
@@ -117,21 +134,4 @@ class AgentPPO(Agent):
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'ppo_optimizer_state_dict': self.optimizer.state_dict(),
-        }, self.folder + '/ppg.pth')
-
-    def _update_step(self, states: list, actions: list, rewards: float, dones: bool, next_states: list) -> None:
-        self.optimizer.zero_grad()
-
-        action_datas        = self.policy(states)
-        values              = self.value(states)
-
-        old_action_datas    = self.policy_old(states, True)
-        old_values          = self.value_old(states, True)
-        next_values         = self.value(next_states, True)
-
-        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, values, next_values, actions, rewards, dones) + \
-            self.value_loss.compute_loss(values, next_values, rewards, dones, old_values) + \
-            self.entropy_loss.compute_loss(action_datas)
-        
-        loss.backward()
-        self.optimizer.step()
+        }, self.folder + '/ppg.pth')    

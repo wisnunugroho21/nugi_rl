@@ -3,7 +3,9 @@ from torch import Tensor
 from torch.distributions import Normal
 from torch.distributions.kl import kl_divergence
 
-class BasicContinous():
+from nugi_rl.distribution.base import Distribution
+
+class BasicContinous(Distribution):
     def sample(self, datas: tuple) -> Tensor:
         mean, std = datas
 

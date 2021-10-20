@@ -26,7 +26,7 @@ class PolicyMemory(Memory):
             torch.tensor([self.rewards[idx]], dtype = torch.float32), torch.tensor([self.dones[idx]], dtype = torch.float32), \
             torch.tensor(self.next_states[idx], dtype = torch.float32)
 
-    def save(self, state: list, action: list, reward: float, done: bool, next_state: list):
+    def save(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
         if len(self) >= self.capacity:
             del self.states[0]
             del self.actions[0]
@@ -40,32 +40,32 @@ class PolicyMemory(Memory):
         self.dones.append(done)
         self.next_states.append(deepcopy(next_state))
 
-    def get(self, start_position: int, end_position: int) -> tuple:
+    def get(self, start_position: int = 0, end_position: int = None) -> tuple:
         if end_position is not None and end_position != -1:
-            states      = self.states[start_position:end_position + 1]
-            actions     = self.actions[start_position:end_position + 1]
-            rewards     = self.rewards[start_position:end_position + 1]
-            dones       = self.dones[start_position:end_position + 1]
-            next_states = self.next_states[start_position:end_position + 1]
+            states      = self.states[start_position : end_position + 1]
+            actions     = self.actions[start_position : end_position + 1]
+            rewards     = self.rewards[start_position : end_position + 1]
+            dones       = self.dones[start_position : end_position + 1]
+            next_states = self.next_states[start_position : end_position + 1]
         else:
-            states      = self.states[start_position:]
-            actions     = self.actions[start_position:]
-            rewards     = self.rewards[start_position:]
-            dones       = self.dones[start_position:]
-            next_states = self.next_states[start_position:]
+            states      = self.states[start_position :]
+            actions     = self.actions[start_position :]
+            rewards     = self.rewards[start_position :]
+            dones       = self.dones[start_position :]
+            next_states = self.next_states[start_position :]
 
         return states, actions, rewards, dones, next_states
 
     def clear(self, start_position: int = 0, end_position: int = None):
         if end_position is not None and end_position != -1:
-            del self.states[start_position:end_position + 1]
-            del self.actions[start_position:end_position + 1]
-            del self.rewards[start_position:end_position + 1]
-            del self.dones[start_position:end_position + 1]
-            del self.next_states[start_position:end_position + 1]
+            del self.states[start_position : end_position + 1]
+            del self.actions[start_position : end_position + 1]
+            del self.rewards[start_position : end_position + 1]
+            del self.dones[start_position : end_position + 1]
+            del self.next_states[start_position : end_position + 1]
         else:
-            del self.states[start_position:]
-            del self.actions[start_position:]
-            del self.rewards[start_position:]
-            del self.dones[start_position:]
-            del self.next_states[start_position:]
+            del self.states[start_position :]
+            del self.actions[start_position :]
+            del self.rewards[start_position :]
+            del self.dones[start_position :]
+            del self.next_states[start_position :]

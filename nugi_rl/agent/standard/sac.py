@@ -50,6 +50,20 @@ class AgentSac(Agent):
         if self.target_q2 is None:
             self.target_q2 = deepcopy(self.soft_q2)
 
+    def _update_step_policy(self, states):
+        self.policy_optimizer.zero_grad()
+
+        action_datas    = self.policy(states)
+        actions         = self.distribution.sample(action_datas)
+
+        q_value1        = self.soft_q1(states, actions)
+        q_value2        = self.soft_q2(states, actions)
+
+        loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
+
+        loss.backward()
+        self.policy_optimizer.step()
+
     def act(self, state: list) -> list:
         with torch.inference_mode():
             state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
@@ -132,18 +146,4 @@ class AgentSac(Agent):
         loss  = self.qLoss.compute_loss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, next_action_datas, next_actions, rewards, dones)
 
         loss.backward()
-        self.soft_q_optimizer.step()
-
-    def _update_step_policy(self, states):
-        self.policy_optimizer.zero_grad()
-
-        action_datas    = self.policy(states)
-        actions         = self.distribution.sample(action_datas)
-
-        q_value1        = self.soft_q1(states, actions)
-        q_value2        = self.soft_q2(states, actions)
-
-        loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
-
-        loss.backward()
-        self.policy_optimizer.step()
+        self.soft_q_optimizer.step()    
