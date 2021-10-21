@@ -3,7 +3,6 @@ from torch.nn import Module
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
 from torch import device
-from torch.nn import Module
 
 from copy import deepcopy
 
@@ -72,7 +71,7 @@ class AgentA2C(Agent):
 
     def act(self, state: list) -> list:
         with torch.inference_mode():
-            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            state           = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:

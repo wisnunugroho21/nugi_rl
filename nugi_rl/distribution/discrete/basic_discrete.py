@@ -4,7 +4,9 @@ from torch import Tensor
 from torch.distributions import Categorical
 from torch.distributions.kl import kl_divergence
 
-class BasicDiscrete():
+from nugi_rl.distribution.base import Distribution
+
+class BasicDiscrete(Distribution):
     def sample(self, datas: Tensor) -> Tensor:
         distribution = Categorical(datas)
         return distribution.sample().int()

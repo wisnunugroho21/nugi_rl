@@ -3,7 +3,6 @@ from torch.nn import Module
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch.optim import Optimizer
 from torch import device
-from torch.nn import Module
 
 from copy import deepcopy
 
@@ -66,7 +65,7 @@ class AgentSac(Agent):
 
     def act(self, state: list) -> list:
         with torch.inference_mode():
-            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
+            state           = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -80,8 +79,8 @@ class AgentSac(Agent):
 
     def logprob(self, state: list, action: list) -> list:
         with torch.inference_mode():
-            state           = torch.FloatTensor(state).unsqueeze(0).float().to(self.device)
-            action          = torch.FloatTensor(action).unsqueeze(0).float().to(self.device)
+            state           = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
+            action          = torch.FloatTensor(action).float().to(self.device).unsqueeze(0)
 
             action_datas    = self.policy(state)
 
