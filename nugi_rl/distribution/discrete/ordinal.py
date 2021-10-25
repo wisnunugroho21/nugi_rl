@@ -14,16 +14,16 @@ class Ordinal(Distribution):
     def _compute_ordinal(self, datas: Tensor) -> Tensor:      
         datas = datas.unsqueeze(-1)
 
-        a1 = torch.ones(datas.size(3), datas.size(3)).to(self.device).triu().transpose(0, 1).repeat(datas.size(0), datas.size(1), 1, 1)
-        a2 = a1.logical_not().float()        
+        a1 = torch.ones(datas.size(2), datas.size(2)).to(self.device).triu().transpose(0, 1).repeat(datas.size(0), datas.size(1), 1, 1)
+        a2 = a1.logical_not().float()
 
         a3 = datas.log()
         a4 = (1 - datas).log()
 
-        out = torch.matmul(a1, a3) + torch.matmul(a2, a4)                
-        out = torch.nn.functional.softmax(out, dim = 3)
-
+        out = torch.matmul(a1, a3) + torch.matmul(a2, a4)
+        out = torch.nn.functional.softmax(out, dim = 2)
         out = out.squeeze(-1)        
+        
         return out
 
     def sample(self, datas: Tensor) -> Tensor:
