@@ -56,7 +56,7 @@ class PolicyMemory(Memory):
 
         return states, actions, rewards, dones, next_states
 
-    def clear(self, start_position: int = 0, end_position: int = None):
+    def clear(self, start_position: int = 0, end_position: int = None) -> None:
         if end_position is not None and end_position != -1:
             del self.states[start_position : end_position + 1]
             del self.actions[start_position : end_position + 1]

@@ -13,13 +13,13 @@ class Policy_Model(nn.Module):
           nn.ReLU(),
           nn.Linear(256, 128),
           nn.ReLU(),
-          nn.Linear(128, action_dim * bins),
-          nn.Sigmoid()
+          nn.Linear(128, action_dim * bins)
         )
         
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
       action = self.nn_layer(states)
       action = action.reshape(-1, self.action_dim, self.bins)
+      action = nn.functional.softmax(action, dim = -1)
 
       if detach:
         return action.detach()
