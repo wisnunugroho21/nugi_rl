@@ -103,11 +103,9 @@ class AgentImagePpoClr(AgentPPO):
 
         self.aux_clr_memory.clear()
 
-    def act(self, state: list) -> list:
+    def act(self, state) -> list:
         with torch.inference_mode():
-            state           = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
-
-            state           = self.trans(state)            
+            state           = self.trans(state).to(self.device).unsqueeze(0)          
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -119,12 +117,11 @@ class AgentImagePpoClr(AgentPPO):
               
         return action
 
-    def logprob(self, state: list, action: list) -> list:
+    def logprob(self, state, action: list) -> list:
         with torch.inference_mode():
-            state           = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
+            state           = self.trans(state).to(self.device).unsqueeze(0)
             action          = torch.FloatTensor(action).float().to(self.device).unsqueeze(0)
 
-            state           = self.trans(state)
             action_datas    = self.policy(state)
 
             logprobs        = self.distribution.logprob(action_datas, action)

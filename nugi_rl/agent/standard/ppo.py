@@ -1,4 +1,5 @@
 import torch
+from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
@@ -12,10 +13,12 @@ from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.memory.policy.base import Memory
+from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
 
 class AgentPPO(Agent):  
-    def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss,
-        memory: Memory, optimizer: Optimizer, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
+    def __init__(self, policy: Module, value: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, 
+        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: Memory, optimizer: Optimizer, 
+        ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
         device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None):
 
         self.batch_size         = batch_size  
@@ -31,6 +34,7 @@ class AgentPPO(Agent):
 
         self.distribution       = distribution
         self.memory             = memory
+        self.gae                = gae
         
         self.policy_loss        = policy_loss
         self.value_loss         = value_loss
@@ -52,7 +56,7 @@ class AgentPPO(Agent):
           self.policy.eval()
           self.value.eval()
 
-    def _update_step(self, states: list, actions: list, rewards: float, dones: bool, next_states: list) -> None:
+    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
         self.optimizer.zero_grad()
 
         action_datas        = self.policy(states)
@@ -62,8 +66,10 @@ class AgentPPO(Agent):
         old_values          = self.value_old(states, True)
         next_values         = self.value(next_states, True)
 
-        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, values, next_values, actions, rewards, dones) + \
-            self.value_loss.compute_loss(values, next_values, rewards, dones, old_values) + \
+        adv = self.gae.compute_advantages(rewards, values, next_values, dones).detach()
+
+        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, actions, adv) + \
+            self.value_loss.compute_loss(values, adv, old_values) + \
             self.entropy_loss.compute_loss(action_datas)
         
         loss.backward()
@@ -71,7 +77,7 @@ class AgentPPO(Agent):
 
     def act(self, state: list) -> list:
         with torch.inference_mode():
-            state           = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
+            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -85,8 +91,8 @@ class AgentPPO(Agent):
 
     def logprob(self, state: list, action: list) -> list:
         with torch.inference_mode():
-            state           = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
-            action          = torch.FloatTensor(action).float().to(self.device).unsqueeze(0)
+            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
+            action          = torch.tensor(action).float().to(self.device).unsqueeze(0)
 
             action_datas    = self.policy(state)
 
@@ -113,7 +119,7 @@ class AgentPPO(Agent):
         self.memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
-        model_checkpoint = torch.load(self.folder + '/ppg.pth', map_location = self.device)
+        model_checkpoint = torch.load(self.folder + '/ppg.tar', map_location = self.device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         
@@ -133,4 +139,4 @@ class AgentPPO(Agent):
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'ppo_optimizer_state_dict': self.optimizer.state_dict(),
-        }, self.folder + '/ppg.pth')    
+        }, self.folder + '/ppg.tar')

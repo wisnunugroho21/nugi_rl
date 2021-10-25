@@ -6,15 +6,14 @@ from torch import device
 
 from copy import deepcopy
 
-from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
-from nugi_rl.loss.sac.policy_loss import PolicyLoss
-from nugi_rl.loss.sac.q_loss import QLoss
+from nugi_rl.loss.cql.td3.policy_loss import PolicyLoss
+from nugi_rl.loss.cql.td3.q_loss import QLoss
 from nugi_rl.memory.policy.base import Memory
 from nugi_rl.helpers.pytorch_utils import copy_parameters
 
 class AgentSac(Agent):
-    def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, distribution: Distribution, q_loss: QLoss, policy_loss: PolicyLoss, memory: Memory, 
+    def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, q_loss: QLoss, policy_loss: PolicyLoss, memory: Memory, 
         soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, soft_tau: float = 0.95, 
         folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None):
 
@@ -31,7 +30,6 @@ class AgentSac(Agent):
         self.target_q1          = target_q1
         self.target_q2          = target_q2
 
-        self.distribution       = distribution
         self.memory             = memory
         
         self.qLoss              = q_loss
@@ -49,62 +47,48 @@ class AgentSac(Agent):
         if self.target_q2 is None:
             self.target_q2 = deepcopy(self.soft_q2)
 
-    def _update_step_policy(self, states):
-        self.policy_optimizer.zero_grad()
-
-        action_datas    = self.policy(states)
-        actions         = self.distribution.sample(action_datas)
-
-        q_value1        = self.soft_q1(states, actions)
-        q_value2        = self.soft_q2(states, actions)
-
-        loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
-
-        loss.backward()
-        self.policy_optimizer.step()
-
     def _update_step_q(self, states, actions, rewards, dones, next_states):
-        self.soft_q_optimizer.zero_grad()
-
-        next_action_datas   = self.policy(next_states, True)
-        next_actions        = self.distribution.sample(next_action_datas)
+        self.soft_q_optimizer.zero_grad()        
 
         predicted_q1        = self.soft_q1(states, actions)
         predicted_q2        = self.soft_q2(states, actions)
 
+        predicted_actions   = self.policy(states, True)
+        naive_q1_value      = self.soft_q1(states, predicted_actions)
+        naive_q2_value      = self.soft_q2(states, predicted_actions)
+
+        next_actions        = self.policy(next_states, True)
         target_next_q1      = self.target_q1(next_states, next_actions, True)
         target_next_q2      = self.target_q2(next_states, next_actions, True)
 
-        loss  = self.qLoss.compute_loss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, next_action_datas, next_actions, rewards, dones)
+        loss  = self.qLoss.compute_loss(predicted_q1, predicted_q2, naive_q1_value, naive_q2_value, target_next_q1, target_next_q2, rewards, dones)
 
         loss.backward()
-        self.soft_q_optimizer.step() 
+        self.soft_q_optimizer.step()   
+
+    def _update_step_policy(self, states):
+        self.policy_optimizer.zero_grad()
+
+        actions     = self.policy(states)
+
+        q_value1    = self.soft_q1(states, actions)
+        q_value2    = self.soft_q2(states, actions)
+
+        loss = self.policyLoss.compute_loss(q_value1, q_value2)
+
+        loss.backward()
+        self.policy_optimizer.step()    
 
     def act(self, state: list) -> list:
         with torch.inference_mode():
-            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
-            action_datas    = self.policy(state)
-            
-            if self.is_training_mode:
-                action = self.distribution.sample(action_datas)
-            else:
-                action = self.distribution.deterministic(action_datas)
-
-            action = action.squeeze(0).detach().tolist()
+            state   = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
+            action  = self.policy(state)
+            action  = action.squeeze(0).detach().tolist()
               
         return action
 
     def logprob(self, state: list, action: list) -> list:
-        with torch.inference_mode():
-            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
-            action          = torch.tensor(action).float().to(self.device).unsqueeze(0)
-
-            action_datas    = self.policy(state)
-
-            logprobs        = self.distribution.logprob(action_datas, action)
-            logprobs        = logprobs.squeeze(0).detach().tolist()
-
-        return logprobs
+        raise NotImplementedError('TD3 is deterministic')
 
     def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
         self.memory.save(state, action, reward, done, next_state)
@@ -145,4 +129,4 @@ class AgentSac(Agent):
             'target_q2_state_dict': self.target_q2.state_dict(),
             'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
             'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
-        }, self.folder + '/sac.tar')       
+        }, self.folder + '/sac.tar')     

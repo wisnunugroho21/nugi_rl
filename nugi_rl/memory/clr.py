@@ -1,9 +1,8 @@
 from copy import deepcopy
-from nugi_rl.memory.clr.base import ClrMemory
 from torchvision.transforms import Compose
 import torchvision.transforms as transforms
 
-class ClrMemory(ClrMemory):
+class ClrMemory():
     def __init__(self, input_trans: Compose = None, target_trans: Compose = None, capacity: int = 10000):        
         self.images         = []
 
