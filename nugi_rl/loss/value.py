@@ -7,7 +7,7 @@ class ValueLoss():
         self.vf_loss_coef       = vf_loss_coef
  
     def compute_loss(self, values: Tensor, advantages: Tensor, old_values: Tensor = None) -> Tensor:
-        returns     = (advantages + values).detach()
+        returns = (advantages + values).detach()
 
         if self.value_clip is None or old_values is None:
             loss            = ((returns - values).pow(2) * 0.5).mean()

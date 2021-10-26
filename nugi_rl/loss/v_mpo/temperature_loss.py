@@ -3,15 +3,11 @@ import math
 
 from torch import Tensor
 
-from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-
 class TemperatureLoss():
-    def __init__(self, advantage_function: GeneralizedAdvantageEstimation, coef_temp: int = 0.0001):
-        self.advantage_function = advantage_function
+    def __init__(self, coef_temp: int = 0.0001):
         self.coef_temp          = coef_temp
 
-    def compute_loss(self, values: Tensor, next_values: Tensor, rewards: Tensor, dones: Tensor, temperature: Tensor) -> Tensor:
-        advantages  = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()                
+    def compute_loss(self, temperature: Tensor, advantages: Tensor) -> Tensor:
         top_adv, _  = torch.topk(advantages, math.ceil(advantages.size(0) / 2), 0)
 
         ratio       = top_adv / (temperature + 1e-6)
