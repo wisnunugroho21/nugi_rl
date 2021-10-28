@@ -7,15 +7,16 @@ from torch import device
 from copy import deepcopy
 
 from nugi_rl.agent.base import Agent
-from nugi_rl.loss.cql.td3.policy_loss import PolicyLoss
-from nugi_rl.loss.cql.td3.q_loss import QLoss
+from nugi_rl.loss.td3.policy_loss import PolicyLoss
+from nugi_rl.loss.td3.q_loss import QLoss
+from nugi_rl.loss.cql_regularizer import CqlRegularizer
 from nugi_rl.memory.policy.base import Memory
 from nugi_rl.helpers.pytorch_utils import copy_parameters
 
 class AgentSac(Agent):
-    def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, q_loss: QLoss, policy_loss: PolicyLoss, memory: Memory, 
-        soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, soft_tau: float = 0.95, 
-        folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None):
+    def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, q_loss: QLoss, policy_loss: PolicyLoss, cql_reg_loss: CqlRegularizer, 
+        memory: Memory, soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, 
+        soft_tau: float = 0.95, folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None):
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
@@ -34,6 +35,7 @@ class AgentSac(Agent):
         
         self.qLoss              = q_loss
         self.policyLoss         = policy_loss
+        self.cqlRegLoss         = cql_reg_loss
 
         self.device             = device
         self.q_update           = 1
@@ -61,7 +63,8 @@ class AgentSac(Agent):
         target_next_q1      = self.target_q1(next_states, next_actions, True)
         target_next_q2      = self.target_q2(next_states, next_actions, True)
 
-        loss  = self.qLoss.compute_loss(predicted_q1, predicted_q2, naive_q1_value, naive_q2_value, target_next_q1, target_next_q2, rewards, dones)
+        loss  = self.qLoss.compute_loss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, rewards, dones) + \
+            self.cqlRegLoss.compute_loss(predicted_q1, predicted_q2, naive_q1_value, naive_q2_value)
 
         loss.backward()
         self.soft_q_optimizer.step()   
@@ -81,7 +84,7 @@ class AgentSac(Agent):
 
     def act(self, state: list) -> list:
         with torch.inference_mode():
-            state   = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
+            state   = torch.tensor(state).float().to(self.device).unsqueeze(0)
             action  = self.policy(state)
             action  = action.squeeze(0).detach().tolist()
               
