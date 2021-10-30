@@ -14,7 +14,7 @@ from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.loss.clr.base import CLR
 from nugi_rl.memory.policy.base import Memory
-from nugi_rl.memory.clr.base import ClrMemory
+from nugi_rl.memory.clr import ClrMemory
 
 class AgentImagePpoClr(AgentPPO):
     def __init__(self, policy: Module, value: Module, cnn: Module, projector: Module, distribution: Distribution, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, 

@@ -86,7 +86,7 @@ class AgentVMPO(Agent):
 
     def act(self, state: list) -> list:
         with torch.inference_mode():
-            state               = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
+            state               = torch.tensor(state).float().to(self.device).unsqueeze(0)
             action_datas, _, _  = self.policy(state)
             
             if self.is_training_mode:
@@ -100,8 +100,8 @@ class AgentVMPO(Agent):
 
     def logprob(self, state: list, action: list) -> list:
         with torch.inference_mode():
-            state               = torch.FloatTensor(state).float().to(self.device).unsqueeze(0)
-            action              = torch.FloatTensor(action).float().to(self.device).unsqueeze(0)
+            state               = torch.tensor(state).float().to(self.device).unsqueeze(0)
+            action              = torch.tensor(action).float().to(self.device).unsqueeze(0)
 
             action_datas, _, _  = self.policy(state)
 
