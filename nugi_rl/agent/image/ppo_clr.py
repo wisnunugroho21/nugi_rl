@@ -13,15 +13,18 @@ from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.loss.clr.base import CLR
+from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
 from nugi_rl.memory.policy.base import Memory
 from nugi_rl.memory.clr import ClrMemory
 
 class AgentImagePpoClr(AgentPPO):
-    def __init__(self, policy: Module, value: Module, cnn: Module, projector: Module, distribution: Distribution, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, 
-        memory: Memory, aux_clr_memory: ClrMemory, optimizer: Optimizer, aux_clr_optimizer: Optimizer, trans: Compose, ppo_epochs: int = 10, aux_clr_epochs = 5, is_training_mode: bool = True, 
-        batch_size: int = 32, folder: str = 'model', device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None, cnn_old: Module = None, projector_old: Module = None):
-        
-        super().__init__(policy, value, distribution, policy_loss, value_loss, entropy_loss, memory, optimizer, ppo_epochs = ppo_epochs, is_training_mode = is_training_mode, batch_size = batch_size, folder = folder, device = device, policy_old = policy_old, value_old = value_old)
+    def __init__(self, policy: Module, value: Module, cnn: Module, projector: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, 
+        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, memory: Memory, aux_clr_memory: ClrMemory, optimizer: Optimizer, aux_clr_optimizer: Optimizer, 
+        trans: Compose, ppo_epochs: int = 10, aux_clr_epochs: int = 5, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
+        device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None, cnn_old: Module = None, projector_old: Module = None):
+
+        super().__init__(policy, value, gae, distribution, policy_loss, value_loss, entropy_loss, memory, optimizer, ppo_epochs = ppo_epochs, is_training_mode = is_training_mode, 
+            batch_size = batch_size, folder = folder, device = device, policy_old = policy_old, value_old = value_old)
 
         self.cnn                = cnn
         self.projector          = projector
@@ -58,8 +61,10 @@ class AgentImagePpoClr(AgentPPO):
         next_res            = self.cnn(next_states, True)
         next_values         = self.value(next_res, True)
 
-        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, values, next_values, actions, rewards, dones) + \
-            self.value_loss.compute_loss(values, next_values, rewards, dones, old_values) + \
+        adv = self.gae.compute_advantages(rewards, values, next_values, dones).detach()
+
+        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, actions, adv) + \
+            self.value_loss.compute_loss(values, adv, old_values) + \
             self.entropy_loss.compute_loss(action_datas)
         
         loss.backward()

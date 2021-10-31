@@ -13,4 +13,4 @@ class A2C():
         pg_target       = logprobs * advantages
         loss            = pg_target.mean()
 
-        return -1 * loss
+        return loss
