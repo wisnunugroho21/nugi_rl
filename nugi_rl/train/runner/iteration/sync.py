@@ -2,7 +2,6 @@ import ray
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from nugi_rl.train.runner.iteration.iter_runner import IterRunner
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
 from nugi_rl.train.runner.base import Runner
@@ -35,10 +34,12 @@ class SyncRunner(Runner):
 
         for _ in range(self.n_update):
             action                      = self.agent.act(self.states)
+            logprob                     = self.agent.logprob(self.states, action)
+
             next_state, reward, done, _ = self.env.step(action)
             
             if self.is_save_memory:
-                self.agent.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
+                self.agent.save_obs(self.states, action, reward, done, next_state, logprob)
                 
             self.states         = next_state
             self.eps_time       += 1 

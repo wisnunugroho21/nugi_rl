@@ -1,9 +1,8 @@
 import torch
-from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
-from torch import device
+from torch import device, Tensor
 
 from copy import deepcopy
 
@@ -13,7 +12,7 @@ from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.loss.rnd_state_predictor import RndStatePredictor
-from nugi_rl.memory.policy.base import Memory
+from nugi_rl.memory.policy.base import PolicyMemory
 from nugi_rl.memory.rnd import RndMemory
 from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
 
@@ -22,9 +21,9 @@ from nugi_rl.helpers.math import normalize, count_new_mean, count_new_std
 class AgentPPO(Agent):  
     def __init__(self, policy: Module, ex_value: Module, in_value: Module, rnd_predict: Module, rnd_target: Module, distribution: Distribution, 
         gae: GeneralizedAdvantageEstimation, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, rnd_predictor_loss: RndStatePredictor,
-        policy_memory: Memory, rnd_memory: RndMemory, policy_optimizer: Optimizer, rnd_optimizer: Optimizer, ppo_epochs: int = 10, rnd_epochs: int = 10,
+        policy_memory: PolicyMemory, rnd_memory: RndMemory, policy_optimizer: Optimizer, rnd_optimizer: Optimizer, ppo_epochs: int = 10, rnd_epochs: int = 10,
         is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', device: device = torch.device('cuda'), 
-        policy_old: Module = None, ex_value_old: Module = None, in_value_old: Module = None):
+        policy_old: Module = None, ex_value_old: Module = None, in_value_old: Module = None) -> None:
 
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
@@ -77,7 +76,7 @@ class AgentPPO(Agent):
           self.ex_value.eval()
           self.in_value.eval()
 
-    def _compute_intrinsic_reward(self, obs, mean_obs, std_obs):
+    def _compute_intrinsic_reward(self, obs, mean_obs: Tensor, std_obs: Tensor) -> None:
         obs             = normalize(obs, mean_obs, std_obs)
         
         state_pred      = self.rnd_predict(obs)
@@ -85,7 +84,7 @@ class AgentPPO(Agent):
 
         return (state_target - state_pred)
 
-    def _update_obs_normalization_param(self, obs):
+    def _update_obs_normalization_param(self, obs: Tensor) -> None:
         obs                 = torch.FloatTensor(obs).to(self.device)
 
         mean_obs            = count_new_mean(self.rnd_memory.mean_obs, self.rnd_memory.total_number_obs, obs)
@@ -94,7 +93,7 @@ class AgentPPO(Agent):
         
         self.rnd_memory.save_observation_normalize_parameter(mean_obs, std_obs, total_number_obs)
     
-    def _update_rwd_normalization_param(self, in_rewards):
+    def _update_rwd_normalization_param(self, in_rewards: Tensor) -> None:
         std_in_rewards      = count_new_std(self.rnd_memory.std_in_rewards, self.rnd_memory.total_number_rwd, in_rewards)
         total_number_rwd    = len(in_rewards) + self.rnd_memory.total_number_rwd
         
@@ -131,7 +130,7 @@ class AgentPPO(Agent):
         loss.backward()
         self.policy_optimizer.step()
 
-    def _update_step_rnd(self, obs, mean_obs, std_obs):
+    def _update_step_rnd(self, obs: Tensor, mean_obs: Tensor, std_obs: Tensor) -> None:
         self.rnd_optimizer.zero_grad()
 
         obs             = normalize(obs, mean_obs, std_obs)
@@ -144,20 +143,19 @@ class AgentPPO(Agent):
         loss.backward()
         self.rnd_optimizer.step()
 
-    def _update_ppo(self):
+    def _update_ppo(self) -> None:
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.ex_value_old.load_state_dict(self.ex_value.state_dict())
         self.in_value_old.load_state_dict(self.in_value.state_dict())
 
         for _ in range(self.ppo_epochs):
             dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
-            for states, actions, rewards, dones, next_states in dataloader:
-                self._update_step_policy(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device),
-                    self.rnd_memory.mean_obs.to(self.device), self.rnd_memory.std_obs.to(self.device), self.rnd_memory.std_in_rewards.to(self.device))
+            for states, actions, rewards, dones, next_states, _ in dataloader:
+                self._update_step_policy(states, actions, rewards, dones, next_states, self.rnd_memory.mean_obs, self.rnd_memory.std_obs, self.rnd_memory.std_in_rewards)
 
         self.policy_memory.clear()
 
-    def _update_rnd(self):
+    def _update_rnd(self) -> None:
         for _ in range(self.rnd_epochs):
             dataloader  = DataLoader(self.rnd_memory, self.batch_size, shuffle = False)       
             for obs in dataloader:
@@ -170,9 +168,9 @@ class AgentPPO(Agent):
 
         self.rnd_memory.clear()
 
-    def act(self, state: list) -> list:
+    def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
+            state           = state.unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -180,25 +178,31 @@ class AgentPPO(Agent):
             else:
                 action = self.distribution.deterministic(action_datas)
 
-            action = action.squeeze(0).detach().tolist()
+            action = action.squeeze(0).detach()
               
         return action
 
-    def logprob(self, state: list, action: list) -> list:
+    def logprobs(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
-            action          = torch.tensor(action).float().to(self.device).unsqueeze(0)
+            state           = state.unsqueeze(0)
+            action          = action.unsqueeze(0)
 
             action_datas    = self.policy(state)
 
             logprobs        = self.distribution.logprob(action_datas, action)
-            logprobs        = logprobs.squeeze(0).detach().tolist()
+            logprobs        = logprobs.squeeze(0).detach()
 
         return logprobs
 
-    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
-        self.policy_memory.save(state, action, reward, done, next_state)
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+        self.policy_memory.save(state, action, reward, done, next_state, logprob)
         self.rnd_memory.save(next_state)
+
+    def save_memory(self, memory: PolicyMemory) -> None:
+        states, actions, rewards, dones, next_states, logprobs = memory.get()
+
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states, logprobs)
+        self.rnd_memory.save_all(next_states)
         
     def update(self, type) -> None:
         if type == 'episodic':
@@ -206,30 +210,46 @@ class AgentPPO(Agent):
         elif type == 'iter':
             self._update_rnd()            
         else:
-            raise Exception('choose type update properly')
+            raise Exception('choose type update properly (episodic, iter)')
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.policy_memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
-        model_checkpoint = torch.load(self.folder + '/ppg.tar', map_location = self.device)
+        model_checkpoint = torch.load(self.folder + '/ppo_rnd.tar', map_location = self.device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
-        self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        self.ex_value.load_state_dict(model_checkpoint['ex_value_state_dict'])
+        self.in_value.load_state_dict(model_checkpoint['in_value_state_dict'])
+        self.rnd_predict.load_state_dict(model_checkpoint['rnd_predict_state_dict'])
+        self.rnd_target.load_state_dict(model_checkpoint['rnd_target_state_dict'])
         
-        if self.optimizer is not None:
-            self.optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])
+        if self.policy_optimizer is not None:
+            self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
+
+        if self.rnd_optimizer is not None:
+            self.rnd_optimizer.load_state_dict(model_checkpoint['rnd_optimizer_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()
-            self.value.train()
+            self.ex_value.train()
+            self.in_value.train()
+            self.rnd_predict.train()
+            self.rnd_target.train()
 
         else:
             self.policy.eval()
-            self.value.eval()
+            self.ex_value.eval()
+            self.in_value.eval()
+            self.rnd_predict.eval()
+            self.rnd_target.eval()
 
     def save_weights(self) -> None:            
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
-            'value_state_dict': self.value.state_dict(),
-            'ppo_optimizer_state_dict': self.optimizer.state_dict(),
-        }, self.folder + '/ppg.tar')
+            'ex_value_state_dict': self.ex_value.state_dict(),
+            'in_value_state_dict': self.in_value.state_dict(),
+            'rnd_predict_state_dict': self.rnd_predict.state_dict(),
+            'rnd_target_state_dict': self.rnd_target.state_dict(),
+            'policy_optimizer_state_dict': self.optimizer.state_dict(),
+            'rnd_optimizer_state_dict': self.optimizer.state_dict(),
+        }, self.folder + '/ppo_rnd.tar')

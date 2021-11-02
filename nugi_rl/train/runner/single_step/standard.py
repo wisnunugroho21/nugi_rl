@@ -23,10 +23,12 @@ class SingleStepRunner(Runner):
 
     def run(self) -> tuple:             
         action                      = self.agent.act(self.states)
+        logprob                     = self.agent.logprob(self.states, action)
+
         next_state, reward, done, _ = self.env.step(action)
         
         if self.is_save_memory:
-            self.agent.save_obs(self.states.tolist(), action, reward, float(done), next_state.tolist())
+            self.agent.save_obs(self.states, action, reward, done, next_state, logprob)
             
         self.states         = next_state
         self.eps_time       += 1 

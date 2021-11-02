@@ -10,7 +10,7 @@ from nugi_rl.agent.base import Agent
 from nugi_rl.loss.td3.policy_loss import PolicyLoss
 from nugi_rl.loss.td3.q_loss import QLoss
 from nugi_rl.loss.cql_regularizer import CqlRegularizer
-from nugi_rl.memory.policy.base import Memory
+from nugi_rl.memory.base import Memory
 from nugi_rl.helpers.pytorch_utils import copy_parameters
 
 class AgentSac(Agent):
@@ -95,6 +95,10 @@ class AgentSac(Agent):
 
     def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
         self.memory.save(state, action, reward, done, next_state)
+
+    def save_memory(self, memory: Memory) -> None:
+        states, actions, rewards, dones, next_states = memory.get()
+        self.memory.save_all(states, actions, rewards, dones, next_states)
         
     def update(self) -> None:
         for _ in range(self.epochs):
@@ -110,7 +114,7 @@ class AgentSac(Agent):
                 self.target_q2 = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
-        self.memory.get(start_position, end_position)
+        return self.memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
         model_checkpoint = torch.load(self.folder + '/sac.tar', map_location = self.device)

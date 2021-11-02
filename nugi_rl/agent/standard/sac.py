@@ -2,7 +2,7 @@ import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch.optim import Optimizer
-from torch import device
+from torch import device, Tensor
 
 from copy import deepcopy
 
@@ -10,11 +10,11 @@ from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
 from nugi_rl.loss.sac.policy_loss import PolicyLoss
 from nugi_rl.loss.sac.q_loss import QLoss
-from nugi_rl.memory.policy.base import Memory
+from nugi_rl.memory.policy.base import PolicyMemory
 from nugi_rl.helpers.pytorch_utils import copy_parameters
 
 class AgentSac(Agent):
-    def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, distribution: Distribution, q_loss: QLoss, policy_loss: PolicyLoss, memory: Memory, 
+    def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, distribution: Distribution, q_loss: QLoss, policy_loss: PolicyLoss, memory: PolicyMemory, 
         soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, soft_tau: float = 0.95, 
         folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None):
 
@@ -49,7 +49,7 @@ class AgentSac(Agent):
         if self.target_q2 is None:
             self.target_q2 = deepcopy(self.soft_q2)
 
-    def _update_step_policy(self, states):
+    def _update_step_policy(self, states: Tensor) -> None:
         self.policy_optimizer.zero_grad()
 
         action_datas    = self.policy(states)
@@ -63,7 +63,7 @@ class AgentSac(Agent):
         loss.backward()
         self.policy_optimizer.step()
 
-    def _update_step_q(self, states, actions, rewards, dones, next_states):
+    def _update_step_q(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> Tensor:
         self.soft_q_optimizer.zero_grad()
 
         next_action_datas   = self.policy(next_states, True)
@@ -80,9 +80,9 @@ class AgentSac(Agent):
         loss.backward()
         self.soft_q_optimizer.step() 
 
-    def act(self, state: list) -> list:
+    def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
+            state           = state.unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -90,24 +90,28 @@ class AgentSac(Agent):
             else:
                 action = self.distribution.deterministic(action_datas)
 
-            action = action.squeeze(0).detach().tolist()
+            action = action.squeeze(0).detach()
               
         return action
 
-    def logprob(self, state: list, action: list) -> list:
+    def logprobs(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = torch.tensor(state).float().to(self.device).unsqueeze(0)
-            action          = torch.tensor(action).float().to(self.device).unsqueeze(0)
+            state           = state.unsqueeze(0)
+            action          = action.unsqueeze(0)
 
             action_datas    = self.policy(state)
 
             logprobs        = self.distribution.logprob(action_datas, action)
-            logprobs        = logprobs.squeeze(0).detach().tolist()
+            logprobs        = logprobs.squeeze(0).detach()
 
         return logprobs
 
-    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
-        self.memory.save(state, action, reward, done, next_state)
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+        self.memory.save(state, action, reward, done, next_state, logprob)
+
+    def save_memory(self, memory: PolicyMemory) -> None:
+        states, actions, rewards, dones, next_states, logprobs = memory.get()
+        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         
     def update(self) -> None:
         for _ in range(self.epochs):
@@ -115,7 +119,7 @@ class AgentSac(Agent):
             indices[-1] = torch.IntTensor([len(self.memory) - 1])
 
             dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
-            for states, actions, rewards, dones, next_states in dataloader:                
+            for states, actions, rewards, dones, next_states, _ in dataloader:                
                 self._update_step_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
                 self._update_step_policy(states.to(self.device))
 
@@ -123,7 +127,7 @@ class AgentSac(Agent):
                 self.target_q2 = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
-        self.memory.get(start_position, end_position)
+        return self.memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
         model_checkpoint = torch.load(self.folder + '/sac.tar', map_location = self.device)

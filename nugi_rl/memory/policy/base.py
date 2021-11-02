@@ -1,21 +1,12 @@
-from torch.utils.data import Dataset
+from nugi_rl.memory.base import Memory
 
-class Memory(Dataset):
-    def __len__(self):
+class PolicyMemory(Memory):
+    def save(self, state, action, reward, done, next_state, logprob) -> None:
         raise NotImplementedError
 
-    def __getitem__(self, idx):
-        raise NotImplementedError
+    def save_all(self, states, actions, rewards, dones, next_states, logprobs) -> None:
+        for state, action, reward, done, next_state, logprob in zip(states, actions, rewards, dones, next_states, logprobs):
+            self.save(state, action, reward, done, next_state, logprob)
 
-    def save(self, state, action, reward, done, next_state) -> None:
-        raise NotImplementedError
-
-    def save_all(self, states, actions, rewards, dones, next_states):
-        for state, action, reward, done, next_state in zip(states, actions, rewards, dones, next_states):
-            self.save(state, action, reward, done, next_state)
-
-    def get(self, start_position: int = 0, end_position: int = None):
-        raise NotImplementedError
-
-    def clear(self, start_position: int = 0, end_position: int = None) -> None:
+    def get(self, start_position: int = 0, end_position: int = None) -> tuple:
         raise NotImplementedError

@@ -14,7 +14,7 @@ from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.loss.clr.base import CLR
 from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
-from nugi_rl.memory.policy.base import Memory
+from nugi_rl.memory.base import Memory
 from nugi_rl.memory.clr import ClrMemory
 
 class AgentImagePpoClr(AgentPPO):
@@ -70,7 +70,7 @@ class AgentImagePpoClr(AgentPPO):
         loss.backward()
         self.optimizer.step()
 
-    def _update_step_aux_clr(self, input_images, target_images):
+    def _update_step_aux_clr(self, input_images, target_images) -> None:
         self.aux_clr_optimizer.zero_grad()
 
         res_anchor        = self.cnn(input_images)
@@ -84,7 +84,7 @@ class AgentImagePpoClr(AgentPPO):
         loss.backward()
         self.aux_clr_optimizer.step()
 
-    def _update_ppo(self):
+    def _update_ppo(self) -> None:
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
 
@@ -97,7 +97,7 @@ class AgentImagePpoClr(AgentPPO):
         self.aux_clr_memory.save_all(states)
         self.memory.clear()
 
-    def _update_aux_clr(self):
+    def _update_aux_clr(self)-> None:
         self.cnn_old.load_state_dict(self.cnn.state_dict())
         self.projector_old.load_state_dict(self.projector.state_dict())
 
@@ -136,13 +136,17 @@ class AgentImagePpoClr(AgentPPO):
 
     def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
         self.memory.save(state, action, reward, done, next_state)
+
+    def save_memory(self, memory: Memory) -> None:
+        states, actions, rewards, dones, next_states = memory.get()
+        self.memory.save_all(states, actions, rewards, dones, next_states)
         
     def update(self) -> None:
         self._update_ppo()
         self._update_aux_clr()
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
-        self.memory.get(start_position, end_position)
+        return self.memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
         model_checkpoint = torch.load(self.folder + '/ppg.pth', map_location = self.device)

@@ -2,7 +2,7 @@ import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
-from torch import device
+from torch import device, Tensor
 
 from copy import deepcopy
 
@@ -13,12 +13,12 @@ from nugi_rl.loss.v_mpo.phi_loss import PhiLoss
 from nugi_rl.loss.v_mpo.temperature_loss import TemperatureLoss
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
-from nugi_rl.memory.policy.base import Memory
+from nugi_rl.memory.policy.base import PolicyMemory
 from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
 
 class AgentVMPO(Agent):
     def __init__(self, policy: Module, value: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, alpha_loss: AlphaLoss, phi_loss: PhiLoss, entropy_loss: EntropyLoss, temperature_loss: TemperatureLoss, value_loss: ValueLoss,
-            memory: Memory, policy_optimizer: Optimizer, value_optimizer: Optimizer, epochs: int = 10, is_training_mode: bool = True, batch_size: int = 64, folder: str = 'model', 
+            memory: PolicyMemory, policy_optimizer: Optimizer, value_optimizer: Optimizer, epochs: int = 10, is_training_mode: bool = True, batch_size: int = 64, folder: str = 'model', 
             device: device = torch.device('cuda:0'), old_policy: Module = None, old_value: Module = None):   
 
         self.batch_size         = batch_size
@@ -84,34 +84,38 @@ class AgentVMPO(Agent):
         self.policy_optimizer.step()
         self.value_optimizer.step()
 
-    def act(self, state: list) -> list:
+    def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state               = torch.tensor(state).float().to(self.device).unsqueeze(0)
-            action_datas, _, _  = self.policy(state)
+            state           = state.unsqueeze(0)
+            action_datas    = self.policy(state)
             
             if self.is_training_mode:
                 action = self.distribution.sample(action_datas)
             else:
                 action = self.distribution.deterministic(action_datas)
 
-            action = action.squeeze(0).detach().tolist()
+            action = action.squeeze(0).detach()
               
         return action
 
-    def logprob(self, state: list, action: list) -> list:
+    def logprobs(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state               = torch.tensor(state).float().to(self.device).unsqueeze(0)
-            action              = torch.tensor(action).float().to(self.device).unsqueeze(0)
+            state           = state.unsqueeze(0)
+            action          = action.unsqueeze(0)
 
-            action_datas, _, _  = self.policy(state)
+            action_datas    = self.policy(state)
 
-            logprobs            = self.distribution.logprob(action_datas, action)
-            logprobs            = logprobs.squeeze(0).detach().tolist()
+            logprobs        = self.distribution.logprob(action_datas, action)
+            logprobs        = logprobs.squeeze(0).detach()
 
         return logprobs
 
-    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list):
-        self.memory.save(state, action, reward, done, next_state)
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+        self.memory.save(state, action, reward, done, next_state, logprob)
+
+    def save_memory(self, memory: PolicyMemory) -> None:
+        states, actions, rewards, dones, next_states, logprobs = memory.get()
+        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         
     def update(self) -> None:
         self.old_policy.load_state_dict(self.policy.state_dict())
@@ -119,13 +123,13 @@ class AgentVMPO(Agent):
 
         for _ in range(self.epochs):
             dataloader = DataLoader(self.memory, self.batch_size, shuffle = False)
-            for states, actions, rewards, dones, next_states in dataloader:
-                self._update_step(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+            for states, actions, rewards, dones, next_states, _ in dataloader:
+                self._update_step(states, actions, rewards, dones, next_states)
 
         self.memory.clear()
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
-        self.memory.get(start_position, end_position)
+        return self.memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
         model_checkpoint = torch.load(self.folder + '/v_mpo.pth', map_location = self.device)

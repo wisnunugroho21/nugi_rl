@@ -13,5 +13,5 @@ class Distribution():
     def kldivergence(self, datas1, datas2) -> Tensor:
         raise NotImplementedError
 
-    def deterministic(self, datas: Tensor) -> Tensor:
+    def deterministic(self, datas) -> Tensor:
         raise NotImplementedError

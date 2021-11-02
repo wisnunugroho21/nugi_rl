@@ -1,22 +1,25 @@
 import torch
+from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
-from torch import device, Tensor
+from torch import device
 
 from copy import deepcopy
 
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
-from nugi_rl.loss.a2c import A2C
+from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.memory.policy.base import PolicyMemory
+from nugi_rl.policy_function.advantage_function.vtrace import VtraceAdvantageEstimation
 
-class AgentA2C(Agent):  
-    def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: A2C, value_loss: ValueLoss, entropy_loss: EntropyLoss, 
-        memory: PolicyMemory, optimizer: Optimizer, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
-        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None):   
+class AgentImpalaPPO(Agent):  
+    def __init__(self, policy: Module, value: Module, gae: VtraceAdvantageEstimation, distribution: Distribution, 
+        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: PolicyMemory, optimizer: Optimizer, 
+        ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
+        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None) -> None:
 
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
@@ -31,13 +34,13 @@ class AgentA2C(Agent):
 
         self.distribution       = distribution
         self.memory             = memory
+        self.gae                = gae
         
         self.policy_loss        = policy_loss
         self.value_loss         = value_loss
         self.entropy_loss       = entropy_loss
 
         self.optimizer          = optimizer
-
         self.device             = device
 
         if self.policy_old is None:
@@ -53,17 +56,22 @@ class AgentA2C(Agent):
           self.policy.eval()
           self.value.eval()
 
-    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
+    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
         self.optimizer.zero_grad()
 
         action_datas        = self.policy(states)
         values              = self.value(states)
 
+        cur_logprobs        = self.logprob(states, actions)
+
+        old_action_datas    = self.policy_old(states, True)
         old_values          = self.value_old(states, True)
         next_values         = self.value(next_states, True)
 
-        loss = self.policy_loss.compute_loss(action_datas, values, next_values, actions, rewards, dones) + \
-            self.value_loss.compute_loss(values, next_values, rewards, dones, old_values) + \
+        adv = self.gae.compute_advantages(rewards, values, next_values, dones, logprobs, cur_logprobs).detach()
+
+        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, actions, adv) + \
+            self.value_loss.compute_loss(values, adv, old_values) + \
             self.entropy_loss.compute_loss(action_datas)
         
         loss.backward()
@@ -95,7 +103,7 @@ class AgentA2C(Agent):
 
         return logprobs
 
-    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list, logprob: list) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
     def save_memory(self, memory: PolicyMemory) -> None:
@@ -108,8 +116,8 @@ class AgentA2C(Agent):
 
         for _ in range(self.ppo_epochs):
             dataloader = DataLoader(self.memory, self.batch_size, shuffle = False)
-            for states, actions, rewards, dones, next_states, _ in dataloader:
-                self._update_step(states, actions, rewards, dones, next_states)
+            for states, actions, rewards, dones, next_states, logprobs in dataloader:
+               self._update_step(states, actions, rewards, dones, next_states, logprobs)
 
         self.memory.clear()
 
@@ -117,7 +125,7 @@ class AgentA2C(Agent):
         return self.memory.get(start_position, end_position)
 
     def load_weights(self) -> None:
-        model_checkpoint = torch.load(self.folder + '/ppg.pth', map_location = self.device)
+        model_checkpoint = torch.load(self.folder + '/ppo.tar', map_location = self.device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         
@@ -137,4 +145,4 @@ class AgentA2C(Agent):
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'ppo_optimizer_state_dict': self.optimizer.state_dict(),
-        }, self.folder + '/ppg.pth')    
+        }, self.folder + '/ppo.tar')

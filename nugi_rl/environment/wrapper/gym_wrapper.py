@@ -1,10 +1,13 @@
 import gym
+import torch
+from torch import device, Tensor
 
 from nugi_rl.environment.base import Environment
 
 class GymWrapper(Environment):
-    def __init__(self, env):
-        self.env = env        
+    def __init__(self, env, agent_device: device):
+        self.env = env
+        self.agent_device = agent_device        
 
     def is_discrete(self):
         return type(self.env.action_space) is not gym.spaces.Box
@@ -30,10 +33,18 @@ class GymWrapper(Environment):
             return self.env.action_space.shape[0]
 
     def reset(self):
-        return self.env.reset()
+        state = self.env.reset()
+        return torch.tensor(state).to(self.agent_device)
 
-    def step(self, action):
-        return self.env.step(action)
+    def step(self, action: Tensor):
+        action = action.tolist()
+        next_state, reward, done, info = self.env.step(action)
+
+        next_state = torch.tensor(next_state).to(self.agent_device)
+        reward = torch.tensor(reward).to(self.agent_device)
+        done = torch.tensor(done).to(self.agent_device)
+
+        return next_state, reward, done, info
 
     def render(self):
         self.env.render()

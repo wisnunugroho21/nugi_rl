@@ -43,6 +43,10 @@ class ClrMemory():
 
         self.images.append(deepcopy(image))
 
+    def save_all(self, images) -> None:
+        for image in images:
+            self.save(image)
+
     def get(self, start_position: int = 0, end_position: int = None) -> tuple:
         if end_position is not None or end_position == -1:
             images  = self.images[start_position:end_position + 1]

@@ -27,19 +27,25 @@ class SyncExecutor(Executor):
         start = time.time()
         print('Running the training!!')
         
-        try:            
-            for _ in range(self.n_iteration):
-                self.agent.save_weights()
+        try:      
+            self.agent.save_weights()
 
-                futures = [runner.run.remote() for runner in self.runner]
-                datas   = ray.get(futures)
+            futures = []
+            for runner in enumerate(self.runner):
+                futures.append(runner.run.remote())
+                time.sleep(2)
+
+            for _ in range(self.n_iteration):
+                ready, not_ready = ray.wait(futures)
+                memory, tag = ray.get(ready)[0]
+
+                futures = not_ready
+                futures.append(self.runner[tag].run.remote())
 
                 if self.is_training_mode:
-                    for data in datas:
-                        memory, _ = data
-                        self.agent.save_memory(memory)
-                
+                    self.agent.save_memory(memory)
                     self.agent.update()
+                self.agent.save_weights()
 
         except KeyboardInterrupt:
             print('Stopped by User')

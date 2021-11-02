@@ -10,7 +10,7 @@ from nugi_rl.loss.v_mpo.phi_loss import PhiLoss
 from nugi_rl.loss.v_mpo.temperature_loss import TemperatureLoss
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
-from nugi_rl.memory.policy.base import Memory
+from nugi_rl.memory.base import Memory
 
 from nugi_rl.agent.standard.v_mpo import AgentVMPO
 

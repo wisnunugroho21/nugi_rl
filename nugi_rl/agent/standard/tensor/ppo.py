@@ -9,7 +9,7 @@ from nugi_rl.distribution.base import Distribution
 from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
-from nugi_rl.memory.policy.base import Memory
+from nugi_rl.memory.base import Memory
 
 class AgentTensorPPO(AgentPPO):  
     def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: Memory, optimizer: Optimizer, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None):

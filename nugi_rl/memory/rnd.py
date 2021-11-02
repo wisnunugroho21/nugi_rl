@@ -33,6 +33,10 @@ class RndMemory():
 
         return obs
 
+    def save_all(self, obs) -> None:
+        for ob in obs:
+            self.save(ob)
+
     def clear(self, start_position: int = 0, end_position: int = None):
         if end_position is not None and end_position != -1:
             del self.observations[start_position : end_position + 1]

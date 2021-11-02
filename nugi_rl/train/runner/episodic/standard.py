@@ -28,10 +28,12 @@ class EpisodicRunner(Runner):
 
             while not done:
                 action                      = self.agent.act(state)
+                logprob                     = self.agent.logprob(state, action)
+
                 next_state, reward, done, _ = self.env.step(action)
                 
                 if self.is_save_memory:
-                    self.agent.save_obs(state.tolist(), action, reward, float(done), next_state.tolist())
+                    self.agent.save_obs(state, action, reward, done, next_state, logprob)
                     
                 state           = next_state
                 eps_time        += 1 
