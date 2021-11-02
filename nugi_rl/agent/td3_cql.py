@@ -1,4 +1,5 @@
 import torch
+from torch.functional import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch.optim import Optimizer
@@ -10,12 +11,12 @@ from nugi_rl.agent.base import Agent
 from nugi_rl.loss.td3.policy_loss import PolicyLoss
 from nugi_rl.loss.td3.q_loss import QLoss
 from nugi_rl.loss.cql_regularizer import CqlRegularizer
-from nugi_rl.memory.base import Memory
+from nugi_rl.memory.policy.base import PolicyMemory
 from nugi_rl.helpers.pytorch_utils import copy_parameters
 
 class AgentSac(Agent):
     def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, q_loss: QLoss, policy_loss: PolicyLoss, cql_reg_loss: CqlRegularizer, 
-        memory: Memory, soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, 
+        memory: PolicyMemory, soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, 
         soft_tau: float = 0.95, folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None):
 
         self.batch_size         = batch_size
@@ -82,11 +83,11 @@ class AgentSac(Agent):
         loss.backward()
         self.policy_optimizer.step()    
 
-    def act(self, state: list) -> list:
+    def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state   = torch.tensor(state).float().to(self.device).unsqueeze(0)
+            state   = state.unsqueeze(0)
             action  = self.policy(state)
-            action  = action.squeeze(0).detach().tolist()
+            action  = action.squeeze(0).detach()
               
         return action
 
@@ -96,7 +97,7 @@ class AgentSac(Agent):
     def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
         self.memory.save(state, action, reward, done, next_state)
 
-    def save_memory(self, memory: Memory) -> None:
+    def save_memory(self, memory: PolicyMemory) -> None:
         states, actions, rewards, dones, next_states = memory.get()
         self.memory.save_all(states, actions, rewards, dones, next_states)
         
@@ -106,9 +107,9 @@ class AgentSac(Agent):
             indices[-1] = torch.IntTensor([len(self.memory) - 1])
 
             dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
-            for states, actions, rewards, dones, next_states in dataloader:                
-                self._update_step_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                self._update_step_policy(states.to(self.device))
+            for states, actions, rewards, dones, next_states, _ in dataloader:                
+                self._update_step_q(states, actions, rewards, dones, next_states)
+                self._update_step_policy(states)
 
                 self.target_q1 = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
                 self.target_q2 = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)

@@ -1,4 +1,5 @@
 import torch
+from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
@@ -8,18 +9,20 @@ from torchvision.transforms import Compose
 from copy import deepcopy
 
 from nugi_rl.distribution.base import Distribution
-from nugi_rl.agent.standard.ppo import AgentPPO
+from nugi_rl.agent.ppo import AgentPPO
 from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.loss.clr.base import CLR
 from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
-from nugi_rl.memory.base import Memory
+from nugi_rl.memory.policy.base import PolicyMemory
 from nugi_rl.memory.clr import ClrMemory
+
+import kornia.augmentation as K
 
 class AgentImagePpoClr(AgentPPO):
     def __init__(self, policy: Module, value: Module, cnn: Module, projector: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, 
-        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, memory: Memory, aux_clr_memory: ClrMemory, optimizer: Optimizer, aux_clr_optimizer: Optimizer, 
+        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, memory: PolicyMemory, aux_clr_memory: ClrMemory, optimizer: Optimizer, aux_clr_optimizer: Optimizer, 
         trans: Compose, ppo_epochs: int = 10, aux_clr_epochs: int = 5, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
         device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None, cnn_old: Module = None, projector_old: Module = None):
 
@@ -45,7 +48,7 @@ class AgentImagePpoClr(AgentPPO):
         if self.projector_old is None:
             self.projector_old  = deepcopy(self.projector)
     
-    def _update_step(self, states: list, actions: list, rewards: float, dones: bool, next_states: list) -> None:
+    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
         self.optimizer.zero_grad()
 
         res                 = self.cnn(states)
@@ -70,7 +73,7 @@ class AgentImagePpoClr(AgentPPO):
         loss.backward()
         self.optimizer.step()
 
-    def _update_step_aux_clr(self, input_images, target_images) -> None:
+    def _update_step_aux_clr(self, input_images: Tensor, target_images: Tensor) -> None:
         self.aux_clr_optimizer.zero_grad()
 
         res_anchor        = self.cnn(input_images)
@@ -90,8 +93,8 @@ class AgentImagePpoClr(AgentPPO):
 
         for _ in range(self.ppo_epochs):
             dataloader = DataLoader(self.memory, self.batch_size, shuffle = False)
-            for states, actions, rewards, dones, next_states in dataloader:
-                self._update_step(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
+            for states, actions, rewards, dones, next_states, _ in dataloader:
+                self._update_step(states, actions, rewards, dones, next_states)
 
         states, _, _, _, _ = self.memory.get()
         self.aux_clr_memory.save_all(states)
@@ -104,13 +107,13 @@ class AgentImagePpoClr(AgentPPO):
         for _ in range(self.aux_clr_epochs):
             dataloader  = DataLoader(self.aux_clr_memory, self.batch_size, shuffle = True, num_workers = 8)
             for input_images, target_images in dataloader:
-                self._update_step_aux_clr(input_images.to(self.device), target_images.to(self.device))            
+                self._update_step_aux_clr(input_images, target_images)            
 
         self.aux_clr_memory.clear()
 
-    def act(self, state) -> list:
+    def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans(state).to(self.device).unsqueeze(0)          
+            state           = self.trans(state).unsqueeze(0)          
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -118,28 +121,28 @@ class AgentImagePpoClr(AgentPPO):
             else:
                 action = self.distribution.deterministic(action_datas)
 
-            action = action.squeeze(0).detach().tolist()
+            action = action.squeeze(0).detach()
               
         return action
 
-    def logprob(self, state, action: list) -> list:
+    def logprobs(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans(state).to(self.device).unsqueeze(0)
-            action          = torch.FloatTensor(action).float().to(self.device).unsqueeze(0)
+            state           = self.trans(state).unsqueeze(0)
+            action          = action.unsqueeze(0)
 
             action_datas    = self.policy(state)
 
             logprobs        = self.distribution.logprob(action_datas, action)
-            logprobs        = logprobs.squeeze(0).detach().tolist()
+            logprobs        = logprobs.squeeze(0).detach()
 
         return logprobs
 
-    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
-        self.memory.save(state, action, reward, done, next_state)
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+        self.memory.save(state, action, reward, done, next_state, logprob)
 
-    def save_memory(self, memory: Memory) -> None:
-        states, actions, rewards, dones, next_states = memory.get()
-        self.memory.save_all(states, actions, rewards, dones, next_states)
+    def save_memory(self, memory: PolicyMemory) -> None:
+        states, actions, rewards, dones, next_states, logprobs = memory.get()
+        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         
     def update(self) -> None:
         self._update_ppo()
@@ -152,9 +155,14 @@ class AgentImagePpoClr(AgentPPO):
         model_checkpoint = torch.load(self.folder + '/ppg.pth', map_location = self.device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
+        self.cnn.load_state_dict(model_checkpoint['cnn_state_dict'])        
+        self.projector.load_state_dict(model_checkpoint['projector_state_dict'])
         
         if self.optimizer is not None:
             self.optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])
+
+        if self.aux_clr_optimizer is not None:
+            self.aux_clr_optimizer.load_state_dict(model_checkpoint['aux_clr_optimizer_state_dict'])
 
         if self.is_training_mode:
             self.policy.train()
@@ -168,5 +176,9 @@ class AgentImagePpoClr(AgentPPO):
         torch.save({
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
+            'cnn_state_dict': self.cnn.state_dict(),
+            'projector_state_dict': self.projector.state_dict(),
+            
             'ppo_optimizer_state_dict': self.optimizer.state_dict(),
+            'aux_clr_optimizer_state_dict': self.aux_clr_optimizer.state_dict(),
         }, self.folder + '/ppg.pth')    
