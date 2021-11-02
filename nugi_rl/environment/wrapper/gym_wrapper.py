@@ -34,15 +34,15 @@ class GymWrapper(Environment):
 
     def reset(self):
         state = self.env.reset()
-        return torch.tensor(state).to(self.agent_device)
+        return torch.tensor(state).float().to(self.agent_device)
 
     def step(self, action: Tensor):
         action = action.tolist()
         next_state, reward, done, info = self.env.step(action)
 
-        next_state = torch.tensor(next_state).to(self.agent_device)
-        reward = torch.tensor(reward).to(self.agent_device)
-        done = torch.tensor(done).to(self.agent_device)
+        next_state = torch.tensor(next_state).float().to(self.agent_device)
+        reward = torch.tensor(reward).float().to(self.agent_device)
+        done = torch.tensor(done).float().to(self.agent_device)
 
         return next_state, reward, done, info
 
