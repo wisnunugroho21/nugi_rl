@@ -83,7 +83,7 @@ class AgentA2C(Agent):
               
         return action
 
-    def logprobs(self, state: Tensor, action: Tensor) -> Tensor:
+    def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
             state           = state.unsqueeze(0)
             action          = action.unsqueeze(0)
