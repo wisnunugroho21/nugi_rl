@@ -74,20 +74,20 @@ class PolicyMemory(PolicyMemory):
 
     def clear(self, start_position: int = 0, end_position: int = None) -> None:
         if start_position is not None and start_position > 0 and end_position is not None and end_position != -1:
-            self.states         = torch.cat([self.states[0 : start_position], self.states[end_position + 1 : ]])
-            self.actions        = torch.cat([self.actions[0 : start_position], self.actions[end_position + 1 : ]])
-            self.rewards        = torch.cat([self.rewards[0 : start_position], self.rewards[end_position + 1 : ]])
-            self.dones          = torch.cat([self.dones[0 : start_position], self.dones[end_position + 1 : ]])
-            self.next_states    = torch.cat([self.next_states[0 : start_position], self.next_states[end_position + 1 : ]])
-            self.logprobs       = torch.cat([self.logprobs[0 : start_position], self.logprobs[end_position + 1 : ]])
+            self.states         = torch.cat([self.states[ : start_position], self.states[end_position + 1 : ]])
+            self.actions        = torch.cat([self.actions[ : start_position], self.actions[end_position + 1 : ]])
+            self.rewards        = torch.cat([self.rewards[ : start_position], self.rewards[end_position + 1 : ]])
+            self.dones          = torch.cat([self.dones[ : start_position], self.dones[end_position + 1 : ]])
+            self.next_states    = torch.cat([self.next_states[ : start_position], self.next_states[end_position + 1 : ]])
+            self.logprobs       = torch.cat([self.logprobs[ : start_position], self.logprobs[end_position + 1 : ]])
 
         elif start_position is not None and start_position > 0:
-            self.states         = self.states[0 : start_position]
-            self.actions        = self.actions[0 : start_position]
-            self.rewards        = self.rewards[0 : start_position]
-            self.dones          = self.dones[0 : start_position]
-            self.next_states    = self.next_states[0 : start_position]
-            self.logprobs       = self.logprobs[0 : start_position]
+            self.states         = self.states[ : start_position]
+            self.actions        = self.actions[ : start_position]
+            self.rewards        = self.rewards[ : start_position]
+            self.dones          = self.dones[ : start_position]
+            self.next_states    = self.next_states[ : start_position]
+            self.logprobs       = self.logprobs[ : start_position]
 
         elif end_position is not None and end_position != -1:
             self.states         = self.states[end_position + 1 : ]

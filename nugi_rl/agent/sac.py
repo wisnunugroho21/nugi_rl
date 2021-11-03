@@ -16,7 +16,7 @@ from nugi_rl.helpers.pytorch_utils import copy_parameters
 class AgentSac(Agent):
     def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, distribution: Distribution, q_loss: QLoss, policy_loss: PolicyLoss, memory: PolicyMemory, 
         soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, soft_tau: float = 0.95, 
-        folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None):
+        folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None) -> None:
 
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode

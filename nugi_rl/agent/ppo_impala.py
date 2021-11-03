@@ -103,7 +103,7 @@ class AgentImpalaPPO(Agent):
 
         return logprobs
 
-    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list, logprob: list) -> None:
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
     def save_memory(self, memory: PolicyMemory) -> None:

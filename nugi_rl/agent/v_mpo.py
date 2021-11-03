@@ -19,7 +19,7 @@ from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageE
 class AgentVMPO(Agent):
     def __init__(self, policy: Module, value: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, alpha_loss: AlphaLoss, phi_loss: PhiLoss, entropy_loss: EntropyLoss, temperature_loss: TemperatureLoss, value_loss: ValueLoss,
             memory: PolicyMemory, policy_optimizer: Optimizer, value_optimizer: Optimizer, epochs: int = 10, is_training_mode: bool = True, batch_size: int = 64, folder: str = 'model', 
-            device: device = torch.device('cuda:0'), old_policy: Module = None, old_value: Module = None):   
+            device: device = torch.device('cuda:0'), old_policy: Module = None, old_value: Module = None) -> None:   
 
         self.batch_size         = batch_size
         self.epochs             = epochs
@@ -60,7 +60,7 @@ class AgentVMPO(Agent):
           self.policy.eval()
           self.value.eval()
 
-    def _update_step(self, states: list, actions: list, rewards: float, dones: bool, next_states: list) -> None:
+    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
         self.policy_optimizer.zero_grad()
         self.value_optimizer.zero_grad()
 

@@ -21,12 +21,12 @@ from nugi_rl.helpers.math import normalize, count_new_mean, count_new_std
 class AgentPPO(Agent):  
     def __init__(self, policy: Module, ex_value: Module, in_value: Module, rnd_predict: Module, rnd_target: Module, distribution: Distribution, 
         gae: GeneralizedAdvantageEstimation, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, rnd_predictor_loss: RndStatePredictor,
-        policy_memory: PolicyMemory, rnd_memory: RndMemory, policy_optimizer: Optimizer, rnd_optimizer: Optimizer, ppo_epochs: int = 10, rnd_epochs: int = 10,
-        is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', device: device = torch.device('cuda'), 
-        policy_old: Module = None, ex_value_old: Module = None, in_value_old: Module = None) -> None:
+        policy_memory: PolicyMemory, rnd_memory: RndMemory, policy_optimizer: Optimizer, rnd_optimizer: Optimizer, policy_epochs: int = 10, rnd_epochs: int = 10,
+        policy_coef: int = 10, rnd_coef: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
+        device: device = torch.device('cuda'), policy_old: Module = None, ex_value_old: Module = None, in_value_old: Module = None) -> None:
 
         self.batch_size         = batch_size  
-        self.ppo_epochs         = ppo_epochs
+        self.policy_epochs      = policy_epochs
         self.rnd_epochs         = rnd_epochs
         self.is_training_mode   = is_training_mode
         self.folder             = folder
@@ -54,6 +54,9 @@ class AgentPPO(Agent):
         self.entropy_loss       = entropy_loss
         self.rnd_predictor_loss = rnd_predictor_loss
 
+        self.policy_coef        = policy_coef
+        self.rnd_coef           = rnd_coef
+
         self.policy_optimizer   = policy_optimizer
         self.rnd_optimizer      = rnd_optimizer
         self.device             = device
@@ -76,26 +79,24 @@ class AgentPPO(Agent):
           self.ex_value.eval()
           self.in_value.eval()
 
-    def _compute_intrinsic_reward(self, obs, mean_obs: Tensor, std_obs: Tensor) -> None:
+    def _compute_intrinsic_reward(self, obs: Tensor, mean_obs: Tensor, std_obs: Tensor) -> None:
         obs             = normalize(obs, mean_obs, std_obs)
         
         state_pred      = self.rnd_predict(obs)
         state_target    = self.rnd_target(obs)
 
-        return (state_target - state_pred)
+        return (state_target - state_pred).pow(2)
 
     def _update_obs_normalization_param(self, obs: Tensor) -> None:
-        obs                 = torch.FloatTensor(obs).to(self.device)
-
         mean_obs            = count_new_mean(self.rnd_memory.mean_obs, self.rnd_memory.total_number_obs, obs)
         std_obs             = count_new_std(self.rnd_memory.std_obs, self.rnd_memory.total_number_obs, obs)
-        total_number_obs    = len(obs) + self.rnd_memory.total_number_obs
+        total_number_obs    = obs.size(0) + self.rnd_memory.total_number_obs
         
         self.rnd_memory.save_observation_normalize_parameter(mean_obs, std_obs, total_number_obs)
     
     def _update_rwd_normalization_param(self, in_rewards: Tensor) -> None:
         std_in_rewards      = count_new_std(self.rnd_memory.std_in_rewards, self.rnd_memory.total_number_rwd, in_rewards)
-        total_number_rwd    = len(in_rewards) + self.rnd_memory.total_number_rwd
+        total_number_rwd    = in_rewards.size(0) + self.rnd_memory.total_number_rwd
         
         self.rnd_memory.save_rewards_normalize_parameter(std_in_rewards, total_number_rwd)
 
@@ -122,8 +123,8 @@ class AgentPPO(Agent):
         ex_adv      = self.gae.compute_advantages(ex_rewards, ex_values, next_ex_values, dones).detach()
         in_adv      = self.gae.compute_advantages(in_rewards, in_values, next_in_values, dones).detach()
 
-        loss = 2 * self.policy_loss.compute_loss(action_datas, old_action_datas, actions, ex_adv) + \
-            self.policy_loss.compute_loss(action_datas, old_action_datas, actions, in_adv) + \
+        loss = self.policy_coef * self.policy_loss.compute_loss(action_datas, old_action_datas, actions, ex_adv) + \
+            self.rnd_coef * self.policy_loss.compute_loss(action_datas, old_action_datas, actions, in_adv) + \
                 self.value_loss.compute_loss(ex_values, ex_adv, old_ex_values) + \
                     self.value_loss.compute_loss(in_values, in_adv, old_in_values)
         
@@ -148,7 +149,7 @@ class AgentPPO(Agent):
         self.ex_value_old.load_state_dict(self.ex_value.state_dict())
         self.in_value_old.load_state_dict(self.in_value.state_dict())
 
-        for _ in range(self.ppo_epochs):
+        for _ in range(self.policy_epochs):
             dataloader = DataLoader(self.policy_memory, self.batch_size, shuffle = False)
             for states, actions, rewards, dones, next_states, _ in dataloader:
                 self._update_step_policy(states, actions, rewards, dones, next_states, self.rnd_memory.mean_obs, self.rnd_memory.std_obs, self.rnd_memory.std_in_rewards)
@@ -250,6 +251,6 @@ class AgentPPO(Agent):
             'in_value_state_dict': self.in_value.state_dict(),
             'rnd_predict_state_dict': self.rnd_predict.state_dict(),
             'rnd_target_state_dict': self.rnd_target.state_dict(),
-            'policy_optimizer_state_dict': self.optimizer.state_dict(),
-            'rnd_optimizer_state_dict': self.optimizer.state_dict(),
+            'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
+            'rnd_optimizer_state_dict': self.rnd_optimizer.state_dict(),
         }, self.folder + '/ppo_rnd.tar')

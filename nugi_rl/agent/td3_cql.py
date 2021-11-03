@@ -1,5 +1,5 @@
 import torch
-from torch.functional import Tensor
+from torch import Tensor
 from torch.nn import Module
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch.optim import Optimizer
@@ -50,7 +50,7 @@ class AgentSac(Agent):
         if self.target_q2 is None:
             self.target_q2 = deepcopy(self.soft_q2)
 
-    def _update_step_q(self, states, actions, rewards, dones, next_states):
+    def _update_step_q(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor):
         self.soft_q_optimizer.zero_grad()        
 
         predicted_q1        = self.soft_q1(states, actions)
@@ -91,11 +91,11 @@ class AgentSac(Agent):
               
         return action
 
-    def logprob(self, state: list, action: list) -> list:
+    def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         raise NotImplementedError('TD3 is deterministic')
 
-    def save_obs(self, state: list, action: list, reward: float, done: bool, next_state: list) -> None:
-        self.memory.save(state, action, reward, done, next_state)
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+        self.memory.save(state, action, reward, done, next_state, logprob)
 
     def save_memory(self, memory: PolicyMemory) -> None:
         states, actions, rewards, dones, next_states = memory.get()

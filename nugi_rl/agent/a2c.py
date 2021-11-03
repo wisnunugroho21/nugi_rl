@@ -16,7 +16,7 @@ from nugi_rl.memory.policy.base import PolicyMemory
 class AgentA2C(Agent):  
     def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: A2C, value_loss: ValueLoss, entropy_loss: EntropyLoss, 
         memory: PolicyMemory, optimizer: Optimizer, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
-        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None):   
+        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None) -> None:   
 
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
