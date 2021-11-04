@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from torch import Tensor
 
 def normalize(data, mean = None, std = None, clip = None):
     if mean is not None and std is not None:
@@ -13,7 +14,7 @@ def normalize(data, mean = None, std = None, clip = None):
 
     return data_normalized 
 
-def prepro_half(I):
+def prepro_half(I: Tensor) -> Tensor:
     I = I[35:195] # crop
     I = I[::2,::2, 0]
     I[I == 144] = 0 # erase background (background type 1)
@@ -39,9 +40,9 @@ def prepo_full_one_dim(I):
     I = I / 255.0
     return I
 
-def prepro_half_one_dim(I):
+def prepro_half_one_dim(I: Tensor) -> Tensor:
     I = prepro_half(I)
-    I = I.astype(np.float32).ravel()
+    I = I.float().ravel()
     return I
 
 def prepo_crop(I):
