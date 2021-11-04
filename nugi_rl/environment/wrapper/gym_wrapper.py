@@ -32,11 +32,11 @@ class GymWrapper(Environment):
         else:
             return self.env.action_space.shape[0]
 
-    def reset(self):
+    def reset(self) -> Tensor:
         state = self.env.reset()
         return torch.tensor(state).float().to(self.agent_device)
 
-    def step(self, action: Tensor):
+    def step(self, action: Tensor) -> tuple:
         action = action.tolist()
         next_state, reward, done, info = self.env.step(action)
 
