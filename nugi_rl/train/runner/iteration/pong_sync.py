@@ -22,6 +22,9 @@ class PongSyncRunner(IterRunner):
         self.tag    = tag
 
     def run(self) -> tuple:
+        self.agent.load_weights()
+        self.agent.clear_obs()
+
         for _ in range(self.n_update):
             action      = self.agent.act(self.states)
             logprob     = self.agent.logprob(self.states, action)
@@ -45,7 +48,6 @@ class PongSyncRunner(IterRunner):
 
             if done:                
                 self.i_episode  += 1
-                now = datetime.now()
 
                 if self.tag is not None:
                     print('Episode {} \t t_reward: {} \t time: {} \t tag: {}'.format(self.i_episode, self.total_reward, self.eps_time, self.tag))
