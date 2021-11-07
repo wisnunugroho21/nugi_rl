@@ -120,6 +120,9 @@ class AgentPPO(Agent):
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.memory.get(start_position, end_position)
 
+    def clear_obs(self, start_position: int = 0, end_position: int = None) -> None:
+        self.memory.clear(start_position, end_position)
+
     def load_weights(self) -> None:
         model_checkpoint = torch.load(self.folder + '/ppo.tar', map_location = self.device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
