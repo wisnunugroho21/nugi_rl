@@ -1,10 +1,10 @@
 import torch
-from torch import Tensor
+from torch import Tensor, device
 
 from nugi_rl.memory.policy.base import PolicyMemory
 
 class PolicyMemory(PolicyMemory):
-    def __init__(self, device, capacity = 100000, datas = None):
+    def __init__(self, device: device, capacity = 100000, datas = None):
         self.capacity       = capacity
         self.device         = device
 

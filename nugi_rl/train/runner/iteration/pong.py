@@ -4,7 +4,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
-from nugi_rl.train.runner.base import Runner
 
 import torch
 from nugi_rl.helpers.math import prepro_half_one_dim
