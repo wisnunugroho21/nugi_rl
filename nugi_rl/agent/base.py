@@ -11,7 +11,7 @@ class Agent():
     def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor)-> None:
         raise NotImplementedError
 
-    def save_memory(self, memory: Memory) -> None:
+    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
         raise NotImplementedError
 
     def get_obs(self, start_position: int = 0, end_position: int = None):

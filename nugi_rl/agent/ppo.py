@@ -103,8 +103,7 @@ class AgentPPO(Agent):
     def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
-    def save_memory(self, memory: PolicyMemory) -> None:
-        states, actions, rewards, dones, next_states, logprobs = memory.get()
+    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
         self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         
     def update(self) -> None:

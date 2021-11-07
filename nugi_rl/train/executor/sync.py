@@ -37,7 +37,9 @@ class SyncExecutor(Executor):
                 if self.is_training_mode:
                     for data in datas:
                         memory, _ = data
-                        self.agent.save_memory(memory)
+
+                        states, actions, rewards, dones, next_states = memory
+                        self.agent.save_all(states, actions, rewards, dones, next_states)
                 
                     self.agent.update()
 
