@@ -6,7 +6,7 @@ from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
 from nugi_rl.train.runner.base import Runner
 
-@ray.remote(num_gpus = 0.25)
+@ray.remote(num_cpus = 4)
 class SyncRunner(Runner):
     def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, 
         writer: SummaryWriter = None, n_plot_batch: int = 100, tag: int = 1) -> None:

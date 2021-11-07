@@ -10,7 +10,7 @@ import torch
 from nugi_rl.helpers.math import prepro_half_one_dim
 from nugi_rl.train.runner.iteration.standard import IterRunner
 
-@ray.remote(num_gpus = 0.25)
+@ray.remote(num_cpus = 4)
 class PongSyncRunner(IterRunner):
     def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, writer: SummaryWriter = None, n_plot_batch: int = 100, tag: int = 1):
         super().__init__(agent, env, is_save_memory, render, n_update, writer, n_plot_batch)
