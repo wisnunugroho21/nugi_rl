@@ -38,8 +38,8 @@ class SyncExecutor(Executor):
                     for data in datas:
                         memory, _ = data
 
-                        states, actions, rewards, dones, next_states = memory
-                        self.agent.save_all(states, actions, rewards, dones, next_states)
+                        states, actions, rewards, dones, next_states, logprobs = memory
+                        self.agent.save_all(states, actions, rewards, dones, next_states, logprobs)
                 
                     self.agent.update()
 
