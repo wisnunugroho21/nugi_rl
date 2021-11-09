@@ -97,7 +97,7 @@ class LMHSA(nn.Module):
         self.key_covnet     = DepthwiseSeparableConv2d(dim, dim, kernel_size = k, stride = k)
         self.value_covnet   = DepthwiseSeparableConv2d(dim, dim, kernel_size = k, stride = k)
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
         b, c, h, w = x.shape
 
         key = self.key_covnet(x)
@@ -120,7 +120,7 @@ class CMTBlock(nn.Module):
         self.lmhsa  = LMHSA(dim, k, head)
         self.irffn  = InvertedResidualFFN(dim)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.lpu(x)
 
         x1 = F.layer_norm(x, [x.shape[-1], x.shape[-2]])
@@ -149,5 +149,5 @@ class CMTStem(nn.Module):
             nn.BatchNorm2d(dim),
         )
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         return self.covnet(x)

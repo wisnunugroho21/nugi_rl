@@ -65,7 +65,7 @@ class BlockDown(nn.Module):
         return x1 + x2
 
 class Stage(nn.Module):
-    def __init__(self, dim_in: int, dim_out: int, d:int = 2):
+    def __init__(self, dim_in: int, dim_out: int, d:int = 2) -> None:
         super(Stage, self).__init__()
 
         self.convlist = nn.ModuleList([

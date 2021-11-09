@@ -19,5 +19,5 @@ class PhiLoss():
         ratio               = top_adv / (temperature + 1e-3)
         psi                 = torch.nn.functional.softmax(ratio, dim = 0)
 
-        loss                = -1 * (psi * top_logprobs).sum()
+        loss                = (psi * top_logprobs).sum()
         return loss
