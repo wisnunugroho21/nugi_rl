@@ -11,6 +11,6 @@ class A2C():
         logprobs        = self.distribution.logprob(action_datas, actions) + 1e-5
 
         pg_target       = logprobs * advantages
-        loss            = pg_target.mean()
+        loss            = -1 * pg_target.mean()
 
         return loss
