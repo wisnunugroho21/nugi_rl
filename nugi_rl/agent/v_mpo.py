@@ -86,8 +86,8 @@ class AgentVMPO(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.unsqueeze(0)
-            action_datas    = self.policy(state)
+            state               = state.unsqueeze(0)
+            action_datas, _, _  = self.policy(state)
             
             if self.is_training_mode:
                 action = self.distribution.sample(action_datas)
@@ -100,10 +100,10 @@ class AgentVMPO(Agent):
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.unsqueeze(0)
-            action          = action.unsqueeze(0)
+            state               = state.unsqueeze(0)
+            action              = action.unsqueeze(0)
 
-            action_datas    = self.policy(state)
+            action_datas, _, _  = self.policy(state)
 
             logprobs        = self.distribution.logprob(action_datas, action)
             logprobs        = logprobs.squeeze(0).detach()
