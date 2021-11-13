@@ -37,7 +37,7 @@ class BraxIterRunner(Runner):
                 self.writer.add_scalar('Rewards', total_reward, self.iter)
                            
             states          = next_state
-            total_reward    += reward
+            total_reward    += reward.mean()
                     
             if self.render:
                 self.env.render()
