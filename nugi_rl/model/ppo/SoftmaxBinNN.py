@@ -17,14 +17,14 @@ class Policy_Model(nn.Module):
         )
         
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
-      action = self.nn_layer(states)
-      action = action.reshape(-1, self.action_dim, self.bins)
-      action = nn.functional.softmax(action, dim = -1)
+      action_datas = self.nn_layer(states)
+      action_datas = action_datas.reshape(-1, self.action_dim, self.bins)
+      action_datas = nn.functional.softmax(action_datas, dim = -1)
 
       if detach:
-        return action.detach()
+        return (action_datas.detach())
       else:
-        return action
+        return (action_datas)
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):

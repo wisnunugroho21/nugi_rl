@@ -22,9 +22,9 @@ class Policy_Model(nn.Module):
       action = action.reshape(-1, self.action_dim, self.bins)
 
       if detach:
-        return action.detach()
+        return (action.detach())
       else:
-        return action
+        return (action)
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):

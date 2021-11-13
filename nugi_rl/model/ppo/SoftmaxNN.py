@@ -15,10 +15,12 @@ class Policy_Model(nn.Module):
         )
         
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
+      action_datas = self.nn_layer(states).detach()
+
       if detach:
-        return self.nn_layer(states).detach()
+        return (action_datas.detach())
       else:
-        return self.nn_layer(states)
+        return (action_datas)
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):

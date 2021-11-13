@@ -11,14 +11,14 @@ class Ordinal(Distribution):
         super().__init__()
         self.device = device
 
-    def _compute_ordinal(self, datas: Tensor) -> Tensor:      
-        datas = datas.unsqueeze(-1)
+    def _compute_ordinal(self, logits: Tensor) -> Tensor:      
+        logits = logits.unsqueeze(-1)
 
-        a1 = torch.ones(datas.size(2), datas.size(2)).to(self.device).triu().transpose(0, 1).repeat(datas.size(0), datas.size(1), 1, 1)
+        a1 = torch.ones(logits.size(2), logits.size(2)).to(self.device).triu().transpose(0, 1).repeat(logits.size(0), logits.size(1), 1, 1)
         a2 = a1.logical_not().float()
 
-        a3 = datas.log()
-        a4 = (1 - datas).log()
+        a3 = logits.log()
+        a4 = (1 - logits).log()
 
         out = torch.matmul(a1, a3) + torch.matmul(a2, a4)
         out = torch.nn.functional.softmax(out, dim = 2)
@@ -26,32 +26,32 @@ class Ordinal(Distribution):
         
         return out
 
-    def sample(self, datas: Tensor) -> Tensor:
-        datas = self._compute_ordinal(datas)
+    def sample(self, logits: Tensor) -> Tensor:
+        logits = self._compute_ordinal(logits)
         
-        distribution = Categorical(datas)
+        distribution = Categorical(logits)
         return distribution.sample().int()
         
-    def entropy(self, datas: Tensor) -> Tensor:
-        datas = self._compute_ordinal(datas)
+    def entropy(self, logits: Tensor) -> Tensor:
+        logits = self._compute_ordinal(logits)
         
-        distribution = Categorical(datas)
+        distribution = Categorical(logits)
         return distribution.entropy()
         
-    def logprob(self, datas: Tensor, value_data: Tensor) -> Tensor:
-        datas = self._compute_ordinal(datas)
+    def logprob(self, logits: Tensor, value: Tensor) -> Tensor:
+        logits = self._compute_ordinal(logits)
 
-        distribution = Categorical(datas)        
-        return distribution.log_prob(value_data)
+        distribution = Categorical(logits)        
+        return distribution.log_prob(value)
 
-    def kldivergence(self, datas1: Tensor, datas2: Tensor) -> Tensor:
-        datas1 = self._compute_ordinal(datas1)
-        datas2 = self._compute_ordinal(datas2)
+    def kldivergence(self, logits1: Tensor, logits2: Tensor) -> Tensor:
+        logits1 = self._compute_ordinal(logits1)
+        logits2 = self._compute_ordinal(logits2)
 
-        distribution1 = Categorical(datas1)
-        distribution2 = Categorical(datas2)
+        distribution1 = Categorical(logits1)
+        distribution2 = Categorical(logits2)
         return kl_divergence(distribution1, distribution2)
 
-    def deterministic(self, datas: Tensor) -> Tensor:
-        datas = self._compute_ordinal(datas)
-        return torch.argmax(datas, 1).int()
+    def deterministic(self, logits: Tensor) -> Tensor:
+        logits = self._compute_ordinal(logits)
+        return torch.argmax(logits, 1).int()

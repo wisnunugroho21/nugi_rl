@@ -10,11 +10,11 @@ class PpoKl(Ppo):
         self.distribution       = distribution
  
     def compute_loss(self, action_datas: tuple, old_action_datas: tuple, actions: Tensor, advantages: Tensor) -> Tensor:
-        logprobs        = self.distribution.logprob(action_datas, actions) + 1e-5
-        old_logprobs    = (self.distribution.logprob(old_action_datas, actions) + 1e-5).detach()
+        logprobs        = self.distribution.logprob(*action_datas, actions) + 1e-5
+        old_logprobs    = (self.distribution.logprob(*old_action_datas, actions) + 1e-5).detach()
 
         ratios          = (logprobs - old_logprobs).exp()
-        Kl              = self.distribution.kldivergence(old_action_datas, action_datas)
+        Kl              = self.distribution.kldivergence(*old_action_datas, *action_datas)
 
         pg_target       = ratios * advantages - self.policy_params * Kl
         loss            = pg_target.mean()

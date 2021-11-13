@@ -6,32 +6,26 @@ from torch.distributions.kl import kl_divergence
 from nugi_rl.distribution.base import Distribution
 
 class MultivariateContinous(Distribution):
-    def sample(self, datas: tuple) -> Tensor:
-        mean, std = datas
+    def sample(self, mean: Tensor, std: Tensor) -> Tensor:
         std = torch.diag_embed(std)
 
         distribution    = MultivariateNormal(mean, std)
         action          = distribution.sample().squeeze(0)
         return action
         
-    def entropy(self, datas: tuple) -> Tensor:
-        mean, std = datas
+    def entropy(self, mean: Tensor, std: Tensor) -> Tensor:
         std = torch.diag_embed(std)
 
         distribution = MultivariateNormal(mean, std) 
         return distribution.entropy()
         
-    def logprob(self, datas: tuple, value_data: Tensor) -> Tensor:
-        mean, std = datas
+    def logprob(self, mean: Tensor, std: Tensor, value_data: Tensor) -> Tensor:
         std = torch.diag_embed(std)
 
         distribution = MultivariateNormal(mean, std)
         return distribution.log_prob(value_data)
 
-    def kldivergence(self, datas1: tuple, datas2: tuple) -> Tensor:
-        mean1, std1 = datas1
-        mean2, std2 = datas2
-
+    def kldivergence(self, mean1: Tensor, std1: Tensor, mean2: Tensor, std2: Tensor) -> Tensor:
         std1 = torch.diag_embed(std1)
         std2 = torch.diag_embed(std2)
 
@@ -39,26 +33,19 @@ class MultivariateContinous(Distribution):
         distribution2 = MultivariateNormal(mean2, std2)
         return kl_divergence(distribution1, distribution2)
 
-    def kldivergence_mean(self, datas1: tuple, datas2: tuple) -> Tensor:
-        mean1, cov1     = datas1
-        mean2, _        = datas2
-
+    def kldivergence_mean(self, mean1: Tensor, std1: Tensor, mean2: Tensor, std2: Tensor) -> Tensor:
         mean1, mean2    = mean1.unsqueeze(-1), mean2.unsqueeze(-1)
-        cov1            = torch.diag_embed(cov1)       
+        std1            = torch.diag_embed(std1)       
 
-        Kl_mean = 0.5 * (mean2 - mean1).transpose(-2, -1) @ cov1.inverse() @ (mean2 - mean1)
+        Kl_mean = 0.5 * (mean2 - mean1).transpose(-2, -1) @ std1.inverse() @ (mean2 - mean1)
         return Kl_mean
 
-    def kldivergence_cov(self, datas1: tuple, datas2: tuple) -> Tensor:
-        mean1, cov1     = datas1
-        _, cov2         = datas2
-
+    def kldivergence_cov(self, mean1: Tensor, std1: Tensor, mean2: Tensor, std2: Tensor) -> Tensor:
         d               = mean1.shape[-1]
-        cov1, cov2      = torch.diag_embed(cov1), torch.diag_embed(cov2)
+        std1, std2      = torch.diag_embed(std1), torch.diag_embed(std2)
 
-        Kl_cov  = 0.5 * ((cov2.inverse() @ cov1).diagonal(dim1 = -2, dim2 = -1).sum(-1) - d + (torch.linalg.det(cov2) / (torch.linalg.det(cov1) + 1e-3)).log())
+        Kl_cov  = 0.5 * ((std2.inverse() @ std1).diagonal(dim1 = -2, dim2 = -1).sum(-1) - d + (torch.linalg.det(std2) / (torch.linalg.det(std1) + 1e-3)).log())
         return Kl_cov
 
-    def deterministic(self, datas: tuple) -> Tensor:
-        mean, _ = datas
+    def deterministic(self, mean: Tensor, std: Tensor) -> Tensor:
         return mean.squeeze(0)
