@@ -9,7 +9,9 @@ class Policy_Model(nn.Module):
         self.bins = bins
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 128),
+          nn.ReLU(),
+          nn.Linear(128, 256),
           nn.ReLU(),
           nn.Linear(256, 128),
           nn.ReLU(),
@@ -17,21 +19,23 @@ class Policy_Model(nn.Module):
           nn.Sigmoid()
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> Tensor:
+    def forward(self, states: Tensor, detach: bool = False) -> tuple:
       action = self.nn_layer(states)
       action = action.reshape(-1, self.action_dim, self.bins)
 
       if detach:
-        return (action.detach())
+        return (action.detach(), )
       else:
-        return (action)
+        return (action, )
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
         super(Value_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 128),
+          nn.ReLU(),
+          nn.Linear(128, 256),
           nn.ReLU(),
           nn.Linear(256, 64),
           nn.ReLU(),

@@ -35,7 +35,9 @@ class Value_Model(nn.Module):
         )
         
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
+      action = self.nn_layer(states)
+
       if detach:
-        return self.nn_layer(states).detach()
+        return (action.detach(), )
       else:
-        return self.nn_layer(states)
+        return (action, )

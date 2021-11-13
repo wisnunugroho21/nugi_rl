@@ -22,9 +22,9 @@ class Policy_Model(nn.Module):
       action_datas = nn.functional.softmax(action_datas, dim = -1)
 
       if detach:
-        return (action_datas.detach())
+        return (action_datas.detach(), )
       else:
-        return (action_datas)
+        return (action_datas, )
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
