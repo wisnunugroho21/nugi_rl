@@ -91,7 +91,7 @@ class AgentPPO(Agent):
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
             state           = state.reshape(-1, state.shape[-1])
-            action          = action.reshape(-1, state.shape[-1])
+            action          = action.reshape(-1, action.shape[-1])
 
             action_datas    = self.policy(state)
 
