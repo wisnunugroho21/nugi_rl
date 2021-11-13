@@ -31,7 +31,7 @@ class BraxIterRunner(Runner):
             next_state, reward, done, _ = self.env.step(action)
             
             if self.is_save_memory:
-                self.agent.save_all(self.states, action, reward, done, next_state, logprob)
+                self.agent.save_all(states, action, reward, done, next_state, logprob)
 
             if self.writer is not None:
                 self.writer.add_scalar('Rewards', total_reward, self.iter)

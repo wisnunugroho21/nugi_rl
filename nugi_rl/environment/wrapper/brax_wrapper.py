@@ -30,13 +30,13 @@ class BraxWrapper():
         if self.is_discrete():
             return self.env.observation_space.n
         else:
-            return self.env.observation_space.shape[0]
+            return self.env.observation_space.shape[-1]
             
     def get_action_dim(self):
         if self.is_discrete():
             return self.env.action_space.n
         else:
-            return self.env.action_space.shape[0]
+            return self.env.action_space.shape[-1]
 
     def reset(self):
         return self.env.reset()

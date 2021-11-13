@@ -9,13 +9,11 @@ class Policy_Model(nn.Module):
         self.bins = bins
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 128),
-          nn.ReLU(),
-          nn.Linear(128, 256),
-          nn.ReLU(),
-          nn.Linear(256, 128),
-          nn.ReLU(),
-          nn.Linear(128, action_dim * bins),
+          nn.Linear(state_dim, 256),
+          nn.SiLU(),
+          nn.Linear(256, 256),
+          nn.SiLU(),
+          nn.Linear(256, action_dim * bins),
           nn.Sigmoid()
         )
         
@@ -33,12 +31,10 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 128),
-          nn.ReLU(),
-          nn.Linear(128, 256),
-          nn.ReLU(),
-          nn.Linear(256, 64),
-          nn.ReLU(),
+          nn.Linear(state_dim, 64),
+          nn.SiLU(),
+          nn.Linear(64, 64),
+          nn.SiLU(),
           nn.Linear(64, 1)
         )
         
