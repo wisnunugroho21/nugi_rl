@@ -80,9 +80,9 @@ class AgentPPO(Agent):
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
-                action = self.distribution.sample(action_datas)
+                action = self.distribution.sample(*action_datas)
             else:
-                action = self.distribution.deterministic(action_datas)
+                action = self.distribution.deterministic(*action_datas)
 
             action = action.squeeze(0).detach()
               
@@ -95,7 +95,7 @@ class AgentPPO(Agent):
 
             action_datas    = self.policy(state)
 
-            logprobs        = self.distribution.logprob(action_datas, action)
+            logprobs        = self.distribution.logprob(*action_datas, action)
             logprobs        = logprobs.squeeze(0).detach()
 
         return logprobs

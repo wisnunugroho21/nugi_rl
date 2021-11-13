@@ -9,5 +9,5 @@ class EntropyLoss():
         self.distribution       = distribution
 
     def compute_loss(self, action_datas: tuple) -> Tensor:
-        dist_entropy    = self.distribution.entropy(action_datas).mean()
+        dist_entropy    = self.distribution.entropy(*action_datas).mean()
         return -1 * self.entropy_coef * dist_entropy
