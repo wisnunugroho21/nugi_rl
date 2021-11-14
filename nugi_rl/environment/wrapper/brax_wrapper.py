@@ -10,12 +10,6 @@ class BraxWrapper():
         self.env = JaxToTorchWrapper(env)
 
     def register_brax_gym(gym):
-        CUDA_AVAILABLE = torch.cuda.is_available()
-        if CUDA_AVAILABLE:
-            # BUG: (@lebrice): Getting a weird "CUDA error: out of memory" RuntimeError
-            # during JIT, which can be "fixed" by first creating a dummy cuda tensor!
-            v = torch.ones(1, device="cuda")
-
         for env_name, env_class in _envs.items():
             env_id = f"brax_{env_name}-v0"
             entry_point = partial(create_gym_env, env_name=env_name)

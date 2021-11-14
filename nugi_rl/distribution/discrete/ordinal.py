@@ -14,7 +14,7 @@ class Ordinal(Distribution):
     def _compute_ordinal(self, logits: Tensor) -> Tensor:      
         logits = logits.unsqueeze(-1)
 
-        a1 = torch.ones(logits.size(2), logits.size(2)).to(self.device).triu().transpose(0, 1).repeat(logits.size(0), logits.size(1), 1, 1)
+        a1 = torch.ones(logits.size(2), logits.size(2), device = self.device).to(self.device).triu().transpose(0, 1).repeat(logits.size(0), logits.size(1), 1, 1)
         a2 = a1.logical_not().float()
 
         a3 = logits.log()

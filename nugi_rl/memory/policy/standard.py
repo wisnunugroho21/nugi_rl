@@ -4,17 +4,16 @@ from torch import Tensor, device
 from nugi_rl.memory.policy.base import PolicyMemory
 
 class PolicyMemory(PolicyMemory):
-    def __init__(self, device: device, capacity = 1000000, datas = None):
+    def __init__(self, capacity = 1000000, datas = None):
         self.capacity       = capacity
-        self.device         = device
 
         if datas is None :
-            self.states         = torch.tensor([]).to(device)
-            self.actions        = torch.tensor([]).to(device)
-            self.rewards        = torch.tensor([]).to(device)
-            self.dones          = torch.tensor([]).to(device)
-            self.next_states    = torch.tensor([]).to(device)
-            self.logprobs       = torch.tensor([]).to(device)
+            self.states         = torch.tensor([])
+            self.actions        = torch.tensor([])
+            self.rewards        = torch.tensor([])
+            self.dones          = torch.tensor([])
+            self.next_states    = torch.tensor([])
+            self.logprobs       = torch.tensor([])
         else:
             self.states, self.actions, self.rewards, self.dones, self.next_states, self.logprobs = datas
 
@@ -105,9 +104,9 @@ class PolicyMemory(PolicyMemory):
             del self.next_states
             del self.logprobs
 
-            self.states         = torch.tensor([]).to(self.device)
-            self.actions        = torch.tensor([]).to(self.device)
-            self.rewards        = torch.tensor([]).to(self.device)
-            self.dones          = torch.tensor([]).to(self.device)
-            self.next_states    = torch.tensor([]).to(self.device)
-            self.logprobs       = torch.tensor([]).to(self.device)
+            self.states         = torch.tensor([])
+            self.actions        = torch.tensor([])
+            self.rewards        = torch.tensor([])
+            self.dones          = torch.tensor([])
+            self.next_states    = torch.tensor([])
+            self.logprobs       = torch.tensor([])
