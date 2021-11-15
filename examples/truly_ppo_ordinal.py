@@ -3,18 +3,18 @@ import random
 import numpy as np
 import torch
 import os
-import ray
-# import robosuite as suite
-# from robosuite.wrappers import GymWrapper as RobosuiteWrapper
+import robosuite as suite
+from robosuite.wrappers import GymWrapper as RobosuiteWrapper
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adamw import AdamW
 
-from nugi_rl.train.runner.iteration.pong_sync import PongSyncRunner
-from nugi_rl.train.executor.sync import SyncExecutor
+from nugi_rl.train.runner.iteration.standard import IterRunner
+from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.ppo import AgentPPO
 from nugi_rl.distribution.discrete.ordinal import Ordinal
 from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.environment.wrapper.discretization_wrapper import DiscretizationWrapper
 from nugi_rl.loss.ppo.truly_ppo import TrulyPpo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
@@ -32,7 +32,7 @@ reward_threshold        = 1000 # Set threshold for reward. The learning will sto
 
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 100000000 # How many episode you want to run
-n_update                = 2048 # How many episode before you update the Policy 
+n_update                = 1024 # How many episode before you update the Policy 
 n_saved                 = 1
 
 policy_kl_range         = 0.03
@@ -45,37 +45,27 @@ epochs                  = 5
 action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
-bins                    = 3
-n_agents                = 2
+bins                    = 9
 
 device                  = torch.device('cuda:0')
-folder                  = 'weights/truly_ppo_pong'
+folder                  = 'weights/truly_ppo_lift1'
 
-env                     = gym.make('PongDeterministic-v4')
+# env                     = gym.make('BipedalWalker-v3')
 
-environments            =  [
-    GymWrapper(
-        gym.make('PongDeterministic-v4'),
-        torch.device('cpu')
+env                     = RobosuiteWrapper(
+    suite.make(
+        "Lift",
+        robots = "Sawyer",                # use Sawyer robot
+        use_camera_obs = False,           # do not use pixel observations
+        has_offscreen_renderer = False,   # not needed since not using pixel obs
+        has_renderer = True,              # make sure we can render to the screen
+        reward_shaping = True,            # use dense rewards
+        control_freq = 20,                # control should happen fast enough so that simulation looks smooth
     )
-    
-    for _ in range(n_agents)
-]
+)
 
-# env                     = RobosuiteWrapper(
-#     suite.make(
-#         "Lift",
-#         robots = "Sawyer",                # use Sawyer robot
-#         use_camera_obs = False,           # do not use pixel observations
-#         has_offscreen_renderer = False,   # not needed since not using pixel obs
-#         has_renderer = True,              # make sure we can render to the screen
-#         reward_shaping = True,            # use dense rewards
-#         control_freq = 20,                # control should happen fast enough so that simulation looks smooth
-#     )
-# )
-
-state_dim               = 80 * 80
-action_dim              = 1
+state_dim               = None
+action_dim              = None
 max_action              = 1
 
 #####################################################################################################################################################
@@ -85,40 +75,25 @@ np.random.seed(20)
 torch.manual_seed(20)
 os.environ['PYTHONHASHSEED'] = str(20)
 
+environment         = DiscretizationWrapper(GymWrapper(env, device), device, bins)
+
 if state_dim is None:
-    state_dim = environments[0].get_obs_dim()
+    state_dim = environment.get_obs_dim()
 print('state_dim: ', state_dim)
 
-if environments[0].is_discrete():
+if environment.is_discrete():
     print('discrete')
 else:
     print('continous')
 
 if action_dim is None:
-    action_dim = environments[0].get_action_dim()
+    action_dim = environment.get_action_dim()
 print('action_dim: ', action_dim)
 
 distribution        = Ordinal(device)
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
 
-agents_worker       = [
-    ray.put(
-        AgentPPO(Policy_Model(state_dim, action_dim, bins), Value_Model(state_dim), None, Ordinal(torch.device('cpu')), None, None, None, PolicyMemory(torch.device('cpu')), None, 
-            None, is_training_mode, None, folder, torch.device('cpu'))
-    ) 
-    for _ in range(n_agents)
-]
-
-environments    = [ray.put(environment) for environment in environments]
-
-runners         = [
-    PongSyncRunner.remote(
-        agent, environment, is_training_mode, render, n_update, None, n_plot_batch, idx
-    ) 
-    for idx, (agent, environment) in enumerate(zip(agents_worker, environments))
-]
-
-memory          = PolicyMemory(device)
+memory          = PolicyMemory()
 ppo_loss        = TrulyPpo(distribution, policy_kl_range, policy_params)
 value_loss      = ValueLoss(vf_loss_coef, value_clip)
 entropy_loss    = EntropyLoss(distribution, entropy_coef)
@@ -127,9 +102,10 @@ policy          = Policy_Model(state_dim, action_dim, bins).float().to(device)
 value           = Value_Model(state_dim).float().to(device)
 optimizer       = AdamW(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)
 
-agent_learner   = AgentPPO(policy, value, advantage_function, distribution, ppo_loss, value_loss, entropy_loss, memory, optimizer, 
+agent   = AgentPPO(policy, value, advantage_function, distribution, ppo_loss, value_loss, entropy_loss, memory, optimizer, 
     epochs, is_training_mode, batch_size, folder, device)
 
-executor    = SyncExecutor(agent_learner, n_iteration, runners, save_weights, n_saved, load_weights, is_training_mode, device)
+runner      = IterRunner(agent, environment, is_training_mode, render, n_update, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

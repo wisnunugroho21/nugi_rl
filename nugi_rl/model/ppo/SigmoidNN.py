@@ -11,9 +11,9 @@ class Policy_Model(nn.Module):
         self.nn_layer = nn.Sequential(
           nn.Linear(state_dim, 256),
           nn.SiLU(),
-          nn.Linear(256, 256),
+          nn.Linear(256, 128),
           nn.SiLU(),
-          nn.Linear(256, action_dim * bins),
+          nn.Linear(128, action_dim * bins),
           nn.Sigmoid()
         )
         
