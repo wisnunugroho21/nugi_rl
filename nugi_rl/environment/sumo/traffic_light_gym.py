@@ -146,7 +146,7 @@ class SumoEnv:
         self.waktu_merah_kanan = 0
         self.waktu_merah_kiri = 0
 
-        return np.zeros(12)
+        return np.zeros(8)
     
     def step(self, action):
         reward = 0
@@ -194,11 +194,12 @@ class SumoEnv:
             self.waktu_merah_kiri = 0
             self.waktu_merah_bawah += 1
             
-        reward += (self.waktu_merah_bawah * 0.2) + ((panjang_antrian_bawah) * 0.5)
-        reward += (self.waktu_merah_atas * 0.2) + ((panjang_antrian_atas) * 0.5)
-        reward += (self.waktu_merah_kanan * 0.2) + ((panjang_antrian_kanan) * 0.5)
-        reward += (self.waktu_merah_kiri * 0.2) + ((panjang_antrian_kiri) * 0.5)        
+        reward += (self.waktu_merah_bawah * 0.1) + ((panjang_antrian_bawah) * 0.5)
+        reward += (self.waktu_merah_atas * 0.1) + ((panjang_antrian_atas) * 0.5)
+        reward += (self.waktu_merah_kanan * 0.1) + ((panjang_antrian_kanan) * 0.5)
+        reward += (self.waktu_merah_kiri * 0.1) + ((panjang_antrian_kiri) * 0.5)        
         reward += (banyak_kendaraan_tabrakan * 5.0)
+        reward *= -1
         
         self.time += 1
         done = traci.simulation.getMinExpectedNumber() <= 0
