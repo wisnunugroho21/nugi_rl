@@ -155,10 +155,10 @@ class SumoEnv:
 
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
-        banyak_kendaraan_bawah = traci.lanearea.getLastStepVehicleNumber('detektor_bawah_1') + traci.lanearea.getLastStepVehicleNumber('detektor_bawah_2')        
-        banyak_kendaraan_kanan = traci.lanearea.getLastStepVehicleNumber('detektor_kanan_1') + traci.lanearea.getLastStepVehicleNumber('detektor_kanan_2')
-        banyak_kendaraan_kiri = traci.lanearea.getLastStepVehicleNumber('detektor_kiri_1') + traci.lanearea.getLastStepVehicleNumber('detektor_kiri_2')
-        banyak_kendaraan_atas = traci.lanearea.getLastStepVehicleNumber('detektor_atas_1') + traci.lanearea.getLastStepVehicleNumber('detektor_atas_2')
+        persentase_kendaraan_bawah = (traci.lanearea.getLastStepOccupancy('detektor_bawah_1') + traci.lanearea.getLastStepOccupancy('detektor_bawah_2')) / 2        
+        persentase_kendaraan_kanan = (traci.lanearea.getLastStepOccupancy('detektor_kanan_1') + traci.lanearea.getLastStepOccupancy('detektor_kanan_2')) / 2
+        persentase_kendaraan_kiri = (traci.lanearea.getLastStepOccupancy('detektor_kiri_1') + traci.lanearea.getLastStepOccupancy('detektor_kiri_2')) / 2
+        persentase_kendaraan_atas = (traci.lanearea.getLastStepOccupancy('detektor_atas_1') + traci.lanearea.getLastStepOccupancy('detektor_atas_2')) / 2
         
         panjang_antrian_bawah = traci.lanearea.getLastStepHaltingNumber('detektor_bawah_1') + traci.lanearea.getLastStepHaltingNumber('detektor_bawah_2')
         panjang_antrian_kanan = traci.lanearea.getLastStepHaltingNumber('detektor_kanan_1') + traci.lanearea.getLastStepHaltingNumber('detektor_kanan_2')
@@ -207,7 +207,7 @@ class SumoEnv:
         if not done:
             done = self.time > 100000
 
-        obs = np.array([banyak_kendaraan_bawah, banyak_kendaraan_kanan, banyak_kendaraan_kiri, banyak_kendaraan_atas,
+        obs = np.array([persentase_kendaraan_bawah, persentase_kendaraan_kanan, persentase_kendaraan_kiri, persentase_kendaraan_atas,
             kecepatan_kendaraan_bawah, kecepatan_kendaraan_kanan, kecepatan_kendaraan_kiri, kecepatan_kendaraan_atas])
 
         info = {}
