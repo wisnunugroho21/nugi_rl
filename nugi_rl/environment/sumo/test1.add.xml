@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Sel 16 Nov 2021 06:53:49  by Eclipse SUMO netedit Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="/home/nugroho/Projects/Simulator/SUMO/project2/test2.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="/home/nugroho/Projects/Simulator/SUMO/project2/test2.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <netedit>
+        <additional-files value="/home/nugroho/Projects/Simulator/SUMO/project2/detektor.add.xml"/>
+    </netedit>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+    <e2Detector id="detektor_atas_1" lane="-gneE6_0" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE6_0_9.xml"/>
+    <e2Detector id="detektor_atas_2" lane="-gneE6_1" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE6_1_10.xml"/>
+    <e2Detector id="detektor_bawah_1" lane="-gneE8_1" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE8_1_2.xml"/>
+    <e2Detector id="detektor_bawah_2" lane="-gneE8_0" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE8_0_3.xml"/>
+    <e2Detector id="detektor_kanan_1" lane="-gneE7_0" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE7_0_0.xml"/>
+    <e2Detector id="detektor_kanan_2" lane="-gneE7_1" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE7_1_1.xml"/>
+    <e2Detector id="detektor_kiri_1" lane="-gneE5_1" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE5_1_4.xml"/>
+    <e2Detector id="detektor_kiri_2" lane="-gneE5_0" pos="189.60" length="50.00" freq="900.00" file="e2Detector_-gneE5_0_8.xml"/>
+</additional>
