@@ -63,63 +63,63 @@ class SumoEnv:
 
             vehNr = 0            
             for i in range(N):
-                if random.uniform(0, 1) < pLR:
+                if random.uniform(0, 1) >= pLR:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pRL:
+                if random.uniform(0, 1) >= pRL:
                     print('    <vehicle id="kanan_kiri_%i" type="car" route="kanan_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pLB:
+                if random.uniform(0, 1) >= pLB:
                     print('    <vehicle id="kiri_bawah_%i" type="car" route="kiri_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pRB: 
+                if random.uniform(0, 1) >= pRB: 
                     print('    <vehicle id="kanan_bawah_%i" type="car" route="kanan_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pBL:
+                if random.uniform(0, 1) >= pBL:
                     print('    <vehicle id="bawah_kiri_%i" type="car" route="bawah_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pBR:
+                if random.uniform(0, 1) >= pBR:
                     print('    <vehicle id="bawah_kanan_%i" type="car" route="bawah_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
                     
 
-                if random.uniform(0, 1) < pUB:
+                if random.uniform(0, 1) >= pUB:
                     print('    <vehicle id="atas_bawah_%i" type="car" route="atas_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pBU:
+                if random.uniform(0, 1) >= pBU:
                     print('    <vehicle id="bawah_atas_%i" type="car" route="bawah_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pLU:
+                if random.uniform(0, 1) >= pLU:
                     print('    <vehicle id="kiri_atas_%i" type="car" route="kiri_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pRU:
+                if random.uniform(0, 1) >= pRU:
                     print('    <vehicle id="kanan_atas_%i" type="car" route="kanan_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pUL:
+                if random.uniform(0, 1) >= pUL:
                     print('    <vehicle id="atas_kiri_%i" type="car" route="atas_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) < pUR:
+                if random.uniform(0, 1) >= pUR:
                     print('    <vehicle id="atas_kanan_%i" type="car" route="atas_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
@@ -165,10 +165,10 @@ class SumoEnv:
         panjang_antrian_kiri = traci.lanearea.getLastStepHaltingNumber('detektor_kiri_1') + traci.lanearea.getLastStepHaltingNumber('detektor_kiri_2')
         panjang_antrian_atas = traci.lanearea.getLastStepHaltingNumber('detektor_atas_1') + traci.lanearea.getLastStepHaltingNumber('detektor_atas_2')
 
-        kecepatan_kendaraan_bawah = (traci.lanearea.getLastStepMeanSpeed('detektor_bawah_1') + traci.lanearea.getLastStepMeanSpeed('detektor_bawah_2')) / 2
-        kecepatan_kendaraan_kanan = (traci.lanearea.getLastStepMeanSpeed('detektor_kanan_1') + traci.lanearea.getLastStepMeanSpeed('detektor_kanan_2')) / 2
-        kecepatan_kendaraan_kiri = (traci.lanearea.getLastStepMeanSpeed('detektor_kiri_1') + traci.lanearea.getLastStepMeanSpeed('detektor_kiri_2')) / 2
-        kecepatan_kendaraan_atas = (traci.lanearea.getLastStepMeanSpeed('detektor_atas_1') + traci.lanearea.getLastStepMeanSpeed('detektor_atas_2')) / 2
+        kecepatan_kendaraan_bawah = (traci.lanearea.getLastStepMeanSpeed('detektor_bawah_1') + traci.lanearea.getLastStepMeanSpeed('detektor_bawah_2')) / 20
+        kecepatan_kendaraan_kanan = (traci.lanearea.getLastStepMeanSpeed('detektor_kanan_1') + traci.lanearea.getLastStepMeanSpeed('detektor_kanan_2')) / 20
+        kecepatan_kendaraan_kiri = (traci.lanearea.getLastStepMeanSpeed('detektor_kiri_1') + traci.lanearea.getLastStepMeanSpeed('detektor_kiri_2')) / 20
+        kecepatan_kendaraan_atas = (traci.lanearea.getLastStepMeanSpeed('detektor_atas_1') + traci.lanearea.getLastStepMeanSpeed('detektor_atas_2')) / 20
         
         if action == 0:
             self.waktu_merah_atas = 0
@@ -194,10 +194,10 @@ class SumoEnv:
             self.waktu_merah_kiri = 0
             self.waktu_merah_bawah += 1
             
-        reward += (self.waktu_merah_bawah * 0.1) + ((panjang_antrian_bawah) * 0.5)
-        reward += (self.waktu_merah_atas * 0.1) + ((panjang_antrian_atas) * 0.5)
-        reward += (self.waktu_merah_kanan * 0.1) + ((panjang_antrian_kanan) * 0.5)
-        reward += (self.waktu_merah_kiri * 0.1) + ((panjang_antrian_kiri) * 0.5)        
+        reward += (self.waktu_merah_bawah * 0.1) + (panjang_antrian_bawah * 0.5)
+        reward += (self.waktu_merah_atas * 0.1) + (panjang_antrian_atas * 0.5)
+        reward += (self.waktu_merah_kanan * 0.1) + (panjang_antrian_kanan * 0.5)
+        reward += (self.waktu_merah_kiri * 0.1) + (panjang_antrian_kiri * 0.5)
         reward += (banyak_kendaraan_tabrakan * 5.0)
         reward *= -1
         
