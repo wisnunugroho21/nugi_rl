@@ -19,14 +19,14 @@ class SumoEnv:
         self.waktu_merah_bawah = 1
         self.waktu_merah_kiri = 1
         
-        self.__generate_routefile("environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
+        self.__generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
 
-        self.observation_space  = spaces.Box(-100, 100, (12, ))
-        self.action_space       = spaces.Discrete(3)
+        self.observation_space  = spaces.Box(-100, 100, (8, ))
+        self.action_space       = spaces.Discrete(4)
         
     def __generate_routefile(self, route_files):
         random.seed(10)  # make tests reproducible
-        N = 300  # number of time steps
+        N = 100  # number of time steps
         # demand per second from different directions
         pLR = 1. / 8
         pRL = 1. / 8
@@ -132,8 +132,8 @@ class SumoEnv:
         if self.run:
             traci.close()  
             
-        traci.start([sumoBinary, "-c", "environment/sumo/test1.sumocfg", 
-        "--tripinfo-output", "environment/sumo/test1.xml",
+        traci.start([sumoBinary, "-c", "nugi_rl/environment/sumo/test1.sumocfg", 
+        "--tripinfo-output", "nugi_rl/environment/sumo/test1.xml",
         "--no-step-log",
         # "--no-warnings",
         "--duration-log.disable"])
@@ -150,7 +150,7 @@ class SumoEnv:
     
     def step(self, action):
         reward = 0
-        traci.trafficlight.setPhase("tl_1", action * 2)
+        traci.trafficlight.setPhase("gneJ10", action * 2)
         traci.simulationStep()
 
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()

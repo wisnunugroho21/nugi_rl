@@ -41,13 +41,12 @@
 -->
 
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
-    <e2Detector id="e2Detector_atas_ke_tengah_0_6" lane="atas_ke_tengah_0" pos="179.60" length="100.00" freq="900.00" file="e2Detector_atas_ke_tengah_0_6.xml"/>
-    <e2Detector id="e2Detector_atas_ke_tengah_1_7" lane="atas_ke_tengah_1" pos="179.60" length="100.00" freq="900.00" file="e2Detector_atas_ke_tengah_1_7.xml"/>
-    <e2Detector id="e2Detector_bawah_ke_tengah_0_3" lane="bawah_ke_tengah_0" pos="179.60" length="100.00" freq="900.00" file="e2Detector_bawah_ke_tengah_0_3.xml"/>
-    <e2Detector id="e2Detector_bawah_ke_tengah_1_2" lane="bawah_ke_tengah_1" pos="179.60" length="100.00" freq="900.00" file="e2Detector_bawah_ke_tengah_1_2.xml"/>
-    <e2Detector id="e2Detector_kanan_ke_tengah_0_0" lane="kanan_ke_tengah_0" pos="179.60" length="100.00" freq="900.00" file="e2Detector_kanan_ke_tengah_0_0.xml"/>
-    <e2Detector id="e2Detector_kanan_ke_tengah_0_8" lane="kanan_ke_tengah_0" pos="167.42" length="100.00" freq="900.00" file="e2Detector_kanan_ke_tengah_0_8.xml"/>
-    <e2Detector id="e2Detector_kanan_ke_tengah_1_1" lane="kanan_ke_tengah_1" pos="179.60" length="100.00" freq="900.00" file="e2Detector_kanan_ke_tengah_1_1.xml"/>
-    <e2Detector id="e2Detector_kiri_ke_tengah_0_5" lane="kiri_ke_tengah_0" pos="179.60" length="100.00" freq="900.00" file="e2Detector_kiri_ke_tengah_0_5.xml"/>
-    <e2Detector id="e2Detector_kiri_ke_tengah_1_4" lane="kiri_ke_tengah_1" pos="179.60" length="100.00" freq="900.00" file="e2Detector_kiri_ke_tengah_1_4.xml"/>
+    <e2Detector id="detektor_atas_1" lane="atas_ke_tengah_0" pos="100.60" length="50.00" freq="900.00" file="e2Detector_atas_ke_tengah_0_6.xml"/>
+    <e2Detector id="detektor_atas_2" lane="atas_ke_tengah_1" pos="100.60" length="50.00" freq="900.00" file="e2Detector_atas_ke_tengah_1_7.xml"/>
+    <e2Detector id="detektor_bawah_1" lane="bawah_ke_tengah_0" pos="100.60" length="50.00" freq="900.00" file="e2Detector_bawah_ke_tengah_0_3.xml"/>
+    <e2Detector id="detektor_bawah_2" lane="bawah_ke_tengah_1" pos="100.60" length="50.00" freq="900.00" file="e2Detector_bawah_ke_tengah_1_2.xml"/>
+    <e2Detector id="detektor_kanan_1" lane="kanan_ke_tengah_0" pos="100.60" length="50.00" freq="900.00" file="e2Detector_kanan_ke_tengah_0_0.xml"/>
+    <e2Detector id="detektor_kanan_2" lane="kanan_ke_tengah_1" pos="100.60" length="50.00" freq="900.00" file="e2Detector_kanan_ke_tengah_1_1.xml"/>
+    <e2Detector id="detektor_kiri_1" lane="kiri_ke_tengah_0" pos="100.60" length="50.00" freq="900.00" file="e2Detector_kiri_ke_tengah_0_5.xml"/>
+    <e2Detector id="detektor_kiri_2" lane="kiri_ke_tengah_1" pos="100.60" length="50.00" freq="900.00" file="e2Detector_kiri_ke_tengah_1_4.xml"/>
 </additional>

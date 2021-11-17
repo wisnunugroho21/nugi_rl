@@ -13,7 +13,7 @@ class GymWrapper(Environment):
         return type(self.env.action_space) is not gym.spaces.Box
 
     def get_obs_dim(self):
-        if self.is_discrete():
+        if type(self.env.observation_space) is not gym.spaces.Box:
             return self.env.observation_space.n
         else:
             return self.env.observation_space.shape[0]

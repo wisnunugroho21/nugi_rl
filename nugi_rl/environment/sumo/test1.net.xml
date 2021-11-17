@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Sel 16 Nov 2021 07:05:30  by Eclipse SUMO netedit Version 1.8.0
+<!-- generated on Kam 18 Nov 2021 05:02:59  by Eclipse SUMO netedit Version 1.4.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
 
     <input>
-        <sumo-net-file value="/home/nugroho/Projects/Simulator/SUMO/project2/test2.net.xml"/>
+        <sumo-net-file value="/home/nugroho/Projects/Deep%20Learning/nugi-reinforcement-learning-framework/nugi_rl/environment/sumo/test1.net.xml"/>
     </input>
 
     <output>
-        <output-file value="/home/nugroho/Projects/Simulator/SUMO/project2/test2.net.xml"/>
+        <output-file value="/home/nugroho/Projects/Deep%20Learning/nugi-reinforcement-learning-framework/nugi_rl/environment/sumo/test1.net.xml"/>
     </output>
 
     <processing>
@@ -36,7 +36,7 @@
 </configuration>
 -->
 
-<net version="1.6" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+<net version="1.3" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
 
     <location netOffset="0.00,0.00" convBoundary="-100.00,-200.00,300.00,200.00" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
 
