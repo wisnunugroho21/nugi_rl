@@ -46,19 +46,19 @@ class SumoEnv:
             print("""<routes>
             <vType id="car" accel="0.8" decel="4.5" sigma="0.5" length="5" minGap="2.5" maxSpeed="16.67" guiShape="passenger"/>
 
-            <route id="kiri_kanan" edges="titik_kiri titik_tengah titik_kanan"/>
-            <route id="kanan_kiri" edges="titik_kanan titik_tengah titik_kiri"/>
-            <route id="kiri_bawah" edges="titik_kiri titik_tengah titik_bawah"/>
-            <route id="kanan_bawah" edges="titik_kanan titik_tengah titik_bawah"/>
-            <route id="bawah_kiri" edges="titik_bawah titik_tengah titik_kiri"/>
-            <route id="bawah_kanan" edges="titik_bawah titik_tengah titik_kanan"/>
+            <route id="kiri_kanan" edges="kiri_ke_tengah tengah_ke_kanan"/>
+            <route id="kanan_kiri" edges="kanan_ke_tengah tengah_ke_kiri"/>
+            <route id="kiri_bawah" edges="kiri_ke_tengah tengah_ke_bawah"/>
+            <route id="kanan_bawah" edges="kanan_ke_tengah tengah_ke_bawah"/>
+            <route id="bawah_kiri" edges="bawah_ke_tengah tengah_ke_kiri"/>
+            <route id="bawah_kanan" edges="bawah_ke_tengah tengah_ke_kanan"/>
             
-            <route id="atas_bawah" edges="titik_atas titik_tengah titik_bawah"/>
-            <route id="bawah_atas" edges="titik_bawah titik_tengah titik_atas"/>
-            <route id="kiri_atas" edges="titik_kiri titik_tengah titik_atas"/>
-            <route id="kanan_atas" edges="titik_kiri titik_tengah titik_atas"/>
-            <route id="atas_kiri" edges="titik_atas titik_tengah titik_kiri"/>
-            <route id="atas_kanan" edges="titik_atas titik_tengah titik_kanan"/>            
+            <route id="atas_bawah" edges="atas_ke_tengah tengah_ke_bawah"/>
+            <route id="bawah_atas" edges="bawah_ke_tengah tengah_ke_atas"/>
+            <route id="kiri_atas" edges="kiri_ke_tengah tengah_ke_atas"/>
+            <route id="kanan_atas" edges="kanan_ke_tengah tengah_ke_atas"/>
+            <route id="atas_kiri" edges="atas_ke_tengah tengah_ke_kiri"/>
+            <route id="atas_kanan" edges="atas_ke_tengah tengah_ke_kanan"/>            
             """, file=routes)
 
             vehNr = 0            
