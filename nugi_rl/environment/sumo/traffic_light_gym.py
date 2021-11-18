@@ -135,7 +135,7 @@ class SumoEnv:
         traci.start([sumoBinary, "-c", "nugi_rl/environment/sumo/test1.sumocfg", 
         "--tripinfo-output", "nugi_rl/environment/sumo/test1.xml",
         "--no-step-log",
-        # "--no-warnings",
+        "--no-warnings",
         "--duration-log.disable"])
         self.run = True
         
@@ -155,20 +155,20 @@ class SumoEnv:
 
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
-        persentase_kendaraan_bawah = (traci.lanearea.getLastStepOccupancy('detektor_bawah_1') + traci.lanearea.getLastStepOccupancy('detektor_bawah_2')) / 2        
-        persentase_kendaraan_kanan = (traci.lanearea.getLastStepOccupancy('detektor_kanan_1') + traci.lanearea.getLastStepOccupancy('detektor_kanan_2')) / 2
-        persentase_kendaraan_kiri = (traci.lanearea.getLastStepOccupancy('detektor_kiri_1') + traci.lanearea.getLastStepOccupancy('detektor_kiri_2')) / 2
-        persentase_kendaraan_atas = (traci.lanearea.getLastStepOccupancy('detektor_atas_1') + traci.lanearea.getLastStepOccupancy('detektor_atas_2')) / 2
+        persentase_kendaraan_bawah = (traci.lane.getLastStepOccupancy('bawah_ke_tengah_0') + traci.lane.getLastStepOccupancy('bawah_ke_tengah_1')) / 2        
+        persentase_kendaraan_kanan = (traci.lane.getLastStepOccupancy('kanan_ke_tengah_0') + traci.lane.getLastStepOccupancy('kanan_ke_tengah_1')) / 2
+        persentase_kendaraan_kiri = (traci.lane.getLastStepOccupancy('kiri_ke_tengah_0') + traci.lane.getLastStepOccupancy('kiri_ke_tengah_1')) / 2
+        persentase_kendaraan_atas = (traci.lane.getLastStepOccupancy('atas_ke_tengah_0') + traci.lane.getLastStepOccupancy('atas_ke_tengah_1')) / 2
         
-        panjang_antrian_bawah = traci.lanearea.getLastStepHaltingNumber('detektor_bawah_1') + traci.lanearea.getLastStepHaltingNumber('detektor_bawah_2')
-        panjang_antrian_kanan = traci.lanearea.getLastStepHaltingNumber('detektor_kanan_1') + traci.lanearea.getLastStepHaltingNumber('detektor_kanan_2')
-        panjang_antrian_kiri = traci.lanearea.getLastStepHaltingNumber('detektor_kiri_1') + traci.lanearea.getLastStepHaltingNumber('detektor_kiri_2')
-        panjang_antrian_atas = traci.lanearea.getLastStepHaltingNumber('detektor_atas_1') + traci.lanearea.getLastStepHaltingNumber('detektor_atas_2')
+        panjang_antrian_bawah = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
+        panjang_antrian_kanan = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
+        panjang_antrian_kiri = traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_1')
+        panjang_antrian_atas = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')
 
-        kecepatan_kendaraan_bawah = (traci.lanearea.getLastStepMeanSpeed('detektor_bawah_1') + traci.lanearea.getLastStepMeanSpeed('detektor_bawah_2')) / 20
-        kecepatan_kendaraan_kanan = (traci.lanearea.getLastStepMeanSpeed('detektor_kanan_1') + traci.lanearea.getLastStepMeanSpeed('detektor_kanan_2')) / 20
-        kecepatan_kendaraan_kiri = (traci.lanearea.getLastStepMeanSpeed('detektor_kiri_1') + traci.lanearea.getLastStepMeanSpeed('detektor_kiri_2')) / 20
-        kecepatan_kendaraan_atas = (traci.lanearea.getLastStepMeanSpeed('detektor_atas_1') + traci.lanearea.getLastStepMeanSpeed('detektor_atas_2')) / 20
+        kecepatan_kendaraan_bawah = (traci.lane.getLastStepMeanSpeed('bawah_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('bawah_ke_tengah_1')) / 2
+        kecepatan_kendaraan_kanan = (traci.lane.getLastStepMeanSpeed('kanan_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('kanan_ke_tengah_1')) / 2
+        kecepatan_kendaraan_kiri = (traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_1')) / 2
+        kecepatan_kendaraan_atas = (traci.lane.getLastStepMeanSpeed('atas_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('atas_ke_tengah_1')) / 2
         
         if action == 0:
             self.waktu_merah_atas = 0
@@ -205,7 +205,7 @@ class SumoEnv:
         done = traci.simulation.getMinExpectedNumber() <= 0
         
         if not done:
-            done = self.time > 100000
+            done = self.time > 10000
 
         obs = np.array([persentase_kendaraan_bawah, persentase_kendaraan_kanan, persentase_kendaraan_kiri, persentase_kendaraan_atas,
             kecepatan_kendaraan_bawah, kecepatan_kendaraan_kanan, kecepatan_kendaraan_kiri, kecepatan_kendaraan_atas])
