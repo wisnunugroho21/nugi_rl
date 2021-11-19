@@ -28,19 +28,19 @@ class SumoEnv:
         random.seed(10)  # make tests reproducible
         N = 100  # number of time steps
         # demand per second from different directions
-        pLR = 1. / 8
-        pRL = 1. / 8
-        pLB = 1. / 20
-        pRB = 1. / 20
-        pBL = 1. / 24
-        pBR = 1. / 24
+        pLR = 0.75
+        pRL = 0.75
+        pLB = 0.9
+        pRB = 0.9
+        pBL = 0.95
+        pBR = 0.95
 
-        pUB = 1. / 20
-        pBU = 1. / 20
-        pLU = 1. / 24
-        pRU = 1. / 24
-        pUL = 1. / 8
-        pUR = 1. / 8
+        pUB = 0.75
+        pBU = 0.75
+        pLU = 0.95
+        pRU = 0.95
+        pUL = 0.9
+        pUR = 0.9
 
         with open(route_files, "w") as routes:
             print("""<routes>
@@ -63,63 +63,64 @@ class SumoEnv:
 
             vehNr = 0            
             for i in range(N):
-                if random.uniform(0, 1) >= pLR:
+                sc = random.uniform(0, 1)
+                if sc >= pLR:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pRL:
+                if sc >= pRL:
                     print('    <vehicle id="kanan_kiri_%i" type="car" route="kanan_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pLB:
+                if sc >= pLB:
                     print('    <vehicle id="kiri_bawah_%i" type="car" route="kiri_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pRB: 
+                if sc >= pRB: 
                     print('    <vehicle id="kanan_bawah_%i" type="car" route="kanan_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pBL:
+                if sc >= pBL:
                     print('    <vehicle id="bawah_kiri_%i" type="car" route="bawah_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pBR:
+                if sc >= pBR:
                     print('    <vehicle id="bawah_kanan_%i" type="car" route="bawah_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
                     
 
-                if random.uniform(0, 1) >= pUB:
+                if sc >= pUB:
                     print('    <vehicle id="atas_bawah_%i" type="car" route="atas_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pBU:
+                if sc >= pBU:
                     print('    <vehicle id="bawah_atas_%i" type="car" route="bawah_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pLU:
+                if sc >= pLU:
                     print('    <vehicle id="kiri_atas_%i" type="car" route="kiri_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pRU:
+                if sc >= pRU:
                     print('    <vehicle id="kanan_atas_%i" type="car" route="kanan_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pUL:
+                if sc >= pUL:
                     print('    <vehicle id="atas_kiri_%i" type="car" route="atas_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if random.uniform(0, 1) >= pUR:
+                if sc >= pUR:
                     print('    <vehicle id="atas_kanan_%i" type="car" route="atas_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1

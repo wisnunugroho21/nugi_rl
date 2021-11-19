@@ -76,7 +76,7 @@ class AgentPPO(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.reshape(-1, state.shape[-1])
+            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -90,8 +90,8 @@ class AgentPPO(Agent):
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.reshape(-1, state.shape[-1])
-            action          = action.reshape(-1, action.shape[-1])
+            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
+            action          = action.reshape(-1, action.shape[-1]) if len(action.shape) > 0 else action.unsqueeze(0)
 
             action_datas    = self.policy(state)
 
