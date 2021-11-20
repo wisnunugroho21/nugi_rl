@@ -17,8 +17,8 @@ class Ordinal(Distribution):
         a1 = torch.ones(logits.size(2), logits.size(2), device = self.device).to(self.device).triu().transpose(0, 1).repeat(logits.size(0), logits.size(1), 1, 1)
         a2 = a1.logical_not().float()
 
-        a3 = logits.log()
-        a4 = (1 - logits).log()
+        a3 = (logits + 1e-5).log()
+        a4 = (1 - logits + 1e-5).log()
 
         out = torch.matmul(a1, a3) + torch.matmul(a2, a4)
         out = torch.nn.functional.softmax(out, dim = 2)
