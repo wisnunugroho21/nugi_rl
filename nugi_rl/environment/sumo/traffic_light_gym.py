@@ -11,7 +11,7 @@ from sumolib import checkBinary
 import traci
 
 class SumoEnv:  
-    def __init__(self):        
+    def __init__(self, new_route = True):        
         self.time = 0
         self.run = False
         
@@ -19,7 +19,8 @@ class SumoEnv:
         self.waktu_merah_bawah = 1
         self.waktu_merah_kiri = 1
         
-        self.__generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
+        if new_route:
+            self.__generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
 
         self.observation_space  = spaces.Box(-100, 100, (8, ))
         self.action_space       = spaces.Discrete(4)
@@ -28,19 +29,21 @@ class SumoEnv:
         random.seed(10)  # make tests reproducible
         N = 100  # number of time steps
         # demand per second from different directions
-        pLR = 0.75
-        pRL = 0.75
-        pLB = 0.9
-        pRB = 0.9
-        pBL = 0.95
-        pBR = 0.95
+        pLR = 1.0 / 6
+        pRL = 1.0 / 24
+        pLB = 1.0 / 6
+        pRB = 1.0 / 24
+        pBL = 1.0 / 24
+        pBR = 1.0 / 6
 
-        pUB = 0.75
-        pBU = 0.75
-        pLU = 0.95
-        pRU = 0.95
-        pUL = 0.9
-        pUR = 0.9
+        pUB = 1.0 / 24
+        pBU = 1.0 / 6
+        pLU = 1.0 / 24
+        pRU = 1.0 / 24
+        pUL = 1.0 / 24
+        pUR = 1.0 / 24
+
+        probs = [pLR, pRL, pLB, pRB, pBL, pBR, pUB, pBU, pLU, pRU, pUL, pUR]
 
         with open(route_files, "w") as routes:
             print("""<routes>
@@ -63,64 +66,65 @@ class SumoEnv:
 
             vehNr = 0            
             for i in range(N):
-                sc = random.uniform(0, 1)
-                if sc >= pLR:
+                sc = np.random.choice(12, p = probs)
+
+                if sc == 0:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pRL:
+                if sc == 1:
                     print('    <vehicle id="kanan_kiri_%i" type="car" route="kanan_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pLB:
+                if sc == 2:
                     print('    <vehicle id="kiri_bawah_%i" type="car" route="kiri_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pRB: 
+                if sc == 3:
                     print('    <vehicle id="kanan_bawah_%i" type="car" route="kanan_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pBL:
+                if sc == 4:
                     print('    <vehicle id="bawah_kiri_%i" type="car" route="bawah_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pBR:
+                if sc == 5:
                     print('    <vehicle id="bawah_kanan_%i" type="car" route="bawah_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
                     
 
-                if sc >= pUB:
+                if sc == 6:
                     print('    <vehicle id="atas_bawah_%i" type="car" route="atas_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pBU:
+                if sc == 7:
                     print('    <vehicle id="bawah_atas_%i" type="car" route="bawah_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pLU:
+                if sc == 8:
                     print('    <vehicle id="kiri_atas_%i" type="car" route="kiri_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pRU:
+                if sc == 9:
                     print('    <vehicle id="kanan_atas_%i" type="car" route="kanan_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pUL:
+                if sc == 10:
                     print('    <vehicle id="atas_kiri_%i" type="car" route="atas_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
 
-                if sc >= pUR:
+                if sc == 11:
                     print('    <vehicle id="atas_kanan_%i" type="car" route="atas_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
                     vehNr += 1
@@ -128,7 +132,7 @@ class SumoEnv:
             print("</routes>", file=routes)
     
     def reset(self):
-        sumoBinary = checkBinary('sumo-gui')
+        sumoBinary = checkBinary('sumo')
         
         if self.run:
             traci.close()  
@@ -142,10 +146,10 @@ class SumoEnv:
         
         self.time = 0
 
-        self.waktu_merah_atas = 0
-        self.waktu_merah_bawah = 0
-        self.waktu_merah_kanan = 0
-        self.waktu_merah_kiri = 0
+        self.waktu_merah_atas = 1
+        self.waktu_merah_bawah = 1
+        self.waktu_merah_kanan = 1
+        self.waktu_merah_kiri = 1
 
         return np.zeros(8)
     
@@ -172,33 +176,33 @@ class SumoEnv:
         kecepatan_kendaraan_atas = (traci.lane.getLastStepMeanSpeed('atas_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('atas_ke_tengah_1')) / 2
         
         if action == 0:
-            self.waktu_merah_atas = 0
-            self.waktu_merah_kanan += 1
-            self.waktu_merah_kiri += 1
-            self.waktu_merah_bawah += 1
+            self.waktu_merah_atas = 1
+            self.waktu_merah_kanan += 0.1
+            self.waktu_merah_kiri += 0.1
+            self.waktu_merah_bawah += 0.1
 
         elif action == 1:
-            self.waktu_merah_atas += 1
-            self.waktu_merah_kanan = 0
-            self.waktu_merah_kiri += 1
-            self.waktu_merah_bawah += 1
+            self.waktu_merah_atas += 0.1
+            self.waktu_merah_kanan = 1
+            self.waktu_merah_kiri += 0.1
+            self.waktu_merah_bawah += 0.1
 
         elif action == 2:
-            self.waktu_merah_atas += 1
-            self.waktu_merah_kanan += 1
-            self.waktu_merah_kiri += 1
-            self.waktu_merah_bawah = 0
+            self.waktu_merah_atas += 0.1
+            self.waktu_merah_kanan += 0.1
+            self.waktu_merah_kiri += 0.1
+            self.waktu_merah_bawah = 1
 
         elif action == 3:
-            self.waktu_merah_atas += 1
-            self.waktu_merah_kanan += 1
-            self.waktu_merah_kiri = 0
-            self.waktu_merah_bawah += 1
+            self.waktu_merah_atas += 0.1
+            self.waktu_merah_kanan += 0.1
+            self.waktu_merah_kiri = 1
+            self.waktu_merah_bawah += 0.1
             
-        reward += (self.waktu_merah_bawah * 0.1) + (panjang_antrian_bawah * 0.5)
-        reward += (self.waktu_merah_atas * 0.1) + (panjang_antrian_atas * 0.5)
-        reward += (self.waktu_merah_kanan * 0.1) + (panjang_antrian_kanan * 0.5)
-        reward += (self.waktu_merah_kiri * 0.1) + (panjang_antrian_kiri * 0.5)
+        reward += (panjang_antrian_bawah * 0.5 * self.waktu_merah_bawah) 
+        reward += (panjang_antrian_atas * 0.5 * self.waktu_merah_atas)
+        reward += (panjang_antrian_kanan * 0.5 * self.waktu_merah_kanan)
+        reward += (panjang_antrian_kiri * 0.5 * self.waktu_merah_kiri)
         reward += (banyak_kendaraan_tabrakan * 5.0)
         reward *= -1
         
