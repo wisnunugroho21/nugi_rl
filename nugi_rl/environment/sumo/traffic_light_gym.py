@@ -27,23 +27,24 @@ class SumoEnv:
         
     def __generate_routefile(self, route_files):
         random.seed(10)  # make tests reproducible
-        N = 100  # number of time steps
+        N = 200  # number of time steps
         # demand per second from different directions
-        pLR = 1.0 / 6
-        pRL = 1.0 / 24
-        pLB = 1.0 / 6
-        pRB = 1.0 / 24
-        pBL = 1.0 / 24
-        pBR = 1.0 / 6
+        pNo   = 1.0 / 13
+        pLR = 1.0 / 13
+        pRL = 1.0 / 13
+        pLB = 1.0 / 13
+        pRB = 1.0 / 13
+        pBL = 1.0 / 13
+        pBR = 1.0 / 13
 
-        pUB = 1.0 / 24
-        pBU = 1.0 / 6
-        pLU = 1.0 / 24
-        pRU = 1.0 / 24
-        pUL = 1.0 / 24
-        pUR = 1.0 / 24
+        pUB = 1.0 / 13
+        pBU = 1.0 / 13
+        pLU = 1.0 / 13
+        pRU = 1.0 / 13
+        pUL = 1.0 / 13
+        pUR = 1.0 / 13
 
-        probs = [pLR, pRL, pLB, pRB, pBL, pBR, pUB, pBU, pLU, pRU, pUL, pUR]
+        probs = [pNo, pLR, pRL, pLB, pRB, pBL, pBR, pUB, pBU, pLU, pRU, pUL, pUR]
 
         with open(route_files, "w") as routes:
             print("""<routes>
@@ -66,7 +67,7 @@ class SumoEnv:
 
             vehNr = 0            
             for i in range(N):
-                sc = np.random.choice(12, p = probs)
+                sc = np.random.choice(13, p = probs)
 
                 if sc == 0:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
