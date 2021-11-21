@@ -20,31 +20,16 @@ class SumoEnv:
         self.waktu_merah_kiri = 1
         
         if new_route:
-            self.__generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
+            self._generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
 
         self.observation_space  = spaces.Box(-100, 100, (8, ))
         self.action_space       = spaces.Discrete(4)
         
-    def __generate_routefile(self, route_files):
-        random.seed(10)  # make tests reproducible
+    def _generate_routefile(self, route_files):
         N = 200  # number of time steps
+
         # demand per second from different directions
-        pNo   = 1.0 / 13
-        pLR = 1.0 / 13
-        pRL = 1.0 / 13
-        pLB = 1.0 / 13
-        pRB = 1.0 / 13
-        pBL = 1.0 / 13
-        pBR = 1.0 / 13
-
-        pUB = 1.0 / 13
-        pBU = 1.0 / 13
-        pLU = 1.0 / 13
-        pRU = 1.0 / 13
-        pUL = 1.0 / 13
-        pUR = 1.0 / 13
-
-        probs = [pNo, pLR, pRL, pLB, pRB, pBL, pBR, pUB, pBU, pLU, pRU, pUL, pUR]
+        probs = self._generate_probs_route(level = 1)
 
         with open(route_files, "w") as routes:
             print("""<routes>
@@ -131,6 +116,26 @@ class SumoEnv:
                     vehNr += 1
                     
             print("</routes>", file=routes)
+
+    def _generate_probs_route(self, level):
+        if level == 1:
+            sc = np.random.choice(4)
+            
+            if sc == 0:
+                return [1.0 / 3, 0, 1.0 / 3, 0, 0, 0, 
+                    0, 0, 1.0 / 3, 0, 0, 0]
+
+            if sc == 1:
+                return [0, 1.0 / 3, 0, 1.0 / 3, 0, 0, 
+                    0, 0, 0, 1.0 / 3, 0, 0]
+
+            if sc == 2:
+                return [0, 0, 0, 0, 1.0 / 3, 1.0 / 3, 
+                    0, 1.0 / 3, 0, 0, 0, 0]
+
+            if sc == 3:
+                return [0, 0, 0, 0, 0, 0, 
+                    1.0 / 3, 0, 0, 0, 1.0 / 3, 1.0 / 3]
     
     def reset(self):
         sumoBinary = checkBinary('sumo')
@@ -161,10 +166,10 @@ class SumoEnv:
 
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
-        persentase_kendaraan_bawah = (traci.lane.getLastStepOccupancy('bawah_ke_tengah_0') + traci.lane.getLastStepOccupancy('bawah_ke_tengah_1')) / 2        
-        persentase_kendaraan_kanan = (traci.lane.getLastStepOccupancy('kanan_ke_tengah_0') + traci.lane.getLastStepOccupancy('kanan_ke_tengah_1')) / 2
-        persentase_kendaraan_kiri = (traci.lane.getLastStepOccupancy('kiri_ke_tengah_0') + traci.lane.getLastStepOccupancy('kiri_ke_tengah_1')) / 2
-        persentase_kendaraan_atas = (traci.lane.getLastStepOccupancy('atas_ke_tengah_0') + traci.lane.getLastStepOccupancy('atas_ke_tengah_1')) / 2
+        banyak_kendaraan_bawah = (traci.lane.getLastStepVehicleNumber('bawah_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('bawah_ke_tengah_1')) / 2        
+        banyak_kendaraan_kanan = (traci.lane.getLastStepVehicleNumber('kanan_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('kanan_ke_tengah_1')) / 2
+        banyak_kendaraan_kiri = (traci.lane.getLastStepVehicleNumber('kiri_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('kiri_ke_tengah_1')) / 2
+        banyak_kendaraan_atas = (traci.lane.getLastStepVehicleNumber('atas_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('atas_ke_tengah_1')) / 2
         
         panjang_antrian_bawah = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
         panjang_antrian_kanan = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
@@ -213,7 +218,7 @@ class SumoEnv:
         if not done:
             done = self.time > 10000
 
-        obs = np.array([persentase_kendaraan_bawah, persentase_kendaraan_kanan, persentase_kendaraan_kiri, persentase_kendaraan_atas,
+        obs = np.array([banyak_kendaraan_bawah, banyak_kendaraan_kanan, banyak_kendaraan_kiri, banyak_kendaraan_atas,
             kecepatan_kendaraan_bawah, kecepatan_kendaraan_kanan, kecepatan_kendaraan_kiri, kecepatan_kendaraan_atas])
 
         info = {}
