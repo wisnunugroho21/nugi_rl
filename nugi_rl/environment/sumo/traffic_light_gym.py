@@ -52,7 +52,7 @@ class SumoEnv:
 
             vehNr = 0            
             for i in range(N):
-                sc = np.random.choice(13, p = probs)
+                sc = np.random.choice(12, p = probs)
 
                 if sc == 0:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
