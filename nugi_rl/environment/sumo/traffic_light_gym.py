@@ -26,7 +26,7 @@ class SumoEnv:
         if os.path.exists(route_files):
             os.remove(route_files)
 
-        N = 200  # number of time steps
+        N = 800  # number of time steps
 
         # demand per second from different directions
         probs = self._generate_probs_route()
@@ -49,71 +49,57 @@ class SumoEnv:
             <route id="atas_kiri" edges="atas_ke_tengah tengah_ke_kiri"/>
             <route id="atas_kanan" edges="atas_ke_tengah tengah_ke_kanan"/>            
             """, file=routes)
-
-            vehNr = 0            
-            for i in range(N):
+            
+            for i in range(0, N, 4):
                 sc = np.random.choice(12, p = probs)
 
                 if sc == 0:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)                    
 
                 if sc == 1:
                     print('    <vehicle id="kanan_kiri_%i" type="car" route="kanan_kiri" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)                    
 
                 if sc == 2:
                     print('    <vehicle id="kiri_bawah_%i" type="car" route="kiri_bawah" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)                    
 
                 if sc == 3:
                     print('    <vehicle id="kanan_bawah_%i" type="car" route="kanan_bawah" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)
 
                 if sc == 4:
                     print('    <vehicle id="bawah_kiri_%i" type="car" route="bawah_kiri" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)                    
 
                 if sc == 5:
                     print('    <vehicle id="bawah_kanan_%i" type="car" route="bawah_kanan" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
-                    
+                        i, i), file=routes)
 
                 if sc == 6:
                     print('    <vehicle id="atas_bawah_%i" type="car" route="atas_bawah" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)
 
                 if sc == 7:
                     print('    <vehicle id="bawah_atas_%i" type="car" route="bawah_atas" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)
 
                 if sc == 8:
                     print('    <vehicle id="kiri_atas_%i" type="car" route="kiri_atas" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)
 
                 if sc == 9:
                     print('    <vehicle id="kanan_atas_%i" type="car" route="kanan_atas" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)
 
                 if sc == 10:
                     print('    <vehicle id="atas_kiri_%i" type="car" route="atas_kiri" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)
 
                 if sc == 11:
                     print('    <vehicle id="atas_kanan_%i" type="car" route="atas_kanan" depart="%i" />' % (
-                        vehNr, i), file=routes)
-                    vehNr += 4
+                        i, i), file=routes)
                     
             print("</routes>", file=routes)
 
