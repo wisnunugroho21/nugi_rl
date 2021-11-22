@@ -26,10 +26,13 @@ class SumoEnv:
         self.action_space       = spaces.Discrete(4)
         
     def _generate_routefile(self, route_files):
+        if os.path.exists(route_files):
+            os.remove(route_files)
+
         N = 200  # number of time steps
 
         # demand per second from different directions
-        probs = self._generate_probs_route(level = 1)
+        probs = self._generate_probs_route()
 
         with open(route_files, "w") as routes:
             print("""<routes>
@@ -57,67 +60,69 @@ class SumoEnv:
                 if sc == 0:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 1:
                     print('    <vehicle id="kanan_kiri_%i" type="car" route="kanan_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 2:
                     print('    <vehicle id="kiri_bawah_%i" type="car" route="kiri_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 3:
                     print('    <vehicle id="kanan_bawah_%i" type="car" route="kanan_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 4:
                     print('    <vehicle id="bawah_kiri_%i" type="car" route="bawah_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 5:
                     print('    <vehicle id="bawah_kanan_%i" type="car" route="bawah_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
                     
 
                 if sc == 6:
                     print('    <vehicle id="atas_bawah_%i" type="car" route="atas_bawah" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 7:
                     print('    <vehicle id="bawah_atas_%i" type="car" route="bawah_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 8:
                     print('    <vehicle id="kiri_atas_%i" type="car" route="kiri_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 9:
                     print('    <vehicle id="kanan_atas_%i" type="car" route="kanan_atas" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 10:
                     print('    <vehicle id="atas_kiri_%i" type="car" route="atas_kiri" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
 
                 if sc == 11:
                     print('    <vehicle id="atas_kanan_%i" type="car" route="atas_kanan" depart="%i" />' % (
                         vehNr, i), file=routes)
-                    vehNr += 1
+                    vehNr += 4
                     
             print("</routes>", file=routes)
 
-    def _generate_probs_route(self, level):
+    def _generate_probs_route(self):
+        level = np.random.choice(4)
+
         if level == 1:
             sc = np.random.choice(4)
             
@@ -125,17 +130,67 @@ class SumoEnv:
                 return [1.0 / 3, 0, 1.0 / 3, 0, 0, 0, 
                     0, 0, 1.0 / 3, 0, 0, 0]
 
-            if sc == 1:
+            elif sc == 1:
                 return [0, 1.0 / 3, 0, 1.0 / 3, 0, 0, 
                     0, 0, 0, 1.0 / 3, 0, 0]
 
-            if sc == 2:
+            elif sc == 2:
                 return [0, 0, 0, 0, 1.0 / 3, 1.0 / 3, 
                     0, 1.0 / 3, 0, 0, 0, 0]
 
-            if sc == 3:
+            elif sc == 3:
                 return [0, 0, 0, 0, 0, 0, 
                     1.0 / 3, 0, 0, 0, 1.0 / 3, 1.0 / 3]
+
+        elif level == 2:
+            sc = np.random.choice(6)
+
+            if sc == 0:
+                return [1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 0, 0, 
+                    0, 0, 1.0 / 6, 1.0 / 6, 0, 0]
+
+            elif sc == 1:
+                return [1.0/ 6, 0, 1.0/ 6, 0, 1.0/ 6, 1.0/ 6,
+                    0, 1.0/ 6, 1.0/ 6, 0, 0, 0]
+
+            elif sc == 2:
+                return [1.0/ 6, 0, 1.0/ 6, 0, 0, 0,
+                    1.0/ 6, 0, 1.0/ 6, 0, 1.0/ 6, 1.0/ 6]
+
+            elif sc == 3:
+                return [0, 1.0/ 6, 0, 1.0/ 6, 1.0/ 6, 1.0/ 6,
+                    0, 1.0/ 6, 0, 1.0/ 6, 0, 0]
+
+            elif sc == 4:
+                return [0, 1.0/ 6, 0, 1.0/ 6, 0, 0,
+                    1.0/ 6, 0, 0, 1.0/ 6, 1.0/ 6, 1.0/ 6]
+
+            elif sc == 5:
+                return [0, 0, 0, 0, 1.0/ 6, 1.0/ 6,
+                    1.0/ 6, 1.0/ 6, 0, 0, 1.0/ 6, 1.0/ 6]
+
+        elif level == 3:
+            sc = np.random.choice(4)
+
+            if sc == 0:
+                return [1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9,
+                    0, 1.0 / 9, 1.0 / 9, 1.0 / 9, 0, 0]
+
+            elif sc == 1:
+                return [1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9, 0, 0, 
+                    1.0 / 9, 0, 1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9]
+
+            elif sc == 2:
+                return [1.0 / 9, 0, 1.0 / 9, 0, 1.0 / 9, 1.0 / 9, 
+                    1.0 / 9, 1.0 / 9, 1.0 / 9, 0, 1.0 / 9, 1.0 / 9]
+
+            if sc == 0:
+                return [0, 1.0 / 9, 0, 1.0 / 9, 1.0 / 9, 1.0 / 9, 
+                    1.0 / 9, 1.0 / 9, 0, 1.0 / 9, 1.0 / 9, 1.0 / 9]
+
+        elif level == 4:
+            return [1.0 / 12, 1.0 / 12, 1.0 / 12, 1.0 / 12, 1.0 / 12, 1.0 / 12, 
+                1.0 / 12, 1.0 / 12, 1.0 / 12, 1.0 / 12, 1.0 / 12, 1.0 / 12]
     
     def reset(self):
         sumoBinary = checkBinary('sumo')
