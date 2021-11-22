@@ -19,9 +19,6 @@ class SumoEnv:
         self.waktu_merah_bawah = 1
         self.waktu_merah_kiri = 1
         
-        if new_route:
-            self._generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
-
         self.observation_space  = spaces.Box(-100, 100, (8, ))
         self.action_space       = spaces.Discrete(4)
         
@@ -194,6 +191,8 @@ class SumoEnv:
     
     def reset(self):
         sumoBinary = checkBinary('sumo')
+
+        self._generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
         
         if self.run:
             traci.close()  
