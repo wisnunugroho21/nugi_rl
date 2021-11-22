@@ -57,47 +57,47 @@ class SumoEnv:
                     print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
                         i, i), file=routes)                    
 
-                if sc == 1:
+                elif sc == 1:
                     print('    <vehicle id="kanan_kiri_%i" type="car" route="kanan_kiri" depart="%i" />' % (
                         i, i), file=routes)                    
 
-                if sc == 2:
+                elif sc == 2:
                     print('    <vehicle id="kiri_bawah_%i" type="car" route="kiri_bawah" depart="%i" />' % (
                         i, i), file=routes)                    
 
-                if sc == 3:
+                elif sc == 3:
                     print('    <vehicle id="kanan_bawah_%i" type="car" route="kanan_bawah" depart="%i" />' % (
                         i, i), file=routes)
 
-                if sc == 4:
+                elif sc == 4:
                     print('    <vehicle id="bawah_kiri_%i" type="car" route="bawah_kiri" depart="%i" />' % (
                         i, i), file=routes)                    
 
-                if sc == 5:
+                elif sc == 5:
                     print('    <vehicle id="bawah_kanan_%i" type="car" route="bawah_kanan" depart="%i" />' % (
                         i, i), file=routes)
 
-                if sc == 6:
+                elif sc == 6:
                     print('    <vehicle id="atas_bawah_%i" type="car" route="atas_bawah" depart="%i" />' % (
                         i, i), file=routes)
 
-                if sc == 7:
+                elif sc == 7:
                     print('    <vehicle id="bawah_atas_%i" type="car" route="bawah_atas" depart="%i" />' % (
                         i, i), file=routes)
 
-                if sc == 8:
+                elif sc == 8:
                     print('    <vehicle id="kiri_atas_%i" type="car" route="kiri_atas" depart="%i" />' % (
                         i, i), file=routes)
 
-                if sc == 9:
+                elif sc == 9:
                     print('    <vehicle id="kanan_atas_%i" type="car" route="kanan_atas" depart="%i" />' % (
                         i, i), file=routes)
 
-                if sc == 10:
+                elif sc == 10:
                     print('    <vehicle id="atas_kiri_%i" type="car" route="atas_kiri" depart="%i" />' % (
                         i, i), file=routes)
 
-                if sc == 11:
+                elif sc == 11:
                     print('    <vehicle id="atas_kanan_%i" type="car" route="atas_kanan" depart="%i" />' % (
                         i, i), file=routes)
                     
