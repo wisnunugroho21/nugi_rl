@@ -11,7 +11,7 @@ from sumolib import checkBinary
 import traci
 
 class SumoEnv:  
-    def __init__(self, new_route = True):        
+    def __init__(self, new_route: bool = True) -> None:        
         self.time = 0
         self.run = False
         
@@ -22,7 +22,7 @@ class SumoEnv:
         self.observation_space  = spaces.Box(-100, 100, (8, ))
         self.action_space       = spaces.Discrete(4)
         
-    def _generate_routefile(self, route_files):
+    def _generate_routefile(self, route_files: str) -> None:
         if os.path.exists(route_files):
             os.remove(route_files)
 
@@ -103,7 +103,7 @@ class SumoEnv:
                     
             print("</routes>", file=routes)
 
-    def _generate_probs_route(self):
+    def _generate_probs_route(self) -> list:
         level = np.random.choice(4)
 
         if level == 0:
@@ -221,8 +221,16 @@ class SumoEnv:
                 return [1.0 / 18, 1.0 / 18, 1.0 / 18, 1.0 / 18, 2.0 / 18, 2.0 / 18,
                     2.0 / 18, 2.0 / 18, 1.0 / 18, 1.0 / 18, 2.0 / 18, 2.0 / 18]
 
+    def _get_data_kendaraan(kendaraan_ids: list, position_id: int) -> list:
+        for id in kendaraan_ids:
+            position = traci.vehicle.getLanePosition(id)
+            speed = traci.vehicle.getSpeed(id)
+            
+            kendaraan_ids.append([position, speed, position_id])
+
+        return kendaraan_ids
     
-    def reset(self):
+    def reset(self) -> np.ndarray:
         sumoBinary = checkBinary('sumo')
 
         self._generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
@@ -244,29 +252,27 @@ class SumoEnv:
         self.waktu_merah_kanan = 1
         self.waktu_merah_kiri = 1
 
-        return np.zeros(8)
+        return np.zeros(1, 3)
     
-    def step(self, action):
+    def step(self, action) -> tuple:
         reward = 0
         traci.trafficlight.setPhase("gneJ10", action * 2)
         traci.simulationStep()
 
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
-        banyak_kendaraan_bawah = (traci.lane.getLastStepVehicleNumber('bawah_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('bawah_ke_tengah_1')) / 2        
-        banyak_kendaraan_kanan = (traci.lane.getLastStepVehicleNumber('kanan_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('kanan_ke_tengah_1')) / 2
-        banyak_kendaraan_kiri = (traci.lane.getLastStepVehicleNumber('kiri_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('kiri_ke_tengah_1')) / 2
-        banyak_kendaraan_atas = (traci.lane.getLastStepVehicleNumber('atas_ke_tengah_0') + traci.lane.getLastStepVehicleNumber('atas_ke_tengah_1')) / 2
-        
-        panjang_antrian_bawah = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
-        panjang_antrian_kanan = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
-        panjang_antrian_kiri = traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_1')
-        panjang_antrian_atas = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')
+        kendaraan_bawah_ids = traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1')
+        kendaraan_atas_ids  = traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1')
+        kendaraan_kiri_ids  = traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1')
+        kendaraan_kanan_ids = traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1')
 
-        kecepatan_kendaraan_bawah = (traci.lane.getLastStepMeanSpeed('bawah_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('bawah_ke_tengah_1')) / 2
-        kecepatan_kendaraan_kanan = (traci.lane.getLastStepMeanSpeed('kanan_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('kanan_ke_tengah_1')) / 2
-        kecepatan_kendaraan_kiri = (traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_1')) / 2
-        kecepatan_kendaraan_atas = (traci.lane.getLastStepMeanSpeed('atas_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('atas_ke_tengah_1')) / 2
+        kendaraan_array = self._get_data_kendaraan(kendaraan_bawah_ids, 0) + self._get_data_kendaraan(kendaraan_atas_ids, 1) + \
+            self._get_data_kendaraan(kendaraan_kiri_ids, 2) + self._get_data_kendaraan(kendaraan_kanan_ids, 3)
+        
+        panjang_antrian_bawah   = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
+        panjang_antrian_kanan   = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
+        panjang_antrian_kiri    = traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_1')
+        panjang_antrian_atas    = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')
         
         if action == 0:
             self.waktu_merah_atas = 1
@@ -305,8 +311,7 @@ class SumoEnv:
         if not done:
             done = self.time > 10000
 
-        obs = np.array([banyak_kendaraan_bawah, banyak_kendaraan_kanan, banyak_kendaraan_kiri, banyak_kendaraan_atas,
-            kecepatan_kendaraan_bawah, kecepatan_kendaraan_kanan, kecepatan_kendaraan_kiri, kecepatan_kendaraan_atas])
+        obs = np.array(kendaraan_array) if len(kendaraan_array) > 0 else np.zeros(1, 3)
 
         info = {}
             
