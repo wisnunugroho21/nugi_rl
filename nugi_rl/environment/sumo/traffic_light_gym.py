@@ -19,7 +19,7 @@ class SumoEnv:
         self.waktu_merah_bawah = 1
         self.waktu_merah_kiri = 1
         
-        self.observation_space  = spaces.Box(-100, 100, (8, ))
+        self.observation_space  = spaces.Box(-100, 100, (3, ))
         self.action_space       = spaces.Discrete(4)
         
     def _generate_routefile(self, route_files: str) -> None:
