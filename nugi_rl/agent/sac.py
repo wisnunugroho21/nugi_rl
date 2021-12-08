@@ -53,7 +53,7 @@ class AgentSac(Agent):
         self.policy_optimizer.zero_grad()
 
         action_datas    = self.policy(states)
-        actions         = self.distribution.sample(action_datas)
+        actions         = self.distribution.sample(*action_datas)
 
         q_value1        = self.soft_q1(states, actions)
         q_value2        = self.soft_q2(states, actions)
@@ -67,7 +67,7 @@ class AgentSac(Agent):
         self.soft_q_optimizer.zero_grad()
 
         next_action_datas   = self.policy(next_states, True)
-        next_actions        = self.distribution.sample(next_action_datas)
+        next_actions        = self.distribution.sample(*next_action_datas)
 
         predicted_q1        = self.soft_q1(states, actions)
         predicted_q2        = self.soft_q2(states, actions)
@@ -82,11 +82,11 @@ class AgentSac(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.unsqueeze(0)
+            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
-                action = self.distribution.sample(action_datas)
+                action = self.distribution.sample(*action_datas)
             else:
                 action = self.distribution.deterministic(action_datas)
 
@@ -96,12 +96,12 @@ class AgentSac(Agent):
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.unsqueeze(0)
-            action          = action.unsqueeze(0)
+            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
+            action          = action.reshape(-1, action.shape[-1]) if len(action.shape) > 0 else action.unsqueeze(0)
 
             action_datas    = self.policy(state)
 
-            logprobs        = self.distribution.logprob(action_datas, action)
+            logprobs        = self.distribution.logprob(*action_datas, action)
             logprobs        = logprobs.squeeze(0).detach()
 
         return logprobs

@@ -76,6 +76,7 @@ class AgentPPO(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
+            # Perlu penjagaan apakah multi agent atau enggak
             state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
             action_datas    = self.policy(state)
             
