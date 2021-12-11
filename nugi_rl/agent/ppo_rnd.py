@@ -195,6 +195,10 @@ class AgentPPO(Agent):
 
         return logprobs
 
+    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states, logprobs)
+        self.rnd_memory.save_all(next_states)
+
     def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
         self.policy_memory.save(state, action, reward, done, next_state, logprob)
         self.rnd_memory.save(next_state)
@@ -215,6 +219,10 @@ class AgentPPO(Agent):
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.policy_memory.get(start_position, end_position)
+
+    def clear_obs(self, start_position: int = 0, end_position: int = None) -> None:
+        self.policy_memory.clear(start_position, end_position)
+        self.rnd_memory.clear(start_position, end_position)
 
     def load_weights(self) -> None:
         model_checkpoint = torch.load(self.folder + '/ppo_rnd.tar', map_location = self.device)
