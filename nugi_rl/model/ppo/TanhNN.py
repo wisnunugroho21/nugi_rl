@@ -18,7 +18,7 @@ class Policy_Model(nn.Module):
           nn.Linear(64, action_dim)
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> Tensor:
+    def forward(self, states: Tensor, detach: bool = False) -> tuple:
       mean  = self.nn_layer(states)
       std   = self.actor_std.exp()
       

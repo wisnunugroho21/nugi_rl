@@ -16,7 +16,7 @@ class Policy_Model(nn.Module):
           nn.Linear(128, action_dim * bins)
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> Tensor:
+    def forward(self, states: Tensor, detach: bool = False) -> tuple:
       action_datas = self.nn_layer(states)
       action_datas = action_datas.reshape(-1, self.action_dim, self.bins)
       action_datas = nn.functional.softmax(action_datas, dim = -1)

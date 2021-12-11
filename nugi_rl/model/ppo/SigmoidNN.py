@@ -9,11 +9,13 @@ class Policy_Model(nn.Module):
         self.bins = bins
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+          nn.Linear(state_dim, 128),
           nn.SiLU(),
-          nn.Linear(256, 128),
+          nn.Linear(128, 256),
           nn.SiLU(),
-          nn.Linear(128, action_dim * bins),
+          nn.Linear(256, 64),
+          nn.SiLU(),
+          nn.Linear(64, action_dim * bins),
           nn.Sigmoid()
         )
         
@@ -33,9 +35,11 @@ class Value_Model(nn.Module):
         self.nn_layer = nn.Sequential(
           nn.Linear(state_dim, 64),
           nn.SiLU(),
-          nn.Linear(64, 64),
+          nn.Linear(64, 128),
           nn.SiLU(),
-          nn.Linear(64, 1)
+          nn.Linear(128, 32),
+          nn.SiLU(),
+          nn.Linear(32, 1)
         )
         
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:

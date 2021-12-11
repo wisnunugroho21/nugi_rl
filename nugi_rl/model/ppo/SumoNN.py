@@ -14,7 +14,7 @@ class Policy_Model(nn.Module):
         self.value  = nn.Linear(state_dim, state_dim)
         self.key    = nn.Linear(state_dim, state_dim)
         self.query  = nn.parameter.Parameter(
-          torch.tensor(1, state_dim)
+          torch.ones(1, state_dim)
         )
 
         self.att  = SelfAttention()
@@ -49,7 +49,7 @@ class Value_Model(nn.Module):
         self.value  = nn.Linear(state_dim, state_dim)
         self.key    = nn.Linear(state_dim, state_dim)
         self.query  = nn.parameter.Parameter(
-          torch.tensor(1, state_dim)
+          torch.ones(1, state_dim)
         )
 
         self.att  = SelfAttention()

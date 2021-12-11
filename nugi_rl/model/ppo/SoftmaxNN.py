@@ -14,7 +14,7 @@ class Policy_Model(nn.Module):
           nn.Softmax(-1)
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> Tensor:
+    def forward(self, states: Tensor, detach: bool = False) -> tuple:
       action_datas = self.nn_layer(states).detach()
 
       if detach:

@@ -24,7 +24,7 @@ class Policy_Model(nn.Module):
           nn.Sigmoid()
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> Tensor:
+    def forward(self, states: Tensor, detach: bool = False) -> tuple:
       x     = self.nn_layer(states)
       mean  = self.mean_layer(x[:, :64])
       std   = self.std_layer(x[:, 64:])
