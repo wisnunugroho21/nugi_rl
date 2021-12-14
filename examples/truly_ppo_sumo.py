@@ -13,7 +13,6 @@ from nugi_rl.train.runner.iteration.standard import IterRunner
 from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.ppo import AgentPPO
 from nugi_rl.distribution.discrete.ordinal import Ordinal
-from nugi_rl.environment.wrapper.discretization_wrapper import DiscretizationWrapper
 from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
 from nugi_rl.environment.sumo.traffic_light_gym import SumoEnv
 from nugi_rl.loss.ppo.truly_ppo import TrulyPpo
@@ -26,7 +25,7 @@ from nugi_rl.memory.policy.standard import PolicyMemory
 ############## Hyperparameters ##############
 
 load_weights            = False # If you want to load the agent, set this to True
-save_weights            = False # If you want to save the agent, set this to True
+save_weights            = True # If you want to save the agent, set this to True
 is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
 render                  = False # If you want to display the image. Turn this off if you run this in Google Collab
 reward_threshold        = 1000 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
@@ -49,7 +48,7 @@ learning_rate           = 2.5e-4
 bins                    = 4
 
 device                  = torch.device('cuda')
-folder                  = 'weights/truly_ppo_lift1'
+folder                  = 'weights/sumo'
 
 env = SumoEnv()
 

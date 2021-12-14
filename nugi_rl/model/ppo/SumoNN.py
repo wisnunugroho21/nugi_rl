@@ -16,7 +16,7 @@ class Encoder(nn.Module):
 
         self.feedforward = nn.Sequential(
           nn.Linear(dim, dim),
-          nn.ELU()
+          nn.SiLU()
         )
 
     def forward(self, datas: Tensor, mask: Tensor) -> Tensor:
@@ -37,17 +37,24 @@ class FinalEncoder(nn.Module):
         self.value  = nn.Linear(dim, dim)
         self.key    = nn.Linear(dim, dim)
         self.query  = nn.parameter.Parameter(
-          torch.ones(1, 1, 10)
+          torch.ones(1, 1, dim)
         )
 
         self.att    = SelfAttention()
+
+        self.feedforward = nn.Sequential(
+          nn.Linear(dim, dim),
+          nn.SiLU()
+        )
 
     def forward(self, datas: Tensor, mask: Tensor) -> Tensor:
         value     = self.value(datas)
         key       = self.key(datas)
 
-        context   = self.att(value, key, self.query, mask)
-        return context.squeeze(1)
+        context   = self.att(value, key, self.query, mask).squeeze(1)
+
+        encoded   = self.feedforward(context)
+        return encoded + context
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, bins: int):
@@ -57,16 +64,16 @@ class Policy_Model(nn.Module):
         self.bins       = bins
 
         self.feedforward_1 = nn.Sequential(
-          nn.Linear(state_dim, 10),
+          nn.Linear(state_dim, 32),
           nn.SiLU(),
         )
 
-        self.encoder_1 = Encoder(10)
-        self.encoder_2 = Encoder(10)
-        self.encoder_3 = FinalEncoder(10)
+        self.encoder_1 = Encoder(32)
+        self.encoder_2 = Encoder(32)
+        self.encoder_3 = FinalEncoder(32)
 
         self.feedforward_2 = nn.Sequential(
-          nn.Linear(10, 64),
+          nn.Linear(32, 64),
           nn.SiLU(),
           nn.Linear(64, action_dim * bins),
           nn.Sigmoid()
@@ -92,16 +99,16 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()
 
         self.feedforward_1 = nn.Sequential(
-          nn.Linear(state_dim, 10),
+          nn.Linear(state_dim, 32),
           nn.SiLU(),
         )
 
-        self.encoder_1 = Encoder(10)
-        self.encoder_2 = Encoder(10)
-        self.encoder_3 = FinalEncoder(10)
+        self.encoder_1 = Encoder(32)
+        self.encoder_2 = Encoder(32)
+        self.encoder_3 = FinalEncoder(32)
 
         self.feedforward_2 = nn.Sequential(
-          nn.Linear(10, 64),
+          nn.Linear(32, 64),
           nn.SiLU(),
           nn.Linear(64, 1)
         )
