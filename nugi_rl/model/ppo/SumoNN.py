@@ -4,37 +4,82 @@ from torch import Tensor
 
 from nugi_rl.model.components.SelfAttention import SelfAttention
 
+class Encoder(nn.Module):
+    def __init__(self, dim) -> None:
+        super(Encoder, self).__init__()
+
+        self.value  = nn.Linear(dim, dim)
+        self.key    = nn.Linear(dim, dim)
+        self.query  = nn.Linear(dim, dim)
+
+        self.att    = SelfAttention()
+
+        self.feedforward = nn.Sequential(
+          nn.Linear(dim, dim),
+          nn.ELU()
+        )
+
+    def forward(self, datas: Tensor, mask: Tensor) -> Tensor:
+        value     = self.value(datas)
+        key       = self.key(datas)
+        query     = self.query(datas)
+
+        context   = self.att(value, key, query, mask)
+        context   = context + datas
+
+        encoded   = self.feedforward(context)
+        return encoded + context
+
+class FinalEncoder(nn.Module):
+    def __init__(self, dim) -> None:
+        super(FinalEncoder, self).__init__()
+
+        self.value  = nn.Linear(dim, dim)
+        self.key    = nn.Linear(dim, dim)
+        self.query  = nn.parameter.Parameter(
+          torch.ones(1, 1, 10)
+        )
+
+        self.att    = SelfAttention()
+
+    def forward(self, datas: Tensor, mask: Tensor) -> Tensor:
+        value     = self.value(datas)
+        key       = self.key(datas)
+
+        context   = self.att(value, key, self.query, mask)
+        return context.squeeze(1)
+
 class Policy_Model(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, bins: int):
         super(Policy_Model, self).__init__()
 
         self.action_dim = action_dim
-        self.bins = bins
+        self.bins       = bins
 
-        self.value  = nn.Linear(state_dim, state_dim)
-        self.key    = nn.Linear(state_dim, state_dim)
-        self.query  = nn.parameter.Parameter(
-          torch.ones(1, state_dim)
+        self.feedforward_1 = nn.Sequential(
+          nn.Linear(state_dim, 10),
+          nn.SiLU(),
         )
 
-        self.att  = SelfAttention()
+        self.encoder_1 = Encoder(10)
+        self.encoder_2 = Encoder(10)
+        self.encoder_3 = FinalEncoder(10)
 
-        self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 256),
+        self.feedforward_2 = nn.Sequential(
+          nn.Linear(10, 64),
           nn.SiLU(),
-          nn.Linear(256, 128),
-          nn.SiLU(),
-          nn.Linear(128, action_dim * bins),
+          nn.Linear(64, action_dim * bins),
           nn.Sigmoid()
         )
         
     def forward(self, states: Tensor, detach: bool = False) -> tuple:
-      value   = self.value(states)
-      key     = self.key(states)
+      datas = self.feedforward_1(states)
 
-      context = self.att(value, key, self.query) 
+      datas = self.encoder_1(datas, states[:, :, -1].unsqueeze(1))
+      datas = self.encoder_2(datas, states[:, :, -1].unsqueeze(1))
+      datas = self.encoder_3(datas, states[:, :, -1].unsqueeze(1))
 
-      action = self.nn_layer(context)
+      action = self.feedforward_2(datas)
       action = action.reshape(-1, self.action_dim, self.bins)
 
       if detach:
@@ -46,29 +91,29 @@ class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
         super(Value_Model, self).__init__()
 
-        self.value  = nn.Linear(state_dim, state_dim)
-        self.key    = nn.Linear(state_dim, state_dim)
-        self.query  = nn.parameter.Parameter(
-          torch.ones(1, state_dim)
+        self.feedforward_1 = nn.Sequential(
+          nn.Linear(state_dim, 10),
+          nn.SiLU(),
         )
 
-        self.att  = SelfAttention()
+        self.encoder_1 = Encoder(10)
+        self.encoder_2 = Encoder(10)
+        self.encoder_3 = FinalEncoder(10)
 
-        self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 64),
-          nn.SiLU(),
-          nn.Linear(64, 64),
+        self.feedforward_2 = nn.Sequential(
+          nn.Linear(10, 64),
           nn.SiLU(),
           nn.Linear(64, 1)
         )
         
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
-      value   = self.value(states)
-      key     = self.key(states)
+      datas = self.feedforward_1(states)
 
-      context = self.att(value, key, self.query)
+      datas = self.encoder_1(datas, states[:, :, -1].unsqueeze(1))
+      datas = self.encoder_2(datas, states[:, :, -1].unsqueeze(1))
+      datas = self.encoder_3(datas, states[:, :, -1].unsqueeze(1))
 
       if detach:
-        return self.nn_layer(context).detach()
+        return self.feedforward_2(datas).detach()
       else:
-        return self.nn_layer(context)
+        return self.feedforward_2(datas)

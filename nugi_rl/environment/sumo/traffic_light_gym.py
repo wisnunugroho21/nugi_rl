@@ -21,6 +21,12 @@ class SumoEnv:
         
         self.observation_space  = spaces.Box(-100, 100, (3, ))
         self.action_space       = spaces.Discrete(4)
+
+    def get_obs_dim(self):
+        return 3
+            
+    def get_action_dim(self):
+        return 4
         
     def _generate_routefile(self, route_files: str) -> None:
         if os.path.exists(route_files):
@@ -221,14 +227,8 @@ class SumoEnv:
                 return [1.0 / 18, 1.0 / 18, 1.0 / 18, 1.0 / 18, 2.0 / 18, 2.0 / 18,
                     2.0 / 18, 2.0 / 18, 1.0 / 18, 1.0 / 18, 2.0 / 18, 2.0 / 18]
 
-    def _get_data_kendaraan(kendaraan_ids: list, position_id: int) -> list:
-        for id in kendaraan_ids:
-            position = traci.vehicle.getLanePosition(id)
-            speed = traci.vehicle.getSpeed(id)
-            
-            kendaraan_ids.append([position, speed, position_id])
-
-        return kendaraan_ids
+    def _get_data_kendaraan(self, kendaraan_ids: list, position_id: int) -> list:
+        return list(map(lambda id: [traci.vehicle.getLanePosition(id), traci.vehicle.getSpeed(id), position_id], kendaraan_ids))
     
     def reset(self) -> np.ndarray:
         sumoBinary = checkBinary('sumo')
@@ -252,7 +252,7 @@ class SumoEnv:
         self.waktu_merah_kanan = 1
         self.waktu_merah_kiri = 1
 
-        return np.zeros(1, 3)
+        return np.full((150, 3), -1)
     
     def step(self, action) -> tuple:
         reward = 0
@@ -261,13 +261,14 @@ class SumoEnv:
 
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
-        kendaraan_bawah_ids = traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1')
-        kendaraan_atas_ids  = traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1')
-        kendaraan_kiri_ids  = traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1')
-        kendaraan_kanan_ids = traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0') + traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1')
-
-        kendaraan_array = self._get_data_kendaraan(kendaraan_bawah_ids, 0) + self._get_data_kendaraan(kendaraan_atas_ids, 1) + \
-            self._get_data_kendaraan(kendaraan_kiri_ids, 2) + self._get_data_kendaraan(kendaraan_kanan_ids, 3)
+        kendaraan_array = self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0'), 1) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1'), 2) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0'), 3) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1'), 4) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0'), 5) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1'), 6) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_0'), 7) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_1'), 8)
         
         panjang_antrian_bawah   = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
         panjang_antrian_kanan   = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
@@ -309,9 +310,11 @@ class SumoEnv:
         done = traci.simulation.getMinExpectedNumber() <= 0
         
         if not done:
-            done = self.time > 10000
+            done = self.time > 20000
 
-        obs = np.array(kendaraan_array) if len(kendaraan_array) > 0 else np.zeros(1, 3)
+        obs     = np.array(kendaraan_array) if len(kendaraan_array) > 0 else np.full((1, 3), -1)
+        zeros   = np.full((150 - len(obs), 3), -1)
+        obs     = np.concatenate([obs, zeros], 0)
 
         info = {}
             
