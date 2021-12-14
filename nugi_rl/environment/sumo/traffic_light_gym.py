@@ -231,12 +231,12 @@ class SumoEnv:
         return list(map(lambda id: [traci.vehicle.getLanePosition(id), traci.vehicle.getSpeed(id), position_id], kendaraan_ids))
     
     def reset(self) -> np.ndarray:
+        if self.run:
+            traci.close()
+
         sumoBinary = checkBinary('sumo')
 
-        self._generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation
-        
-        if self.run:
-            traci.close()  
+        self._generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation          
             
         traci.start([sumoBinary, "-c", "nugi_rl/environment/sumo/test1.sumocfg", 
         "--tripinfo-output", "nugi_rl/environment/sumo/test1.xml",
@@ -247,10 +247,10 @@ class SumoEnv:
         
         self.time = 0
 
-        self.waktu_merah_atas = 1
-        self.waktu_merah_bawah = 1
-        self.waktu_merah_kanan = 1
-        self.waktu_merah_kiri = 1
+        self.waktu_merah_atas = 0
+        self.waktu_merah_bawah = 0
+        self.waktu_merah_kanan = 0
+        self.waktu_merah_kiri = 0
 
         return np.full((150, 3), -1)
     
@@ -276,14 +276,14 @@ class SumoEnv:
         panjang_antrian_atas    = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')
         
         if action == 0:
-            self.waktu_merah_atas = 1
+            self.waktu_merah_atas = 0
             self.waktu_merah_kanan += 0.1
             self.waktu_merah_kiri += 0.1
             self.waktu_merah_bawah += 0.1
 
         elif action == 1:
             self.waktu_merah_atas += 0.1
-            self.waktu_merah_kanan = 1
+            self.waktu_merah_kanan = 0
             self.waktu_merah_kiri += 0.1
             self.waktu_merah_bawah += 0.1
 
@@ -291,20 +291,20 @@ class SumoEnv:
             self.waktu_merah_atas += 0.1
             self.waktu_merah_kanan += 0.1
             self.waktu_merah_kiri += 0.1
-            self.waktu_merah_bawah = 1
+            self.waktu_merah_bawah = 0
 
         elif action == 3:
             self.waktu_merah_atas += 0.1
             self.waktu_merah_kanan += 0.1
-            self.waktu_merah_kiri = 1
+            self.waktu_merah_kiri = 0
             self.waktu_merah_bawah += 0.1
             
-        reward += (panjang_antrian_bawah * 0.5 * self.waktu_merah_bawah) 
-        reward += (panjang_antrian_atas * 0.5 * self.waktu_merah_atas)
-        reward += (panjang_antrian_kanan * 0.5 * self.waktu_merah_kanan)
-        reward += (panjang_antrian_kiri * 0.5 * self.waktu_merah_kiri)
+        reward += (panjang_antrian_bawah * 0.5 + self.waktu_merah_bawah) 
+        reward += (panjang_antrian_atas * 0.5 + self.waktu_merah_atas)
+        reward += (panjang_antrian_kanan * 0.5 + self.waktu_merah_kanan)
+        reward += (panjang_antrian_kiri * 0.5 + self.waktu_merah_kiri)
         reward += (banyak_kendaraan_tabrakan * 5.0)
-        reward *= -1
+        reward *= -1.0
         
         self.time += 1
         done = traci.simulation.getMinExpectedNumber() <= 0
