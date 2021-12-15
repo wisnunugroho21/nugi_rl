@@ -252,7 +252,10 @@ class SumoEnv:
         self.waktu_merah_kanan = 0
         self.waktu_merah_kiri = 0
 
-        return np.full((150, 3), -1)
+        start = np.full((1, 3), -1)
+        zeros = np.full((150, 3), -2) 
+
+        return np.concatenate([start, zeros], 0)
     
     def step(self, action) -> tuple:
         reward = 0
@@ -310,11 +313,18 @@ class SumoEnv:
         done = traci.simulation.getMinExpectedNumber() <= 0
         
         if not done:
-            done = self.time > 20000
+            done = self.time > 20000        
+        
+        start   = np.full((1, 3), -1)
 
-        obs     = np.array(kendaraan_array) if len(kendaraan_array) > 0 else np.full((1, 3), -1)
-        zeros   = np.full((150 - len(obs), 3), -1)
-        obs     = np.concatenate([obs, zeros], 0)
+        if len(kendaraan_array) > 0:        
+            zeros   = np.full((150 - len(kendaraan_array), 3), -2)
+            obs     = np.array(kendaraan_array)
+            obs     = np.concatenate([start, obs, zeros], 0)
+        
+        else:
+            zeros   = np.full((150, 3), -2) 
+            obs     = np.concatenate([start, zeros], 0)
 
         info = {}
             
