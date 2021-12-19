@@ -32,8 +32,6 @@ class SumoEnv:
         if os.path.exists(route_files):
             os.remove(route_files)
 
-        N = 800  # number of time steps
-
         # demand per second from different directions
         probs = self._generate_probs_route()
 
@@ -56,7 +54,10 @@ class SumoEnv:
             <route id="atas_kanan" edges="atas_ke_tengah tengah_ke_kanan"/>            
             """, file=routes)
             
-            for i in range(0, N, 4):
+            for i in range(0, 800, 4):
+                """ vc = 1 # np.random.choice(2, p = [0.2, 0.8])
+
+                if vc == 1: """
                 sc = np.random.choice(12, p = probs)
 
                 if sc == 0:
@@ -253,16 +254,13 @@ class SumoEnv:
         self.waktu_merah_kiri = 0
 
         start = np.full((1, 3), -1)
-        zeros = np.full((150, 3), -2) 
+        zeros = np.full((150, 3), -100) 
 
         return np.concatenate([start, zeros], 0)
     
-    def step(self, action) -> tuple:
-        reward = 0
-        traci.trafficlight.setPhase("gneJ10", action * 2)
-        traci.simulationStep()
-
-        banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
+    def step(self, action) -> tuple:        
+        traci.trafficlight.setPhase("gneJ10", action)
+        traci.simulationStep()        
 
         kendaraan_array = self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0'), 1) + \
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1'), 2) + \
@@ -278,7 +276,7 @@ class SumoEnv:
         panjang_antrian_kiri    = traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_1')
         panjang_antrian_atas    = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')
         
-        if action == 0:
+        """ if action == 0:
             self.waktu_merah_atas = 0
             self.waktu_merah_kanan += 0.1
             self.waktu_merah_kiri += 0.1
@@ -300,12 +298,20 @@ class SumoEnv:
             self.waktu_merah_atas += 0.1
             self.waktu_merah_kanan += 0.1
             self.waktu_merah_kiri = 0
-            self.waktu_merah_bawah += 0.1
+            self.waktu_merah_bawah += 0.1 """
             
-        reward += (panjang_antrian_bawah * 0.5 + self.waktu_merah_bawah) 
+        """ reward += (panjang_antrian_bawah * 0.5 + self.waktu_merah_bawah) 
         reward += (panjang_antrian_atas * 0.5 + self.waktu_merah_atas)
         reward += (panjang_antrian_kanan * 0.5 + self.waktu_merah_kanan)
-        reward += (panjang_antrian_kiri * 0.5 + self.waktu_merah_kiri)
+        reward += (panjang_antrian_kiri * 0.5 + self.waktu_merah_kiri) """
+
+        reward = 0
+        banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
+
+        reward += (panjang_antrian_bawah * 0.5) 
+        reward += (panjang_antrian_atas * 0.5)
+        reward += (panjang_antrian_kanan * 0.5)
+        reward += (panjang_antrian_kiri * 0.5)
         reward += (banyak_kendaraan_tabrakan * 5.0)
         reward *= -1.0
         
@@ -313,19 +319,21 @@ class SumoEnv:
         done = traci.simulation.getMinExpectedNumber() <= 0
         
         if not done:
-            done = self.time > 20000        
+            done = self.time > 30000
         
         start   = np.full((1, 3), -1)
 
         if len(kendaraan_array) > 0:        
-            zeros   = np.full((150 - len(kendaraan_array), 3), -2)
+            zeros   = np.full((150 - len(kendaraan_array), 3), -100)
             obs     = np.array(kendaraan_array)
             obs     = np.concatenate([start, obs, zeros], 0)
         
         else:
-            zeros   = np.full((150, 3), -2) 
+            zeros   = np.full((150, 3), -100) 
             obs     = np.concatenate([start, zeros], 0)
 
-        info = {}
+        info = {
+            "colliding": banyak_kendaraan_tabrakan
+        }
             
         return obs, reward, done, info
