@@ -18,8 +18,9 @@ class AgentPPO(Agent):
     def __init__(self, policy: Module, value: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, 
         policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: PolicyMemory, optimizer: Optimizer, 
         ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
-        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None) -> None:
+        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None, need_unsqueeze = False) -> None:
 
+        self.need_unsqueeze     = need_unsqueeze
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
         self.is_training_mode   = is_training_mode
@@ -76,8 +77,7 @@ class AgentPPO(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            # Perlu penjagaan apakah multi agent atau enggak
-            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
+            state           = state.unsqueeze(0) if len(state.shape) == 0 or self.need_unsqueeze else state
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -91,8 +91,8 @@ class AgentPPO(Agent):
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
-            action          = action.reshape(-1, action.shape[-1]) if len(action.shape) > 0 else action.unsqueeze(0)
+            state           = state.unsqueeze(0) if len(state.shape) == 0 or self.need_unsqueeze else state
+            action          = action.unsqueeze(0) if len(action.shape) == 0 or self.need_unsqueeze else action
 
             action_datas    = self.policy(state)
 
