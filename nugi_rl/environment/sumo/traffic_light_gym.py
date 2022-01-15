@@ -280,18 +280,18 @@ class SumoEnv:
         kecepatan_kendaraan_kiri    = (traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_1')) / 2
         kecepatan_kendaraan_atas    = (traci.lane.getLastStepMeanSpeed('atas_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('atas_ke_tengah_1')) / 2
 
-        waktu_menunggu_bawah    = traci.lane.getWaitingTime('bawah_ke_tengah_0') + traci.lane.getWaitingTime('bawah_ke_tengah_1')
-        waktu_menunggu_kanan    = traci.lane.getWaitingTime('kanan_ke_tengah_0') + traci.lane.getWaitingTime('kanan_ke_tengah_1')
-        waktu_menunggu_kiri     = traci.lane.getWaitingTime('kiri_ke_tengah_0') + traci.lane.getWaitingTime('kiri_ke_tengah_1')
-        waktu_menunggu_atas     = traci.lane.getWaitingTime('atas_ke_tengah_0') + traci.lane.getWaitingTime('atas_ke_tengah_1')
+        waktu_menunggu_bawah    = (traci.lane.getWaitingTime('bawah_ke_tengah_0') + traci.lane.getWaitingTime('bawah_ke_tengah_1')) / 2
+        waktu_menunggu_kanan    = (traci.lane.getWaitingTime('kanan_ke_tengah_0') + traci.lane.getWaitingTime('kanan_ke_tengah_1')) / 2
+        waktu_menunggu_kiri     = (traci.lane.getWaitingTime('kiri_ke_tengah_0') + traci.lane.getWaitingTime('kiri_ke_tengah_1')) / 2
+        waktu_menunggu_atas     = (traci.lane.getWaitingTime('atas_ke_tengah_0') + traci.lane.getWaitingTime('atas_ke_tengah_1')) / 2
 
         kecepatan_diperbolehkan_bawah   = (traci.lane.getMaxSpeed('bawah_ke_tengah_0') + traci.lane.getMaxSpeed('bawah_ke_tengah_1')) / 2
         kecepatan_diperbolehkan_kanan   = (traci.lane.getMaxSpeed('kanan_ke_tengah_0') + traci.lane.getMaxSpeed('kanan_ke_tengah_1')) / 2
         kecepatan_diperbolehkan_kiri    = (traci.lane.getMaxSpeed('kiri_ke_tengah_0') + traci.lane.getMaxSpeed('kiri_ke_tengah_1')) / 2
         kecepatan_diperbolehkan_atas    = (traci.lane.getMaxSpeed('atas_ke_tengah_0') + traci.lane.getMaxSpeed('atas_ke_tengah_1')) / 2
 
-        banyak_lolos_perempatan     = traci.edge.getLastStepVehicleNumber('titik_tengah')
-        banyak_antrian_perempatan   = traci.edge.getLastStepHaltingNumber('titik_tengah')
+        # banyak_lolos_perempatan     = traci.edge.getLastStepVehicleNumber('titik_tengah')
+        # banyak_antrian_perempatan   = traci.edge.getLastStepHaltingNumber('titik_tengah')
         
         phase_changed = 0
         if action != self.last_action:
@@ -311,7 +311,7 @@ class SumoEnv:
         reward += (panjang_antrian_kiri * -0.25 + waktu_delay_kiri * -0.25 + waktu_menunggu_kiri * -0.25)
         reward += (panjang_antrian_atas * -0.25 + waktu_delay_atas * -0.25 + waktu_menunggu_atas * -0.25)
         reward += (phase_changed * -5)
-        reward += (banyak_lolos_perempatan - banyak_antrian_perempatan)
+        # reward += (banyak_lolos_perempatan - banyak_antrian_perempatan)
         reward += (banyak_kendaraan_tabrakan * -5.0)
         
         self.time += 1
