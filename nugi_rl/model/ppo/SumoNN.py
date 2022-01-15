@@ -2,125 +2,121 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from nugi_rl.model.components.SelfAttention import SelfAttention
+from nugi_rl.model.components.Transformer import EncoderLayer, DecoderLayer
 
-class Encoder(nn.Module):
-    def __init__(self, dim) -> None:
-        super(Encoder, self).__init__()
+class GlobalExtractor(nn.Module):
+    def __init__(self, dim: int) -> None:
+        super().__init__()
 
-        self.value  = nn.Linear(dim, dim)
-        self.key    = nn.Linear(dim, dim)
-        self.query  = nn.Linear(dim, dim)
-
-        self.att    = SelfAttention()
-
-        self.feedforward = nn.Sequential(
-          nn.Linear(dim, dim),
-          nn.SiLU()
+        self.object_queries = nn.parameter.Parameter(
+            torch.ones(1, 1, dim)
         )
 
-    def forward(self, datas: Tensor, mask: Tensor) -> Tensor:
-        value     = self.value(datas)
-        key       = self.key(datas)
-        query     = self.query(datas)
+        self.encoder_1 = EncoderLayer(dim)
+        self.encoder_2 = EncoderLayer(dim)
+        self.decoder = DecoderLayer(dim)
 
-        context   = self.att(value, key, query, mask)
-        context   = context + datas
+    def forward(self, inputs: Tensor, mask: Tensor) -> Tensor:
+        mask = self.transform_mask(mask)
 
-        encoded   = self.feedforward(context)
-        return encoded + context
+        x = self.encoder_1(inputs, mask)
+        x = self.encoder_2(x, mask)
+        return self.decoder(self.object_queries, x).squeeze(1)
 
-class FinalEncoder(nn.Module):
-    def __init__(self, dim) -> None:
-        super(FinalEncoder, self).__init__()
+    def transform_mask(self, mask: Tensor) -> Tensor:
+        seq_len = mask.shape[-1]
+        lookahead_mask = torch.ones((seq_len, seq_len)).bool()
+        padding_mask = (mask != -100)
+        mask = padding_mask.unsqueeze(0) & lookahead_mask
 
-        self.value  = nn.Linear(dim, dim)
-        self.key    = nn.Linear(dim, dim)
-        self.query  = nn.parameter.Parameter(
-          torch.ones(1, 1, dim)
-        )
-
-        self.att    = SelfAttention()
-
-        self.feedforward = nn.Sequential(
-          nn.Linear(dim, dim),
-          nn.SiLU()
-        )
-
-    def forward(self, datas: Tensor, mask: Tensor) -> Tensor:
-        value     = self.value(datas)
-        key       = self.key(datas)
-
-        context   = self.att(value, key, self.query, mask).squeeze(1)
-
-        encoded   = self.feedforward(context)
-        return encoded + context
+        return mask.unsqueeze(0)
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, bins: int):
         super(Policy_Model, self).__init__()
 
         self.action_dim = action_dim
-        self.bins       = bins
+        self.bins = bins
+
+        self.object_queries = nn.parameter.Parameter(
+            torch.ones(1, 1, 64)
+        )
 
         self.feedforward_1 = nn.Sequential(
-          nn.Linear(state_dim, 32),
-          nn.SiLU(),
+            nn.Linear(state_dim, 32),
+            nn.SiLU(),
         )
 
-        self.encoder_1 = Encoder(32)
-        self.encoder_2 = Encoder(32)
-        self.encoder_3 = FinalEncoder(32)
+        self.extractors = nn.ModuleList(
+            [GlobalExtractor(32) for _ in range(4)]
+        )
 
         self.feedforward_2 = nn.Sequential(
-          nn.Linear(32, 64),
-          nn.SiLU(),
-          nn.Linear(64, action_dim * bins),
-          nn.Sigmoid()
+            nn.Linear(128, 64),
+            nn.SiLU(),
+            nn.Linear(64, action_dim * bins),
+            nn.Sigmoid()
         )
-        
+
     def forward(self, states: Tensor, detach: bool = False) -> tuple:
-      datas = self.feedforward_1(states)
+        masks = states.permute(1, 0, 2, 3)[:, :, :, -1].unsqueeze(1)
 
-      datas = self.encoder_1(datas, states[:, :, -1].unsqueeze(1))
-      datas = self.encoder_2(datas, states[:, :, -1].unsqueeze(1))
-      datas = self.encoder_3(datas, states[:, :, -1].unsqueeze(1))
+        datas = self.feedforward_1(states)
+        datas = datas.permute(1, 0, 2, 3)
 
-      action = self.feedforward_2(datas)
-      action = action.reshape(-1, self.action_dim, self.bins)
+        for idx, extractor in enumerate(self.extractors):
+            datas[idx] = extractor(datas[idx], masks[idx])
 
-      if detach:
-        return (action.detach(), )
-      else:
-        return (action, )
+        datas = datas.permute(1, 0, 2).flatten(1)
+        
+        action = self.feedforward_2(datas)
+        action = action.reshape(-1, self.action_dim, self.bins)
+
+        if detach:
+            return (action.detach(), )
+        else:
+            return (action, )
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
         super(Value_Model, self).__init__()
 
         self.feedforward_1 = nn.Sequential(
-          nn.Linear(state_dim, 32),
-          nn.SiLU(),
+            nn.Linear(state_dim, 32),
+            nn.SiLU(),
         )
 
-        self.encoder_1 = Encoder(32)
-        self.encoder_2 = Encoder(32)
-        self.encoder_3 = FinalEncoder(32)
+        self.object_queries = nn.parameter.Parameter(
+            torch.ones(1, 1, 64)
+        )
+
+        self.feedforward_1 = nn.Sequential(
+            nn.Linear(state_dim, 32),
+            nn.SiLU(),
+        )
+
+        self.extractors = nn.ModuleList(
+            [GlobalExtractor(32) for _ in range(4)]
+        )
 
         self.feedforward_2 = nn.Sequential(
-          nn.Linear(32, 64),
-          nn.SiLU(),
-          nn.Linear(64, 1)
+            nn.Linear(128, 64),
+            nn.SiLU(),
+            nn.Linear(64, 1)
         )
-        
+
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
-      datas = self.feedforward_1(states)
+        masks = states.permute(1, 0, 2, 3)[:, :, :, -1].unsqueeze(1)
 
-      datas = self.encoder_1(datas, states[:, :, -1].unsqueeze(1))
-      datas = self.encoder_2(datas, states[:, :, -1].unsqueeze(1))
-      datas = self.encoder_3(datas, states[:, :, -1].unsqueeze(1))
+        datas = self.feedforward_1(states)
+        datas = datas.permute(1, 0, 2, 3)
 
-      if detach:
-        return self.feedforward_2(datas).detach()
-      else:
-        return self.feedforward_2(datas)
+        for idx, extractor in enumerate(self.extractors):
+            datas[idx] = extractor(datas[idx], masks[idx])
+
+        datas = datas.permute(1, 0, 2).flatten(1)
+
+        if detach:
+            return self.feedforward_2(datas).detach()
+        else:
+            return self.feedforward_2(datas)

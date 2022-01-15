@@ -228,8 +228,8 @@ class SumoEnv:
                 return [1.0 / 18, 1.0 / 18, 1.0 / 18, 1.0 / 18, 2.0 / 18, 2.0 / 18,
                     2.0 / 18, 2.0 / 18, 1.0 / 18, 1.0 / 18, 2.0 / 18, 2.0 / 18]
 
-    def _get_data_kendaraan(self, kendaraan_ids: list, position_id: int) -> list:
-        return list(map(lambda id: [traci.vehicle.getLanePosition(id), traci.vehicle.getSpeed(id), position_id], kendaraan_ids))
+    def _get_data_kendaraan(self, kendaraan_ids: list) -> list:
+        return list(map(lambda id: [traci.vehicle.getLanePosition(id), traci.vehicle.getSpeed(id)], kendaraan_ids))
     
     def reset(self) -> np.ndarray:
         if self.run:
@@ -253,23 +253,33 @@ class SumoEnv:
         self.waktu_merah_kanan = 0
         self.waktu_merah_kiri = 0
 
-        start = np.full((1, 3), -1)
-        zeros = np.full((150, 3), -100) 
+        kendaraan_array = [[0], [0], [0], [0]]
+        for idx in range(len(kendaraan_array)):
+            start = np.full((1, 3), -1)
+            zeros = np.full((150, 3), -100)
+            kendaraan_array[idx] = np.concatenate([start, zeros], 0)
 
-        return np.concatenate([start, zeros], 0)
+        return np.stack(kendaraan_array)
     
     def step(self, action) -> tuple:        
         traci.trafficlight.setPhase("gneJ10", action)
         traci.simulationStep()        
 
-        kendaraan_array = self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0'), 1) + \
+        """ kendaraan_array = self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0'), 1) + \
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1'), 2) + \
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0'), 3) + \
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1'), 4) + \
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0'), 5) + \
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1'), 6) + \
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_0'), 7) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_1'), 8)
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_1'), 8) """
+
+        kendaraan_array = [
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1')),
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1')),
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1')),
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_1'))
+        ]
         
         panjang_antrian_bawah   = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
         panjang_antrian_kanan   = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
@@ -314,21 +324,39 @@ class SumoEnv:
         done = traci.simulation.getMinExpectedNumber() <= 0
         
         if not done:
-            done = self.time > 30000
-        
-        start   = np.full((1, 3), -1)
+            done = self.time > 30000        
 
-        if len(kendaraan_array) > 0:        
+        """ if len(kendaraan_array) > 0:        
             zeros   = np.full((150 - len(kendaraan_array), 3), -100)
             obs     = np.array(kendaraan_array)
             obs     = np.concatenate([start, obs, zeros], 0)
         
         else:
             zeros   = np.full((150, 3), -100) 
-            obs     = np.concatenate([start, zeros], 0)
+            obs     = np.concatenate([start, zeros], 0) """
+
+        for idx, arr in enumerate(kendaraan_array):  
+            start = np.full((1, 3), -1)      
+            if len(kendaraan_array) > 0:      
+                zeros   = np.full((50 - len(arr), 3), -100)
+                obs     = np.array(arr)
+                obs     = np.concatenate([start, obs, zeros], 0)
+            else:
+                zeros   = np.full((50, 3), -100) 
+                obs     = np.concatenate([start, zeros], 0)
+            kendaraan_array[idx] = obs
+
+        """ if len(kendaraan_array) > 0:       
+            zeros   = np.full((50 - len(arr), 3), -100)
+            obs     = np.array(arr)
+            obs     = np.concatenate([start, obs, zeros], 0)
+
+        else:
+            zeros   = np.full((150, 3), -100) 
+            obs     = np.concatenate([start, zeros], 0) """
 
         info = {
             "colliding": banyak_kendaraan_tabrakan
         }
             
-        return obs, reward, done, info
+        return np.stack(obs), reward, done, info
