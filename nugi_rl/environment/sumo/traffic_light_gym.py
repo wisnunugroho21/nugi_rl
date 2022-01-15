@@ -54,7 +54,7 @@ class SumoEnv:
             <route id="atas_kanan" edges="atas_ke_tengah tengah_ke_kanan"/>            
             """, file=routes)
             
-            for i in range(0, 800, 4):
+            for i in range(0, 400, 2):
                 """ vc = 1 # np.random.choice(2, p = [0.2, 0.8])
 
                 if vc == 1: """
@@ -276,7 +276,7 @@ class SumoEnv:
         panjang_antrian_kiri    = traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_1')
         panjang_antrian_atas    = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')
         
-        """ if action == 0:
+        if action == 0:
             self.waktu_merah_atas = 0
             self.waktu_merah_kanan += 0.1
             self.waktu_merah_kiri += 0.1
@@ -298,20 +298,15 @@ class SumoEnv:
             self.waktu_merah_atas += 0.1
             self.waktu_merah_kanan += 0.1
             self.waktu_merah_kiri = 0
-            self.waktu_merah_bawah += 0.1 """
+            self.waktu_merah_bawah += 0.1
             
-        """ reward += (panjang_antrian_bawah * 0.5 + self.waktu_merah_bawah) 
-        reward += (panjang_antrian_atas * 0.5 + self.waktu_merah_atas)
-        reward += (panjang_antrian_kanan * 0.5 + self.waktu_merah_kanan)
-        reward += (panjang_antrian_kiri * 0.5 + self.waktu_merah_kiri) """
-
         reward = 0
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
-        reward += (panjang_antrian_bawah * 0.5) 
-        reward += (panjang_antrian_atas * 0.5)
-        reward += (panjang_antrian_kanan * 0.5)
-        reward += (panjang_antrian_kiri * 0.5)
+        reward += (panjang_antrian_bawah * 0.5 + self.waktu_merah_bawah) 
+        reward += (panjang_antrian_atas * 0.5 + self.waktu_merah_atas)
+        reward += (panjang_antrian_kanan * 0.5 + self.waktu_merah_kanan)
+        reward += (panjang_antrian_kiri * 0.5 + self.waktu_merah_kiri)
         reward += (banyak_kendaraan_tabrakan * 5.0)
         reward *= -1.0
         
