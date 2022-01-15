@@ -12,9 +12,9 @@ class GlobalExtractor(nn.Module):
             torch.ones(1, 1, dim)
         )
 
-        self.encoder_1 = EncoderLayer(dim)
-        self.encoder_2 = EncoderLayer(dim)
-        self.decoder = DecoderLayer(dim)
+        self.encoder_1 = EncoderLayer(dim, heads = 4)
+        self.encoder_2 = EncoderLayer(dim, heads = 4)
+        self.decoder = DecoderLayer(dim, heads = 4)
 
     def forward(self, inputs: Tensor, mask: Tensor) -> Tensor:
         mask = self.transform_mask(mask)
@@ -24,12 +24,8 @@ class GlobalExtractor(nn.Module):
         return self.decoder(self.object_queries, x).squeeze(1)
 
     def transform_mask(self, mask: Tensor) -> Tensor:
-        seq_len = mask.shape[-1]
-        lookahead_mask = torch.ones((seq_len, seq_len)).bool()
-        padding_mask = (mask != -100)
-        mask = padding_mask.unsqueeze(0) & lookahead_mask
-
-        return mask.unsqueeze(0)
+        mask = mask != -100
+        return mask.unsqueeze(1).unsqueeze(-1)
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, bins: int):
@@ -59,15 +55,16 @@ class Policy_Model(nn.Module):
         )
 
     def forward(self, states: Tensor, detach: bool = False) -> tuple:
-        masks = states.permute(1, 0, 2, 3)[:, :, :, -1].unsqueeze(1)
+        masks = states.permute(1, 0, 2, 3)[:, :, :, -1]
 
         datas = self.feedforward_1(states)
         datas = datas.permute(1, 0, 2, 3)
 
+        extracted = []
         for idx, extractor in enumerate(self.extractors):
-            datas[idx] = extractor(datas[idx], masks[idx])
+            extracted.append(extractor(datas[idx], masks[idx]))
 
-        datas = datas.permute(1, 0, 2).flatten(1)
+        datas = torch.stack(extracted).permute(1, 0, 2).flatten(1)
         
         action = self.feedforward_2(datas)
         action = action.reshape(-1, self.action_dim, self.bins)
@@ -106,15 +103,16 @@ class Value_Model(nn.Module):
         )
 
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
-        masks = states.permute(1, 0, 2, 3)[:, :, :, -1].unsqueeze(1)
+        masks = states.permute(1, 0, 2, 3)[:, :, :, -1]
 
         datas = self.feedforward_1(states)
         datas = datas.permute(1, 0, 2, 3)
 
+        extracted = []
         for idx, extractor in enumerate(self.extractors):
-            datas[idx] = extractor(datas[idx], masks[idx])
+            extracted.append(extractor(datas[idx], masks[idx]))
 
-        datas = datas.permute(1, 0, 2).flatten(1)
+        datas = torch.stack(extracted).permute(1, 0, 2).flatten(1)
 
         if detach:
             return self.feedforward_2(datas).detach()

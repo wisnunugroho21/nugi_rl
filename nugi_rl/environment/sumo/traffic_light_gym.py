@@ -19,11 +19,11 @@ class SumoEnv:
         self.waktu_merah_bawah = 1
         self.waktu_merah_kiri = 1
         
-        self.observation_space  = spaces.Box(-100, 100, (3, ))
+        self.observation_space  = spaces.Box(-100, 100, (2, ))
         self.action_space       = spaces.Discrete(4)
 
     def get_obs_dim(self):
-        return 3
+        return 2
             
     def get_action_dim(self):
         return 4
@@ -255,8 +255,8 @@ class SumoEnv:
 
         kendaraan_array = [[0], [0], [0], [0]]
         for idx in range(len(kendaraan_array)):
-            start = np.full((1, 3), -1)
-            zeros = np.full((150, 3), -100)
+            start = np.full((1, 2), -1)
+            zeros = np.full((50, 2), -100)
             kendaraan_array[idx] = np.concatenate([start, zeros], 0)
 
         return np.stack(kendaraan_array)
@@ -335,16 +335,18 @@ class SumoEnv:
             zeros   = np.full((150, 3), -100) 
             obs     = np.concatenate([start, zeros], 0) """
 
-        for idx, arr in enumerate(kendaraan_array):  
-            start = np.full((1, 3), -1)      
-            if len(kendaraan_array) > 0:      
-                zeros   = np.full((50 - len(arr), 3), -100)
+        out_arr = []
+        for arr in kendaraan_array:  
+            start = np.full((1, 2), -1)
+
+            if len(arr) > 0:      
+                zeros   = np.full((50 - len(arr), 2), -100)
                 obs     = np.array(arr)
                 obs     = np.concatenate([start, obs, zeros], 0)
             else:
-                zeros   = np.full((50, 3), -100) 
+                zeros   = np.full((50, 2), -100) 
                 obs     = np.concatenate([start, zeros], 0)
-            kendaraan_array[idx] = obs
+            out_arr.append(obs)
 
         """ if len(kendaraan_array) > 0:       
             zeros   = np.full((50 - len(arr), 3), -100)
@@ -359,4 +361,4 @@ class SumoEnv:
             "colliding": banyak_kendaraan_tabrakan
         }
             
-        return np.stack(obs), reward, done, info
+        return np.stack(out_arr), reward, done, info
