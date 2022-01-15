@@ -25,7 +25,7 @@ class GlobalExtractor(nn.Module):
 
     def transform_mask(self, mask: Tensor) -> Tensor:
         mask = mask != -100
-        return mask.unsqueeze(1).unsqueeze(-1)
+        return mask.unsqueeze(1).unsqueeze(2)
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, bins: int):
