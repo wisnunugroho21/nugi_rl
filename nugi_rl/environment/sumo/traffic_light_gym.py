@@ -15,9 +15,7 @@ class SumoEnv:
         self.time = 0
         self.run = False
         
-        self.waktu_merah_kanan = 1
-        self.waktu_merah_bawah = 1
-        self.waktu_merah_kiri = 1
+        self.last_action = -1
         
         self.observation_space  = spaces.Box(-100, 100, (2, ))
         self.action_space       = spaces.Discrete(4)
@@ -265,15 +263,6 @@ class SumoEnv:
         traci.trafficlight.setPhase("gneJ10", action)
         traci.simulationStep()        
 
-        """ kendaraan_array = self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0'), 1) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1'), 2) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0'), 3) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1'), 4) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0'), 5) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1'), 6) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_0'), 7) + \
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_1'), 8) """
-
         kendaraan_array = [
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1')),
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1')),
@@ -285,55 +274,51 @@ class SumoEnv:
         panjang_antrian_kanan   = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
         panjang_antrian_kiri    = traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_1')
         panjang_antrian_atas    = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')
+
+        kecepatan_kendaraan_bawah   = (traci.lane.getLastStepMeanSpeed('bawah_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('bawah_ke_tengah_1')) / 2
+        kecepatan_kendaraan_kanan   = (traci.lane.getLastStepMeanSpeed('kanan_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('kanan_ke_tengah_1')) / 2
+        kecepatan_kendaraan_kiri    = (traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('kiri_ke_tengah_1')) / 2
+        kecepatan_kendaraan_atas    = (traci.lane.getLastStepMeanSpeed('atas_ke_tengah_0') + traci.lane.getLastStepMeanSpeed('atas_ke_tengah_1')) / 2
+
+        waktu_menunggu_bawah    = traci.lane.getWaitingTime('bawah_ke_tengah_0') + traci.lane.getWaitingTime('bawah_ke_tengah_1')
+        waktu_menunggu_kanan    = traci.lane.getWaitingTime('kanan_ke_tengah_0') + traci.lane.getWaitingTime('kanan_ke_tengah_1')
+        waktu_menunggu_kiri     = traci.lane.getWaitingTime('kiri_ke_tengah_0') + traci.lane.getWaitingTime('kiri_ke_tengah_1')
+        waktu_menunggu_atas     = traci.lane.getWaitingTime('atas_ke_tengah_0') + traci.lane.getWaitingTime('atas_ke_tengah_1')
+
+        kecepatan_diperbolehkan_bawah   = (traci.lane.getMaxSpeed('bawah_ke_tengah_0') + traci.lane.getMaxSpeed('bawah_ke_tengah_1')) / 2
+        kecepatan_diperbolehkan_kanan   = (traci.lane.getMaxSpeed('kanan_ke_tengah_0') + traci.lane.getMaxSpeed('kanan_ke_tengah_1')) / 2
+        kecepatan_diperbolehkan_kiri    = (traci.lane.getMaxSpeed('kiri_ke_tengah_0') + traci.lane.getMaxSpeed('kiri_ke_tengah_1')) / 2
+        kecepatan_diperbolehkan_atas    = (traci.lane.getMaxSpeed('atas_ke_tengah_0') + traci.lane.getMaxSpeed('atas_ke_tengah_1')) / 2
+
+        banyak_lolos_perempatan     = traci.edge.getLastStepVehicleNumber('titik_tengah')
+        banyak_antrian_perempatan   = traci.edge.getLastStepHaltingNumber('titik_tengah')
         
-        if action == 0:
-            self.waktu_merah_atas = 0
-            self.waktu_merah_kanan += 0.1
-            self.waktu_merah_kiri += 0.1
-            self.waktu_merah_bawah += 0.1
-
-        elif action == 1:
-            self.waktu_merah_atas += 0.1
-            self.waktu_merah_kanan = 0
-            self.waktu_merah_kiri += 0.1
-            self.waktu_merah_bawah += 0.1
-
-        elif action == 2:
-            self.waktu_merah_atas += 0.1
-            self.waktu_merah_kanan += 0.1
-            self.waktu_merah_kiri += 0.1
-            self.waktu_merah_bawah = 0
-
-        elif action == 3:
-            self.waktu_merah_atas += 0.1
-            self.waktu_merah_kanan += 0.1
-            self.waktu_merah_kiri = 0
-            self.waktu_merah_bawah += 0.1
+        phase_changed = 0
+        if action != self.last_action:
+            phase_changed = 1
+            self.last_action = action        
             
         reward = 0
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
-        reward += (panjang_antrian_bawah * 0.5 + self.waktu_merah_bawah) 
-        reward += (panjang_antrian_atas * 0.5 + self.waktu_merah_atas)
-        reward += (panjang_antrian_kanan * 0.5 + self.waktu_merah_kanan)
-        reward += (panjang_antrian_kiri * 0.5 + self.waktu_merah_kiri)
-        reward += (banyak_kendaraan_tabrakan * 5.0)
-        reward *= -1.0
+        waktu_delay_bawah   = 1 - (kecepatan_kendaraan_bawah / kecepatan_diperbolehkan_bawah)
+        waktu_delay_kanan   = 1 - (kecepatan_kendaraan_kanan / kecepatan_diperbolehkan_kanan)
+        waktu_delay_kiri    = 1 - (kecepatan_kendaraan_kiri / kecepatan_diperbolehkan_kiri)        
+        waktu_delay_atas    = 1 - (kecepatan_kendaraan_atas / kecepatan_diperbolehkan_atas)
+
+        reward += (panjang_antrian_bawah * -0.25 + waktu_delay_bawah * -0.25 + waktu_menunggu_bawah * -0.25) 
+        reward += (panjang_antrian_kanan * -0.25 + waktu_delay_kanan * -0.25 + waktu_menunggu_kanan * -0.25)
+        reward += (panjang_antrian_kiri * -0.25 + waktu_delay_kiri * -0.25 + waktu_menunggu_kiri * -0.25)
+        reward += (panjang_antrian_atas * -0.25 + waktu_delay_atas * -0.25 + waktu_menunggu_atas * -0.25)
+        reward += (phase_changed * -5)
+        reward += (banyak_lolos_perempatan - banyak_antrian_perempatan)
+        reward += (banyak_kendaraan_tabrakan * -5.0)
         
         self.time += 1
         done = traci.simulation.getMinExpectedNumber() <= 0
         
         if not done:
             done = self.time > 30000        
-
-        """ if len(kendaraan_array) > 0:        
-            zeros   = np.full((150 - len(kendaraan_array), 3), -100)
-            obs     = np.array(kendaraan_array)
-            obs     = np.concatenate([start, obs, zeros], 0)
-        
-        else:
-            zeros   = np.full((150, 3), -100) 
-            obs     = np.concatenate([start, zeros], 0) """
 
         out_arr = []
         for arr in kendaraan_array:  
