@@ -17,8 +17,9 @@ from nugi_rl.helpers.pytorch_utils import copy_parameters
 class AgentSac(Agent):
     def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, q_loss: QLoss, policy_loss: PolicyLoss, cql_reg_loss: CqlRegularizer, 
         memory: PolicyMemory, soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, 
-        soft_tau: float = 0.95, folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None):
+        soft_tau: float = 0.95, folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None, dont_unsqueeze = False) -> None:
 
+        self.dont_unsqueeze     = dont_unsqueeze
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
         self.folder             = folder
@@ -85,9 +86,15 @@ class AgentSac(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state   = state.unsqueeze(0)
-            action  = self.policy(state)
-            action  = action.squeeze(0).detach()
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
+            action_datas    = self.policy(state)
+            
+            if self.is_training_mode:
+                action = self.distribution.sample(*action_datas)
+            else:
+                action = self.distribution.deterministic(action_datas)
+
+            action = action.squeeze(0)
               
         return action
 

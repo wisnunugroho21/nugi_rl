@@ -18,9 +18,10 @@ from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageE
 
 class AgentVMPO(Agent):
     def __init__(self, policy: Module, value: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, alpha_loss: AlphaLoss, phi_loss: PhiLoss, entropy_loss: EntropyLoss, temperature_loss: TemperatureLoss, value_loss: ValueLoss,
-            memory: PolicyMemory, policy_optimizer: Optimizer, value_optimizer: Optimizer, epochs: int = 10, is_training_mode: bool = True, batch_size: int = 64, folder: str = 'model', 
-            device: device = torch.device('cuda:0'), old_policy: Module = None, old_value: Module = None) -> None:   
+        memory: PolicyMemory, policy_optimizer: Optimizer, value_optimizer: Optimizer, epochs: int = 10, is_training_mode: bool = True, batch_size: int = 64, folder: str = 'model', 
+        device: device = torch.device('cuda:0'), old_policy: Module = None, old_value: Module = None, dont_unsqueeze = False) -> None:
 
+        self.dont_unsqueeze     = dont_unsqueeze
         self.batch_size         = batch_size
         self.epochs             = epochs
         self.is_training_mode   = is_training_mode
@@ -86,27 +87,27 @@ class AgentVMPO(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state               = state.unsqueeze(0)
-            action_datas, _, _  = self.policy(state)
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
+            action_datas    = self.policy(state)
             
             if self.is_training_mode:
-                action = self.distribution.sample(action_datas)
+                action = self.distribution.sample(*action_datas)
             else:
-                action = self.distribution.deterministic(action_datas)
+                action = self.distribution.deterministic(*action_datas)
 
-            action = action.squeeze(0).detach()
+            action = action.squeeze(0)
               
         return action
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state               = state.unsqueeze(0)
-            action              = action.unsqueeze(0)
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
+            action          = action if self.dont_unsqueeze else action.unsqueeze(0)
 
-            action_datas, _, _  = self.policy(state)
+            action_datas    = self.policy(state)
 
-            logprobs        = self.distribution.logprob(action_datas, action)
-            logprobs        = logprobs.squeeze(0).detach()
+            logprobs        = self.distribution.logprob(*action_datas, action)
+            logprobs        = logprobs.squeeze(0)
 
         return logprobs
 

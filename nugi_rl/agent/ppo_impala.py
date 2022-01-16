@@ -19,8 +19,9 @@ class AgentImpalaPPO(Agent):
     def __init__(self, policy: Module, value: Module, gae: VtraceAdvantageEstimation, distribution: Distribution, 
         policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: PolicyMemory, optimizer: Optimizer, 
         ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
-        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None) -> None:
+        device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None, dont_unsqueeze = False) -> None:
 
+        self.dont_unsqueeze     = dont_unsqueeze
         self.batch_size         = batch_size  
         self.ppo_epochs         = ppo_epochs
         self.is_training_mode   = is_training_mode
@@ -79,27 +80,27 @@ class AgentImpalaPPO(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.unsqueeze(0)
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
-                action = self.distribution.sample(action_datas)
+                action = self.distribution.sample(*action_datas)
             else:
-                action = self.distribution.deterministic(action_datas)
+                action = self.distribution.deterministic(*action_datas)
 
-            action = action.squeeze(0).detach()
+            action = action.squeeze(0)
               
         return action
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.unsqueeze(0)
-            action          = action.unsqueeze(0)
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
+            action          = action if self.dont_unsqueeze else action.unsqueeze(0)
 
             action_datas    = self.policy(state)
 
-            logprobs        = self.distribution.logprob(action_datas, action)
-            logprobs        = logprobs.squeeze(0).detach()
+            logprobs        = self.distribution.logprob(*action_datas, action)
+            logprobs        = logprobs.squeeze(0)
 
         return logprobs
 

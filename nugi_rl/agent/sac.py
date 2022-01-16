@@ -16,8 +16,9 @@ from nugi_rl.helpers.pytorch_utils import copy_parameters
 class AgentSac(Agent):
     def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, distribution: Distribution, q_loss: QLoss, policy_loss: PolicyLoss, memory: PolicyMemory, 
         soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, soft_tau: float = 0.95, 
-        folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None) -> None:
+        folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None, dont_unsqueeze = False) -> None:
 
+        self.dont_unsqueeze     = dont_unsqueeze
         self.batch_size         = batch_size
         self.is_training_mode   = is_training_mode
         self.folder             = folder
@@ -82,7 +83,7 @@ class AgentSac(Agent):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -90,19 +91,19 @@ class AgentSac(Agent):
             else:
                 action = self.distribution.deterministic(action_datas)
 
-            action = action.squeeze(0).detach()
+            action = action.squeeze(0)
               
         return action
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state.reshape(-1, state.shape[-1]) if len(state.shape) > 0 else state.unsqueeze(0)
-            action          = action.reshape(-1, action.shape[-1]) if len(action.shape) > 0 else action.unsqueeze(0)
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
+            action          = action if self.dont_unsqueeze else action.unsqueeze(0)
 
             action_datas    = self.policy(state)
 
             logprobs        = self.distribution.logprob(*action_datas, action)
-            logprobs        = logprobs.squeeze(0).detach()
+            logprobs        = logprobs.squeeze(0)
 
         return logprobs
 
