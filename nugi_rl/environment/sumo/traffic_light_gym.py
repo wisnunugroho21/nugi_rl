@@ -297,6 +297,10 @@ class SumoEnv:
         reward = 0
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
+        banyak_kendaraan_tersangkut = 0
+        for linkIndex in range(24):
+            banyak_kendaraan_tersangkut += traci.trafficlight.getBlockingVehicles("lampu_lalu_lintas", linkIndex)
+
         waktu_delay_bawah   = 1 - (kecepatan_kendaraan_bawah / kecepatan_diperbolehkan_bawah)
         waktu_delay_kanan   = 1 - (kecepatan_kendaraan_kanan / kecepatan_diperbolehkan_kanan)
         waktu_delay_kiri    = 1 - (kecepatan_kendaraan_kiri / kecepatan_diperbolehkan_kiri)        
@@ -306,9 +310,10 @@ class SumoEnv:
         reward += (panjang_antrian_kanan * -0.25 + waktu_delay_kanan * -0.25 + waktu_menunggu_kanan * -0.25)
         reward += (panjang_antrian_kiri * -0.25 + waktu_delay_kiri * -0.25 + waktu_menunggu_kiri * -0.25)
         reward += (panjang_antrian_atas * -0.25 + waktu_delay_atas * -0.25 + waktu_menunggu_atas * -0.25)
-        reward += (phase_changed * -5)
+        reward += (phase_changed * -5.0)
         # reward += (banyak_lolos_perempatan - banyak_antrian_perempatan)
-        reward += (banyak_kendaraan_tabrakan * -5.0)
+        reward += (banyak_kendaraan_tabrakan * -20.0)
+        reward += (banyak_kendaraan_tersangkut * -5.0)
         
         self.time += 1
         done = traci.simulation.getMinExpectedNumber() <= 0
@@ -339,7 +344,8 @@ class SumoEnv:
             obs     = np.concatenate([start, zeros], 0) """
 
         info = {
-            "colliding": banyak_kendaraan_tabrakan
+            "colliding": banyak_kendaraan_tabrakan,
+            "blocking": banyak_kendaraan_tersangkut
         }
             
         return np.stack(out_arr), reward, done, info
