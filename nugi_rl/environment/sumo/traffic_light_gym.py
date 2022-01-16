@@ -53,60 +53,49 @@ class SumoEnv:
             """, file=routes)
             
             for i in range(0, 400, 2):
-                """ vc = 1 # np.random.choice(2, p = [0.2, 0.8])
-
-                if vc == 1: """
-                sc = np.random.choice(12, p = probs)
-
+                sc = np.random.choice(12, p = probs)                
+                route_name = ''
+                
                 if sc == 0:
-                    print('    <vehicle id="kiri_kanan_%i" type="car" route="kiri_kanan" depart="%i" />' % (
-                        i, i), file=routes)                    
+                    route_name = 'kiri_kanan'                  
 
                 elif sc == 1:
-                    print('    <vehicle id="kanan_kiri_%i" type="car" route="kanan_kiri" depart="%i" />' % (
-                        i, i), file=routes)                    
+                    route_name = 'kanan_kiri'                  
 
                 elif sc == 2:
-                    print('    <vehicle id="kiri_bawah_%i" type="car" route="kiri_bawah" depart="%i" />' % (
-                        i, i), file=routes)                    
+                    route_name = 'kiri_bawah'                  
 
                 elif sc == 3:
-                    print('    <vehicle id="kanan_bawah_%i" type="car" route="kanan_bawah" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'kanan_bawah'
 
                 elif sc == 4:
-                    print('    <vehicle id="bawah_kiri_%i" type="car" route="bawah_kiri" depart="%i" />' % (
-                        i, i), file=routes)                    
+                    route_name = 'bawah_kiri'                  
 
                 elif sc == 5:
-                    print('    <vehicle id="bawah_kanan_%i" type="car" route="bawah_kanan" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'bawah_kanan'
 
                 elif sc == 6:
-                    print('    <vehicle id="atas_bawah_%i" type="car" route="atas_bawah" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'atas_bawah'
 
                 elif sc == 7:
-                    print('    <vehicle id="bawah_atas_%i" type="car" route="bawah_atas" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'bawah_atas'
 
                 elif sc == 8:
-                    print('    <vehicle id="kiri_atas_%i" type="car" route="kiri_atas" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'kiri_atas'
 
                 elif sc == 9:
-                    print('    <vehicle id="kanan_atas_%i" type="car" route="kanan_atas" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'kanan_atas'
 
                 elif sc == 10:
-                    print('    <vehicle id="atas_kiri_%i" type="car" route="atas_kiri" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'atas_kiri'
 
                 elif sc == 11:
-                    print('    <vehicle id="atas_kanan_%i" type="car" route="atas_kanan" depart="%i" />' % (
-                        i, i), file=routes)
+                    route_name = 'atas_kanan'
+                        
+                for idx in range(4):
+                    print('    <vehicle id="%s_%i_%i" type="car" route="%s" depart="%i" />' % (route_name, i, idx, route_name, i), file = routes)
                     
-            print("</routes>", file=routes)
+            print("</routes>", file = routes)
 
     def _generate_probs_route(self) -> list:
         level = np.random.choice(4)
