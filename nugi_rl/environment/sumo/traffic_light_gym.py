@@ -234,6 +234,7 @@ class SumoEnv:
         self.run = True
         
         self.time = 0
+        self.last_action = -1
 
         self.waktu_merah_atas = 0
         self.waktu_merah_bawah = 0
@@ -250,7 +251,7 @@ class SumoEnv:
     
     def step(self, action) -> tuple: 
         phase_changed = 0
-        if action != self.last_action:
+        if action != self.last_action and self.last_action != -1:
             traci.trafficlight.setPhase("lampu_lalu_lintas", self.last_action * 2 + 1)
             traci.simulationStep()
             
