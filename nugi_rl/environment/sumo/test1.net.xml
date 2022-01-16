@@ -138,7 +138,7 @@
         <lane id="tengah_ke_kiri_1" index="1" speed="13.89" length="189.60" shape="89.60,1.60 -100.00,1.60"/>
     </edge>
 
-    <tlLogic id="gneJ10" type="static" programID="0" offset="0">
+    <tlLogic id="lampu_lalu_lintas" type="static" programID="0" offset="0">
         <phase duration="42" state="GGGGGGrrrrrrrrrrrrrrrrrr"/>
         <phase duration="3"  state="yyyyyyrrrrrrrrrrrrrrrrrr"/>
         <phase duration="42" state="rrrrrrGGGGGGrrrrrrrrrrrr"/>
@@ -180,30 +180,30 @@
         <request index="23" response="000000111100001111111100" foes="000000111100001111111100" cont="0"/>
     </junction>
 
-    <connection from="atas_ke_tengah" to="tengah_ke_kiri" fromLane="0" toLane="0" via=":titik_tengah_0_0" tl="gneJ10" linkIndex="0" dir="r" state="O"/>
-    <connection from="atas_ke_tengah" to="tengah_ke_kiri" fromLane="0" toLane="1" via=":titik_tengah_1_0" tl="gneJ10" linkIndex="1" dir="r" state="O"/>
-    <connection from="atas_ke_tengah" to="tengah_ke_bawah" fromLane="0" toLane="0" via=":titik_tengah_2_0" tl="gneJ10" linkIndex="2" dir="s" state="O"/>
-    <connection from="atas_ke_tengah" to="tengah_ke_bawah" fromLane="1" toLane="1" via=":titik_tengah_2_1" tl="gneJ10" linkIndex="3" dir="s" state="O"/>
-    <connection from="atas_ke_tengah" to="tengah_ke_kanan" fromLane="1" toLane="0" via=":titik_tengah_4_0" tl="gneJ10" linkIndex="4" dir="l" state="o"/>
-    <connection from="atas_ke_tengah" to="tengah_ke_kanan" fromLane="1" toLane="1" via=":titik_tengah_5_0" tl="gneJ10" linkIndex="5" dir="l" state="o"/>
-    <connection from="bawah_ke_tengah" to="tengah_ke_kanan" fromLane="0" toLane="0" via=":titik_tengah_12_0" tl="gneJ10" linkIndex="12" dir="r" state="O"/>
-    <connection from="bawah_ke_tengah" to="tengah_ke_kanan" fromLane="0" toLane="1" via=":titik_tengah_13_0" tl="gneJ10" linkIndex="13" dir="r" state="O"/>
-    <connection from="bawah_ke_tengah" to="tengah_ke_atas" fromLane="0" toLane="0" via=":titik_tengah_14_0" tl="gneJ10" linkIndex="14" dir="s" state="O"/>
-    <connection from="bawah_ke_tengah" to="tengah_ke_atas" fromLane="1" toLane="1" via=":titik_tengah_14_1" tl="gneJ10" linkIndex="15" dir="s" state="O"/>
-    <connection from="bawah_ke_tengah" to="tengah_ke_kiri" fromLane="1" toLane="0" via=":titik_tengah_16_0" tl="gneJ10" linkIndex="16" dir="l" state="o"/>
-    <connection from="bawah_ke_tengah" to="tengah_ke_kiri" fromLane="1" toLane="1" via=":titik_tengah_17_0" tl="gneJ10" linkIndex="17" dir="l" state="o"/>
-    <connection from="kanan_ke_tengah" to="tengah_ke_atas" fromLane="0" toLane="0" via=":titik_tengah_6_0" tl="gneJ10" linkIndex="6" dir="r" state="o"/>
-    <connection from="kanan_ke_tengah" to="tengah_ke_atas" fromLane="0" toLane="1" via=":titik_tengah_7_0" tl="gneJ10" linkIndex="7" dir="r" state="o"/>
-    <connection from="kanan_ke_tengah" to="tengah_ke_kiri" fromLane="0" toLane="0" via=":titik_tengah_8_0" tl="gneJ10" linkIndex="8" dir="s" state="o"/>
-    <connection from="kanan_ke_tengah" to="tengah_ke_kiri" fromLane="1" toLane="1" via=":titik_tengah_8_1" tl="gneJ10" linkIndex="9" dir="s" state="o"/>
-    <connection from="kanan_ke_tengah" to="tengah_ke_bawah" fromLane="1" toLane="0" via=":titik_tengah_10_0" tl="gneJ10" linkIndex="10" dir="l" state="o"/>
-    <connection from="kanan_ke_tengah" to="tengah_ke_bawah" fromLane="1" toLane="1" via=":titik_tengah_11_0" tl="gneJ10" linkIndex="11" dir="l" state="o"/>
-    <connection from="kiri_ke_tengah" to="tengah_ke_bawah" fromLane="0" toLane="0" via=":titik_tengah_18_0" tl="gneJ10" linkIndex="18" dir="r" state="o"/>
-    <connection from="kiri_ke_tengah" to="tengah_ke_bawah" fromLane="0" toLane="1" via=":titik_tengah_19_0" tl="gneJ10" linkIndex="19" dir="r" state="o"/>
-    <connection from="kiri_ke_tengah" to="tengah_ke_kanan" fromLane="0" toLane="0" via=":titik_tengah_20_0" tl="gneJ10" linkIndex="20" dir="s" state="o"/>
-    <connection from="kiri_ke_tengah" to="tengah_ke_kanan" fromLane="1" toLane="1" via=":titik_tengah_20_1" tl="gneJ10" linkIndex="21" dir="s" state="o"/>
-    <connection from="kiri_ke_tengah" to="tengah_ke_atas" fromLane="1" toLane="0" via=":titik_tengah_22_0" tl="gneJ10" linkIndex="22" dir="l" state="o"/>
-    <connection from="kiri_ke_tengah" to="tengah_ke_atas" fromLane="1" toLane="1" via=":titik_tengah_23_0" tl="gneJ10" linkIndex="23" dir="l" state="o"/>
+    <connection from="atas_ke_tengah" to="tengah_ke_kiri" fromLane="0" toLane="0" via=":titik_tengah_0_0" tl="lampu_lalu_lintas" linkIndex="0" dir="r" state="O"/>
+    <connection from="atas_ke_tengah" to="tengah_ke_kiri" fromLane="0" toLane="1" via=":titik_tengah_1_0" tl="lampu_lalu_lintas" linkIndex="1" dir="r" state="O"/>
+    <connection from="atas_ke_tengah" to="tengah_ke_bawah" fromLane="0" toLane="0" via=":titik_tengah_2_0" tl="lampu_lalu_lintas" linkIndex="2" dir="s" state="O"/>
+    <connection from="atas_ke_tengah" to="tengah_ke_bawah" fromLane="1" toLane="1" via=":titik_tengah_2_1" tl="lampu_lalu_lintas" linkIndex="3" dir="s" state="O"/>
+    <connection from="atas_ke_tengah" to="tengah_ke_kanan" fromLane="1" toLane="0" via=":titik_tengah_4_0" tl="lampu_lalu_lintas" linkIndex="4" dir="l" state="o"/>
+    <connection from="atas_ke_tengah" to="tengah_ke_kanan" fromLane="1" toLane="1" via=":titik_tengah_5_0" tl="lampu_lalu_lintas" linkIndex="5" dir="l" state="o"/>
+    <connection from="bawah_ke_tengah" to="tengah_ke_kanan" fromLane="0" toLane="0" via=":titik_tengah_12_0" tl="lampu_lalu_lintas" linkIndex="12" dir="r" state="O"/>
+    <connection from="bawah_ke_tengah" to="tengah_ke_kanan" fromLane="0" toLane="1" via=":titik_tengah_13_0" tl="lampu_lalu_lintas" linkIndex="13" dir="r" state="O"/>
+    <connection from="bawah_ke_tengah" to="tengah_ke_atas" fromLane="0" toLane="0" via=":titik_tengah_14_0" tl="lampu_lalu_lintas" linkIndex="14" dir="s" state="O"/>
+    <connection from="bawah_ke_tengah" to="tengah_ke_atas" fromLane="1" toLane="1" via=":titik_tengah_14_1" tl="lampu_lalu_lintas" linkIndex="15" dir="s" state="O"/>
+    <connection from="bawah_ke_tengah" to="tengah_ke_kiri" fromLane="1" toLane="0" via=":titik_tengah_16_0" tl="lampu_lalu_lintas" linkIndex="16" dir="l" state="o"/>
+    <connection from="bawah_ke_tengah" to="tengah_ke_kiri" fromLane="1" toLane="1" via=":titik_tengah_17_0" tl="lampu_lalu_lintas" linkIndex="17" dir="l" state="o"/>
+    <connection from="kanan_ke_tengah" to="tengah_ke_atas" fromLane="0" toLane="0" via=":titik_tengah_6_0" tl="lampu_lalu_lintas" linkIndex="6" dir="r" state="o"/>
+    <connection from="kanan_ke_tengah" to="tengah_ke_atas" fromLane="0" toLane="1" via=":titik_tengah_7_0" tl="lampu_lalu_lintas" linkIndex="7" dir="r" state="o"/>
+    <connection from="kanan_ke_tengah" to="tengah_ke_kiri" fromLane="0" toLane="0" via=":titik_tengah_8_0" tl="lampu_lalu_lintas" linkIndex="8" dir="s" state="o"/>
+    <connection from="kanan_ke_tengah" to="tengah_ke_kiri" fromLane="1" toLane="1" via=":titik_tengah_8_1" tl="lampu_lalu_lintas" linkIndex="9" dir="s" state="o"/>
+    <connection from="kanan_ke_tengah" to="tengah_ke_bawah" fromLane="1" toLane="0" via=":titik_tengah_10_0" tl="lampu_lalu_lintas" linkIndex="10" dir="l" state="o"/>
+    <connection from="kanan_ke_tengah" to="tengah_ke_bawah" fromLane="1" toLane="1" via=":titik_tengah_11_0" tl="lampu_lalu_lintas" linkIndex="11" dir="l" state="o"/>
+    <connection from="kiri_ke_tengah" to="tengah_ke_bawah" fromLane="0" toLane="0" via=":titik_tengah_18_0" tl="lampu_lalu_lintas" linkIndex="18" dir="r" state="o"/>
+    <connection from="kiri_ke_tengah" to="tengah_ke_bawah" fromLane="0" toLane="1" via=":titik_tengah_19_0" tl="lampu_lalu_lintas" linkIndex="19" dir="r" state="o"/>
+    <connection from="kiri_ke_tengah" to="tengah_ke_kanan" fromLane="0" toLane="0" via=":titik_tengah_20_0" tl="lampu_lalu_lintas" linkIndex="20" dir="s" state="o"/>
+    <connection from="kiri_ke_tengah" to="tengah_ke_kanan" fromLane="1" toLane="1" via=":titik_tengah_20_1" tl="lampu_lalu_lintas" linkIndex="21" dir="s" state="o"/>
+    <connection from="kiri_ke_tengah" to="tengah_ke_atas" fromLane="1" toLane="0" via=":titik_tengah_22_0" tl="lampu_lalu_lintas" linkIndex="22" dir="l" state="o"/>
+    <connection from="kiri_ke_tengah" to="tengah_ke_atas" fromLane="1" toLane="1" via=":titik_tengah_23_0" tl="lampu_lalu_lintas" linkIndex="23" dir="l" state="o"/>
 
     <connection from=":titik_tengah_0" to="tengah_ke_kiri" fromLane="0" toLane="0" dir="r" state="M"/>
     <connection from=":titik_tengah_1" to="tengah_ke_kiri" fromLane="0" toLane="1" dir="r" state="M"/>

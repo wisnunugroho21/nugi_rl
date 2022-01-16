@@ -248,9 +248,20 @@ class SumoEnv:
 
         return np.stack(kendaraan_array)
     
-    def step(self, action) -> tuple:        
-        traci.trafficlight.setPhase("gneJ10", action)
-        traci.simulationStep()        
+    def step(self, action) -> tuple: 
+        phase_changed = 0
+        if action != self.last_action:
+            traci.trafficlight.setPhase("lampu_lalu_lintas", self.last_action * 2 + 1)
+            traci.simulationStep()
+            
+            phase_changed = 1
+            self.last_action = action
+
+        traci.trafficlight.setPhase("lampu_lalu_lintas", action * 2)
+        traci.simulationStep()
+
+        print(traci.trafficlight.getControlledLinks("lampu_lalu_lintas")) 
+        print('----')       
 
         kendaraan_array = [
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1')),
@@ -281,11 +292,6 @@ class SumoEnv:
 
         # banyak_lolos_perempatan     = traci.edge.getLastStepVehicleNumber('titik_tengah')
         # banyak_antrian_perempatan   = traci.edge.getLastStepHaltingNumber('titik_tengah')
-        
-        phase_changed = 0
-        if action != self.last_action:
-            phase_changed = 1
-            self.last_action = action        
             
         reward = 0
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
