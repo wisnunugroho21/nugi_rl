@@ -1,11 +1,12 @@
 import torch
+import torch.nn as nn
 from torch import Tensor
 
-class VtraceAdvantageEstimation():
+class VtraceAdvantageEstimation(nn.Module):
     def __init__(self, gamma = 0.99):
         self.gamma  = gamma
 
-    def compute_advantages(self, rewards: Tensor, values: Tensor, next_values: Tensor, dones: Tensor, worker_logprobs: Tensor, learner_logprobs: Tensor) -> Tensor:
+    def forward(self, rewards: Tensor, values: Tensor, next_values: Tensor, dones: Tensor, worker_logprobs: Tensor, learner_logprobs: Tensor) -> Tensor:
         gae     = 0
         adv     = []
 

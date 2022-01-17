@@ -121,13 +121,13 @@ class AgentPPO(Agent):
 
         in_rewards  = ((state_targets - state_preds).pow(2) * 0.5 / (std_in_rewards.mean() + 1e-6)).detach()
 
-        ex_adv      = self.gae.compute_advantages(ex_rewards, ex_values, next_ex_values, dones).detach()
-        in_adv      = self.gae.compute_advantages(in_rewards, in_values, next_in_values, dones).detach()
+        ex_adv      = self.gae(ex_rewards, ex_values, next_ex_values, dones).detach()
+        in_adv      = self.gae(in_rewards, in_values, next_in_values, dones).detach()
 
-        loss = self.policy_coef * self.policy_loss.compute_loss(action_datas, old_action_datas, actions, ex_adv) + \
-            self.rnd_coef * self.policy_loss.compute_loss(action_datas, old_action_datas, actions, in_adv) + \
-                self.value_loss.compute_loss(ex_values, ex_adv, old_ex_values) + \
-                    self.value_loss.compute_loss(in_values, in_adv, old_in_values)
+        loss = self.policy_coef * self.policy_loss(action_datas, old_action_datas, actions, ex_adv) + \
+            self.rnd_coef * self.policy_loss(action_datas, old_action_datas, actions, in_adv) + \
+                self.value_loss(ex_values, ex_adv, old_ex_values) + \
+                    self.value_loss(in_values, in_adv, old_in_values)
         
         loss.backward()
         self.policy_optimizer.step()
@@ -140,7 +140,7 @@ class AgentPPO(Agent):
         state_pred      = self.rnd_predict(obs)
         state_target    = self.rnd_target(obs)
 
-        loss            = self.rnd_predictor_loss.compute_loss(state_pred, state_target)
+        loss            = self.rnd_predictor_loss(state_pred, state_target)
         
         loss.backward()
         self.rnd_optimizer.step()

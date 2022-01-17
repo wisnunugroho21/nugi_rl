@@ -7,7 +7,7 @@ class CosineSimilarityCLR(CLR):
     def __init__(self, device = torch.device('cuda')):
         self.device = device
 
-    def compute_loss(self, first_encoded: Tensor, second_encoded: Tensor) -> Tensor:
+    def forward(self, first_encoded: Tensor, second_encoded: Tensor) -> Tensor:
         indexes     = torch.arange(first_encoded.shape[0]).long().to(self.device)   
         
         similarity  = torch.nn.functional.cosine_similarity(first_encoded.unsqueeze(1), second_encoded.unsqueeze(0), dim = 2)
