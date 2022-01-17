@@ -59,7 +59,7 @@ class AgentSac(Agent):
         q_value1        = self.soft_q1(states, actions)
         q_value2        = self.soft_q2(states, actions)
 
-        loss = self.policyLoss(action_datas, actions, q_value1, q_value2)
+        loss = self.policyLoss.compute_loss(action_datas, actions, q_value1, q_value2)
 
         loss.backward()
         self.policy_optimizer.step()
@@ -76,7 +76,7 @@ class AgentSac(Agent):
         target_next_q1      = self.target_q1(next_states, next_actions, True)
         target_next_q2      = self.target_q2(next_states, next_actions, True)
 
-        loss  = self.qLoss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, next_action_datas, next_actions, rewards, dones)
+        loss  = self.qLoss.compute_loss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, next_action_datas, next_actions, rewards, dones)
 
         loss.backward()
         self.soft_q_optimizer.step() 

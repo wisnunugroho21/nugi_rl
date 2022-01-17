@@ -71,13 +71,13 @@ class AgentVMPO(Agent):
         old_values                          = self.old_value(states, True)
         next_values                         = self.value(next_states, True)
 
-        adv         = self.gae(rewards, values, next_values, dones).detach()        
+        adv         = self.gae.compute_advantages(rewards, values, next_values, dones).detach()        
         
-        phi_loss    = self.phi_loss(action_datas, actions, temperature, adv)
-        temp_loss   = self.temperature_loss(temperature, adv)
-        alpha_loss  = self.alpha_loss(action_datas, old_action_datas, alpha)
-        value_loss  = self.value_loss(values, adv, old_values)
-        ent_loss    = self.entropy_loss(action_datas)
+        phi_loss    = self.phi_loss.compute_loss(action_datas, actions, temperature, adv)
+        temp_loss   = self.temperature_loss.compute_loss(temperature, adv)
+        alpha_loss  = self.alpha_loss.compute_loss(action_datas, old_action_datas, alpha)
+        value_loss  = self.value_loss.compute_loss(values, adv, old_values)
+        ent_loss    = self.entropy_loss.compute_loss(action_datas)
 
         loss    = phi_loss + temp_loss + alpha_loss + value_loss + ent_loss
         loss.backward()

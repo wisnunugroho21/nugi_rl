@@ -1,9 +1,7 @@
 import torch
 from copy import deepcopy
 
-from memory.base import Memory
-
-class RndMemory(Memory):
+class RndMemory():
     def __init__(self, state_dim, device = torch.device('cuda'), capacity: int = 10000):        
         self.capacity           = capacity
         self.observations       = []

@@ -2,9 +2,7 @@ from copy import deepcopy
 from torchvision.transforms import Compose
 import torchvision.transforms as transforms
 
-from memory.base import Memory
-
-class ClrMemory(Memory):
+class ClrMemory():
     def __init__(self, input_trans: Compose = None, target_trans: Compose = None, capacity: int = 10000):        
         self.images         = []
 

@@ -1,6 +1,5 @@
 import torch
 from torch import Tensor
-
 from nugi_rl.distribution.discrete.basic_discrete import BasicDiscrete
 from nugi_rl.loss.v_mpo.alpha.base import AlphaLoss
 
@@ -11,7 +10,7 @@ class DiscreteAlphaLoss(AlphaLoss):
         self.coef_alpha_upper  = coef_alpha_upper
         self.coef_alpha_below  = coef_alpha_below
 
-    def forward(self, action_datas: tuple, old_action_datas: tuple, alpha: tuple) -> Tensor:
+    def compute_loss(self, action_datas: tuple, old_action_datas: tuple, alpha: tuple) -> Tensor:
         alpha       = alpha[0]
         
         coef_alpha  = torch.distributions.Uniform(self.coef_alpha_below.log(), self.coef_alpha_upper.log()).sample().exp()

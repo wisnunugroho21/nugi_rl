@@ -66,11 +66,11 @@ class AgentPPO(Agent):
         old_values          = self.value_old(states, True)
         next_values         = self.value(next_states, True)
 
-        adv = self.gae(rewards, values, next_values, dones).detach()
+        adv = self.gae.compute_advantages(rewards, values, next_values, dones).detach()
 
-        loss = self.policy_loss(action_datas, old_action_datas, actions, adv) + \
-            self.value_loss(values, adv, old_values) + \
-            self.entropy_loss(action_datas)
+        loss = self.policy_loss.compute_loss(action_datas, old_action_datas, actions, adv) + \
+            self.value_loss.compute_loss(values, adv, old_values) + \
+            self.entropy_loss.compute_loss(action_datas)
         
         loss.backward()
         self.optimizer.step()

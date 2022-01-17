@@ -9,7 +9,7 @@ class PpoClip(Ppo):
         self.policy_clip        = policy_clip
         self.distribution       = distribution
  
-    def forward(self, action_datas: tuple, old_action_datas: tuple, actions: Tensor, advantages: Tensor) -> Tensor:
+    def compute_loss(self, action_datas: tuple, old_action_datas: tuple, actions: Tensor, advantages: Tensor) -> Tensor:
         logprobs        = self.distribution.logprob(*action_datas, actions) + 1e-5
         old_logprobs    = (self.distribution.logprob(*old_action_datas, actions) + 1e-5).detach()
 

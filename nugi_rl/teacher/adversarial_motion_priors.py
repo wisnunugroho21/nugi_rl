@@ -37,7 +37,7 @@ class TeacherAdvMtnPrior(Teacher):
         dis_expert  = self.discrim(expert_states, expert_next_states, goals)
         dis_policy  = self.discrim(policy_states, policy_next_states, goals)       
 
-        loss = self.discrim_loss(dis_expert, dis_policy, policy_states, policy_next_states)
+        loss = self.discrim_loss.compute_loss(dis_expert, dis_policy, policy_states, policy_next_states)
         
         loss.backward()
         self.optimizer.step()
