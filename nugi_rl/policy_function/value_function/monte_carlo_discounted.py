@@ -1,11 +1,12 @@
 import torch
+import torch.nn as nn
 from torch import Tensor
 
-class MonteCarloDiscounted():
+class MonteCarloDiscounted(nn.Module):
     def __init__(self, gamma = 0.99):
         self.gamma = gamma
 
-    def compute_value(self, reward: Tensor, done: Tensor) -> Tensor:
+    def forward(self, reward: Tensor, done: Tensor) -> Tensor:
         returns = []        
         running_add = 0
         
