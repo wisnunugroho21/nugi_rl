@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch import Tensor
 
-def normalize(data, mean = None, std = None, clip = None):
+def normalize(data: Tensor, mean = None, std = None, clip = None) -> Tensor:
     if mean is not None and std is not None:
         data_normalized = (data - mean) / (std + 1e-8)
     else:
