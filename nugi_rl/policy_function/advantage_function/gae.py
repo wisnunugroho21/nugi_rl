@@ -4,6 +4,8 @@ from torch import Tensor
 
 class GeneralizedAdvantageEstimation(nn.Module):
     def __init__(self, gamma = 0.99):
+        super().__init__()
+        
         self.gamma  = gamma
 
     def forward(self, rewards: Tensor, values: Tensor, next_values: Tensor, dones: Tensor) -> Tensor:

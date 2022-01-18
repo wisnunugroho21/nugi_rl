@@ -6,6 +6,8 @@ from nugi_rl.distribution.base import Distribution
 
 class QLoss(nn.Module):
     def __init__(self, distribution: Distribution, gamma: int = 0.99, alpha: int = 0.2):
+        super().__init__()
+        
         self.gamma          = gamma
         self.distribution   = distribution
         self.alpha          = alpha

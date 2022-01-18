@@ -6,6 +6,7 @@ from torch import Tensor
 
 class TemperatureLoss(nn.Module):
     def __init__(self, coef_temp: int = 0.0001):
+        super().__init__()
         self.coef_temp          = coef_temp
 
     def forward(self, temperature: Tensor, advantages: Tensor) -> Tensor:

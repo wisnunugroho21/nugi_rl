@@ -7,6 +7,8 @@ from nugi_rl.loss.v_mpo.alpha.base import AlphaLoss
 class ContinuousAlphaLoss(AlphaLoss):
     def __init__(self, distribution: MultivariateContinous, coef_alpha_mean_upper: Tensor = torch.Tensor([0.01]), coef_alpha_mean_below: Tensor = torch.Tensor([0.005]), 
             coef_alpha_cov_upper: Tensor = torch.Tensor([0.01]), coef_alpha_cov_below: Tensor = torch.Tensor([0.005])):
+        super().__init__()
+        
         self.distribution           = distribution
 
         self.coef_alpha_mean_upper  = coef_alpha_mean_upper

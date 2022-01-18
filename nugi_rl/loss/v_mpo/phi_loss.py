@@ -8,6 +8,7 @@ from nugi_rl.distribution.base import Distribution
 
 class PhiLoss(nn.Module):
     def __init__(self, distribution: Distribution):
+        super().__init__()
         self.distribution       = distribution
 
     def forward(self, action_datas: tuple, actions: Tensor, temperature: Tensor, advantages: Tensor) -> Tensor:

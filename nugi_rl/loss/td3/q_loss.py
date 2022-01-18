@@ -4,6 +4,7 @@ from torch import Tensor
 
 class QLoss(nn.Module):
     def __init__(self, gamma = 0.99):
+        super().__init__()
         self.gamma  = gamma
 
     def forward(self, predicted_q1: Tensor, predicted_q2: Tensor, target_next_q1: Tensor, target_next_q2: Tensor, reward: Tensor, done: Tensor) -> Tensor:

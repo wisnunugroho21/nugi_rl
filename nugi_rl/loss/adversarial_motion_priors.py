@@ -4,6 +4,7 @@ from torch import Tensor
 
 class DiscriminatorLoss(nn.Module):
     def __init__(self, coef: int = 10) -> None:
+        super().__init__()
         self.coef = coef
 
     def forward(self, dis_expert: Tensor, dis_policy: Tensor, policy_states: Tensor, policy_next_states: Tensor, goals: Tensor) -> Tensor:

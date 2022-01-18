@@ -5,6 +5,8 @@ from nugi_rl.distribution.base import Distribution
 
 class EntropyLoss(nn.Module):
     def __init__(self, distribution: Distribution, entropy_coef: float = 0.01):
+        super().__init__()
+        
         self.entropy_coef       = entropy_coef
         self.distribution       = distribution
 

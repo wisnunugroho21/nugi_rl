@@ -5,6 +5,8 @@ from nugi_rl.loss.clr.base import CLR
 
 class Matmul(CLR):
     def __init__(self, device = torch.device('cuda')):
+        super().__init__()
+        
         self.device = device
 
     def forward(self, first_encoded: Tensor, second_encoded: Tensor) -> Tensor:

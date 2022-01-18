@@ -6,6 +6,8 @@ from nugi_rl.loss.ppo.base import Ppo
 
 class PpoKl(Ppo):
     def __init__(self, distribution: Distribution, policy_params: float = 1):
+        super().__init__()
+        
         self.policy_params  = policy_params
         self.distribution       = distribution
  

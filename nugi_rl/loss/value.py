@@ -4,6 +4,8 @@ from torch import Tensor
 
 class ValueLoss(nn.Module):
     def __init__(self, vf_loss_coef: float = 1.0, value_clip: float = None):
+        super().__init__()
+        
         self.value_clip         = value_clip
         self.vf_loss_coef       = vf_loss_coef
 

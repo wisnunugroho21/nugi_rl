@@ -3,6 +3,8 @@ from torch import Tensor
 
 class TemporalDifference(nn.Module):
     def __init__(self, gamma = 0.99):
+        super().__init__()
+        
         self.gamma = gamma
 
     def forward(self, reward: Tensor, next_value: Tensor, done: Tensor) -> Tensor:

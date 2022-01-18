@@ -6,6 +6,8 @@ from nugi_rl.loss.ppo.base import Ppo
 
 class PpoClip(Ppo):
     def __init__(self, distribution: Distribution, policy_clip: float = 0.2):
+        super().__init__()
+        
         self.policy_clip        = policy_clip
         self.distribution       = distribution
  
