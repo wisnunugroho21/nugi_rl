@@ -8,15 +8,15 @@ import pybullet_envs
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adamw import AdamW
 
-from nugi_rl.eps_runner.iteration.iter_runner import IterRunner
-from nugi_rl.train_executor.executor import Executor
-from nugi_rl.agent.standard.ppo import AgentPPO
-from nugi_rl.distribution.basic_continous import BasicContinous
-from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
-from nugi_rl.loss.trpo_ppo.ppo_clip import PPOClip
-from nugi_rl.policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
-from nugi_rl.model.ppo.TanhStdNN import Policy_Model, Value_Model
-from nugi_rl.memory.policy.standard import PolicyMemory
+from eps_runner.iteration.iter_runner import IterRunner
+from train_executor.executor import Executor
+from agent.standard.ppo import AgentPPO
+from distribution.basic_continous import BasicContinous
+from environment.wrapper.gym_wrapper import GymWrapper
+from loss.trpo_ppo.ppo_clip import PPOClip
+from policy_function.advantage_function.generalized_advantage_estimation import GeneralizedAdvantageEstimation
+from model.ppo.TanhStdNN import Policy_Model, Value_Model
+from memory.policy.standard import PolicyMemory
 
 ############## Hyperparameters ##############
 
@@ -32,7 +32,7 @@ n_update                = 2048 # How many episode before you update the Policy
 n_saved                 = 1
 
 policy_clip             = 0.2
-value_clip              = None
+value_clip              = 10.0
 entropy_coef            = 0.2
 vf_loss_coef            = 1.0
 batch_size              = 32

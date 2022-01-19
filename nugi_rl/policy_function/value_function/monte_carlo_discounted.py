@@ -1,11 +1,14 @@
 import torch
-from helpers.pytorch_utils import set_device
+import torch.nn as nn
+from torch import Tensor
 
-class MonteCarloDiscounted():
+class MonteCarloDiscounted(nn.Module):
     def __init__(self, gamma = 0.99):
+        super().__init__()
+        
         self.gamma = gamma
 
-    def compute_value(self, reward, done):
+    def forward(self, reward: Tensor, done: Tensor) -> Tensor:
         returns = []        
         running_add = 0
         
@@ -14,7 +17,3 @@ class MonteCarloDiscounted():
             returns.insert(0, running_add)
             
         return torch.stack(returns)
-        
-    def temporal_difference(self, reward, next_value, done):
-        q_values = reward + (1.0 - done) * self.gamma * next_value           
-        return q_values

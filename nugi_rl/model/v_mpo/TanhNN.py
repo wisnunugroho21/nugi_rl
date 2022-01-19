@@ -1,6 +1,6 @@
+
 import torch
 import torch.nn as nn
-from helpers.pytorch_utils import set_device
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim):
@@ -18,7 +18,7 @@ class Policy_Model(nn.Module):
           torch.Tensor([1.0])
         )
 
-        self.actor_std = nn.parameter.Parameter(
+        self.actor_std  = nn.parameter.Parameter(
           torch.zeros(action_dim)
         )
 

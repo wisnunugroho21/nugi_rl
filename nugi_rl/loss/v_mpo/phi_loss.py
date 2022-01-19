@@ -1,15 +1,18 @@
 import torch
+import torch.nn as nn
 import math
 
-class PhiLoss():
-    def __init__(self, distribution, advantage_function):
-        self.advantage_function = advantage_function
+from torch import Tensor
+
+from nugi_rl.distribution.base import Distribution
+
+class PhiLoss(nn.Module):
+    def __init__(self, distribution: Distribution):
+        super().__init__()
         self.distribution       = distribution
 
-    def compute_loss(self, action_datas, values, next_values, actions, rewards, dones, temperature):
+    def forward(self, action_datas: tuple, actions: Tensor, temperature: Tensor, advantages: Tensor) -> Tensor:
         temperature         = temperature.detach()
-
-        advantages          = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()
         top_adv, top_idx    = torch.topk(advantages, math.ceil(advantages.size(0) / 2), 0)
 
         logprobs            = self.distribution.logprob(action_datas, actions)

@@ -1,0 +1,52 @@
+from torch.utils.tensorboard import SummaryWriter
+
+from nugi_rl.agent.base import Agent
+from nugi_rl.environment.base import Environment
+from nugi_rl.train.runner.base import Runner
+
+class SingleStepRunner(Runner):
+    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, writer: SummaryWriter = None, n_plot_batch: int = 100) -> None:
+        self.agent              = agent
+        self.env                = env
+
+        self.render             = render
+        self.is_save_memory     = is_save_memory
+        self.writer             = writer
+        self.n_plot_batch       = n_plot_batch
+
+        self.t_updates          = 0
+        self.i_episode          = 0
+        self.total_reward       = 0
+        self.eps_time           = 0
+
+        self.states             = self.env.reset()
+
+    def run(self) -> tuple:             
+        action                      = self.agent.act(self.states)
+        logprob                     = self.agent.logprob(self.states, action)
+
+        next_state, reward, done, _ = self.env.step(action)
+        
+        if self.is_save_memory:
+            self.agent.save_obs(self.states, action, reward, done, next_state, logprob)
+            
+        self.states         = next_state
+        self.eps_time       += 1 
+        self.total_reward   += reward
+                
+        if self.render:
+            self.env.render()
+
+        if done:                
+            self.i_episode  += 1
+            print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
+
+            if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
+                self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
+                self.writer.add_scalar('Times', self.eps_time, self.i_episode)
+
+            self.states         = self.env.reset()
+            self.total_reward   = 0
+            self.eps_time       = 0
+
+        return self.agent.get_obs(-1)

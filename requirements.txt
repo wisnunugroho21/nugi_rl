@@ -5,3 +5,6 @@ torchvision
 torchaudio
 numpy
 ray
+Pillow
+matplotlib
+pandas

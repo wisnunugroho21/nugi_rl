@@ -1,14 +1,17 @@
 import torch
+import torch.nn as nn
+from torch import Tensor
 
-class QLoss():
+class QLoss(nn.Module):
     def __init__(self, gamma = 0.99):
-        self.gamma = gamma
+        super().__init__()
+        self.gamma  = gamma
 
-    def compute_loss(self, predicted_q_value1, predicted_q_value2, target_next_q1, target_next_q2, rewards, dones):
-        next_value              = torch.min(target_next_q1, target_next_q2)
-        target_q_value          = (rewards + (1 - dones) * self.gamma * next_value).detach()
+    def forward(self, predicted_q1: Tensor, predicted_q2: Tensor, target_next_q1: Tensor, target_next_q2: Tensor, reward: Tensor, done: Tensor) -> Tensor:
+        target_value            = torch.min(target_next_q1, target_next_q2)
+        target_q_value          = (reward + (1 - done) * self.gamma * target_value).detach()
 
-        td_error1               = ((target_q_value - predicted_q_value1).pow(2) * 0.5).mean()
-        td_error2               = ((target_q_value - predicted_q_value2).pow(2) * 0.5).mean()
-
-        return td_error1 + td_error2
+        q_value_loss1           = ((target_q_value - predicted_q1).pow(2) * 0.5).mean()
+        q_value_loss2           = ((target_q_value - predicted_q2).pow(2) * 0.5).mean()
+        
+        return q_value_loss1 + q_value_loss2

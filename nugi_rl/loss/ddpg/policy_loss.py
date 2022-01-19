@@ -1,6 +1,10 @@
-import torch
+import torch.nn as nn
+from torch import Tensor
 
-class OffPolicyLoss():
-    def compute_loss(self, predicted_q_value):
-        policy_loss = (predicted_q_value * -1).mean() 
+class PolicyLoss(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    def forward(self, q_value: Tensor) -> Tensor:
+        policy_loss = q_value.mean() * -1
         return policy_loss

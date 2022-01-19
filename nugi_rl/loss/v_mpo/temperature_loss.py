@@ -1,14 +1,15 @@
 import torch
+import torch.nn as nn
 import math
 
-class TemperatureLoss():
-    def __init__(self, advantage_function, coef_temp = 0.0001, device = torch.device('cuda')):
-        self.advantage_function = advantage_function
-        self.coef_temp          = coef_temp
-        self.device             = device
+from torch import Tensor
 
-    def compute_loss(self, values, next_values, rewards, dones, temperature):
-        advantages  = self.advantage_function.compute_advantages(rewards, values, next_values, dones).detach()                
+class TemperatureLoss(nn.Module):
+    def __init__(self, coef_temp: int = 0.0001):
+        super().__init__()
+        self.coef_temp          = coef_temp
+
+    def forward(self, temperature: Tensor, advantages: Tensor) -> Tensor:
         top_adv, _  = torch.topk(advantages, math.ceil(advantages.size(0) / 2), 0)
 
         ratio       = top_adv / (temperature + 1e-6)

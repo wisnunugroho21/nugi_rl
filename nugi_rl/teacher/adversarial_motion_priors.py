@@ -1,89 +1,95 @@
 import torch
+from torch.nn import Module
 from torch.utils.data import DataLoader
+from torch.optim import Optimizer
+from torch import device, Tensor
 
-class TeacherAdvMtnPrio():
-    def __init__(self, discrim_model, loss_fn, memory, optimizer, epochs = 10, device = torch.device('cuda:0'), is_training_mode = True, batch_size = 32):
-        self.discrim_model      = discrim_model
+from nugi_rl.teacher.base import Teacher
+from nugi_rl.loss.adversarial_motion_priors import DiscriminatorLoss
+from nugi_rl.memory.teacher.sng.standard import SNGMemory
 
-        self.teacher_memory     = memory
-        self.optimizer          = optimizer
-        self.loss_fn            = loss_fn
+class TeacherAdvMtnPrior(Teacher):
+    def __init__(self, discrim: Module, discrim_loss: DiscriminatorLoss, memory: SNGMemory, optimizer: Optimizer, 
+        epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
+        device: device = torch.device('cuda:0'), dont_unsqueeze = False) -> None:
 
+        self.dont_unsqueeze     = dont_unsqueeze
+        self.batch_size         = batch_size  
         self.epochs             = epochs
-        self.batch_size         = batch_size        
-        self.device             = device
         self.is_training_mode   = is_training_mode
+        self.folder             = folder
 
-    @property
-    def memory(self):
-        return self.teacher_memory
+        self.discrim            = discrim
+        self.memory             = memory
+        self.discrim_loss       = discrim_loss
 
-    def _training_rewards(self, expert_states, expert_next_states, policy_states, policy_next_states, goals):
-        dis_expert  = self.discrim_model(expert_states, expert_next_states, goals)
-        dis_policy  = self.discrim_model(policy_states, policy_next_states, goals)       
+        self.optimizer          = optimizer
+        self.device             = device
 
-        loss = self.loss_fn.compute_loss(dis_expert, dis_policy, policy_states, policy_next_states)
+        if is_training_mode:
+          self.discrim.train()
+        else:
+          self.discrim.eval()
 
+    def _update_step(self, expert_states: Tensor, expert_next_states: Tensor, policy_states: Tensor, policy_next_states: Tensor, goals: Tensor) -> None:
         self.optimizer.zero_grad()
+
+        dis_expert  = self.discrim(expert_states, expert_next_states, goals)
+        dis_policy  = self.discrim(policy_states, policy_next_states, goals)       
+
+        loss = self.discrim_loss(dis_expert, dis_policy, policy_states, policy_next_states)
+        
         loss.backward()
         self.optimizer.step()
 
-    def _update_rewards(self):
+    def teach(self, state: Tensor, next_state: Tensor, goal: Tensor) -> Tensor:
+        with torch.inference_mode():
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
+            next_state      = next_state if self.dont_unsqueeze else next_state.unsqueeze(0)
+            goal            = goal if self.dont_unsqueeze else goal.unsqueeze(0)
+
+            discrimination  = self.discrim(state, next_state, goal)
+            reward          = torch.max(0, 1 - 0.25 * (discrimination - 1).pow(2))
+
+            reward = reward.squeeze(0)
+              
+        return reward
+
+    def save_obs(self, state: Tensor, goal: Tensor, next_state: Tensor) -> None:
+        self.memory.save(state, goal, next_state)
+
+    def save_all(self, states: Tensor, goals: Tensor, next_states: Tensor) -> None:
+        self.memory.save_all(states, goals, next_states)
+        
+    def update(self) -> None:
         for _ in range(self.epochs):
-            dataloader = DataLoader(self.teacher_memory, self.batch_size, shuffle = False, num_workers = 8)
-
+            dataloader = DataLoader(self.memory, self.batch_size, shuffle = False)
             for expert_states, expert_next_states, policy_states, policy_next_states, goals in dataloader:
-                self._training_rewards(expert_states.to(self.device), expert_next_states.to(self.device),
-                    policy_states.to(self.device), policy_next_states.to(self.device), goals.to(self.device))
+                self._update_step(expert_states, expert_next_states, policy_states, policy_next_states, goals)
 
-        self.teacher_memory.clear_policy_memory()
+        self.memory.clear()
 
-    def update(self):
-        if len(self.teacher_memory) >= self.batch_size:
-            self._update_rewards()
+    def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
+        return self.memory.get(start_position, end_position)
 
-    def teach(self, state, next_state, goal):
-        state       = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        goal        = torch.FloatTensor(goal).unsqueeze(0).to(self.device)
-        next_state  = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
+    def clear_obs(self, start_position: int = 0, end_position: int = None) -> None:
+        self.memory.clear(start_position, end_position)
 
-        discrimination  = self.discrim_model(state, next_state, goal)
-        reward          = torch.max(0, 1 - 0.25 * (discrimination - 1).pow(2))
-        
-        return reward.squeeze().detach().tolist()
-
-    def save_obs(self, state, goal, next_state):
-        self.teacher_memory.save_policy_obs(state, goal, next_state)
-
-    def save_weights(self, folder = None):
-        if folder == None:
-            folder = self.folder
-            
-        torch.save({
-            'discrim_model_state_dict': self.discrim_model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-        }, self.folder + '/amp.tar')
-        
-    def load_weights(self, folder = None, device = None):
-        if device == None:
-            device = self.device
-
-        if folder == None:
-            folder = self.folder
-
-        model_checkpoint = torch.load(self.folder + '/amp.tar', map_location = device)
-        self.discrim_model.load_state_dict(model_checkpoint['discrim_model_state_dict'])
+    def load_weights(self) -> None:
+        model_checkpoint = torch.load(self.folder + '/ppo.tar', map_location = self.device)
+        self.discrim.load_state_dict(model_checkpoint['discrim_model_state_dict'])
         self.optimizer.load_state_dict(model_checkpoint['optimizer_state_dict'])
+        
+        if self.optimizer is not None:
+            self.optimizer.load_state_dict(model_checkpoint['ppo_optimizer_state_dict'])
 
         if self.is_training_mode:
-            self.discrim_model.train()
+            self.discrim.train()
         else:
-            self.discrim_model.eval()
+            self.discrim.eval()
 
-    def get_weights(self):
-        return self.discrim_model.state_dict()
-
-    def set_weights(self, discrim_weights):
-        self.discrim_model.load_state_dict(discrim_weights)
-    
-    
+    def save_weights(self) -> None:            
+        torch.save({
+            'discrim_model_state_dict': self.discrim.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+        }, self.folder + '/amp.tar')
