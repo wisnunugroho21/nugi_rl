@@ -47,7 +47,8 @@ class SyncExecutor(Executor):
 
                 if self.is_training_mode:
                     states, actions, rewards, dones, next_states, logprobs = memory
-                    self.agent.save_all(states.to(self.learner_device), actions.to(self.learner_device), rewards.to(self.learner_device), dones.to(self.learner_device), next_states.to(self.learner_device), logprobs.to(self.learner_device))
+                    self.agent.save_all(states.to(self.learner_device), actions.to(self.learner_device), rewards.to(self.learner_device), 
+                        dones.to(self.learner_device), next_states.to(self.learner_device), logprobs.to(self.learner_device))
 
                     self.agent.update()
                 self.agent.save_weights()
