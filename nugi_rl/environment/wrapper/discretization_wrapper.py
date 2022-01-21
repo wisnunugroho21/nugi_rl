@@ -4,7 +4,7 @@ from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
 from torch import device, Tensor
 
 class DiscretizationWrapper(GymWrapper):
-    def __init__(self, env, agent_device: device, bins: int = 15) -> None:
+    def __init__(self, env, agent_device: device, bins: int = 15, act_dim: int = None) -> None:
         super().__init__(env, agent_device)
 
         self.act = torch.arange(bins, device = agent_device)
@@ -12,7 +12,10 @@ class DiscretizationWrapper(GymWrapper):
         
         self.env = env
         self.bins = bins
-        self.act_dim = self.env.get_action_dim()
+
+        self.act_dim = act_dim
+        if act_dim is None:
+            self.act_dim = self.env.get_action_dim()
 
     def step(self, action: Tensor) -> Tensor:
         action = action.flatten().long()

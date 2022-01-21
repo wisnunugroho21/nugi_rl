@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from nugi_rl.distribution.continous.multivariate_continous import MultivariateContinous
+from nugi_rl.distribution.continous.multivariate import MultivariateContinous
 from nugi_rl.loss.v_mpo.alpha.base import AlphaLoss
 
 class ContinuousAlphaLoss(AlphaLoss):

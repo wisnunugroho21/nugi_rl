@@ -1,7 +1,7 @@
 import torch
 from torch import Tensor
 
-from nugi_rl.distribution.discrete.basic_discrete import BasicDiscrete
+from nugi_rl.distribution.discrete.basic import BasicDiscrete
 from nugi_rl.loss.v_mpo.alpha.base import AlphaLoss
 
 class DiscreteAlphaLoss(AlphaLoss):
