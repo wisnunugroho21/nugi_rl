@@ -3,11 +3,11 @@ import random
 import numpy as np
 import torch
 import os
-import robosuite as suite
-from robosuite.wrappers import GymWrapper as RobosuiteWrapper
+import wandb
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.adamw import AdamW
+from nugi_rl.helpers.plotter.tensor_board import TensorboardPlotter
 
 from nugi_rl.train.runner.iteration.standard import IterRunner
 from nugi_rl.train.executor.standard import Executor
@@ -45,65 +45,41 @@ action_std              = 1.0
 gamma                   = 0.95
 learning_rate           = 3e-4
 
-device                  = torch.device('cuda')
-folder                  = 'weights/truly_ppo_lift1'
-
-# env = gym.make('BipedalWalker-v3')
-
-env                     = RobosuiteWrapper(
-    suite.make(
-        "Lift",
-        robots = "Sawyer",                # use Sawyer robot
-        use_camera_obs = False,           # do not use pixel observations
-        has_offscreen_renderer = False,   # not needed since not using pixel obs
-        has_renderer = True,              # make sure we can render to the screen
-        reward_shaping = True,            # use dense rewards
-        control_freq = 20,                # control should happen fast enough so that simulation looks smooth
-    )
-)
+device_name             = 'cuda'
+env_name                = 'BipedalWalker-v3'
+folder                  = 'weights'
 
 state_dim               = None
 action_dim              = None
 max_action              = 1
 
+config = { load_weights, save_weights, is_training_mode, render, reward_threshold, n_plot_batch, n_iteration,
+    n_update, n_saved, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,
+    epochs, action_std, gamma, learning_rate, device_name, env_name
+}
+
 #####################################################################################################################################################
+device              = torch.device(device_name)
 
-random.seed(20)
-np.random.seed(20)
-torch.manual_seed(20)
-os.environ['PYTHONHASHSEED'] = str(20)
-
-environment         = GymWrapper(env, device)
-
-if state_dim is None:
-    state_dim = environment.get_obs_dim()
-print('state_dim: ', state_dim)
-
-if environment.is_discrete():
-    print('discrete')
-else:
-    print('continous')
-
-if action_dim is None:
-    action_dim = environment.get_action_dim()
-print('action_dim: ', action_dim)
-
+environment         = GymWrapper(gym.make(env_name), device)
 distribution        = BasicContinous()
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
+memory              = PolicyMemory()
+plotter             = TensorboardPlotter(SummaryWriter())
 
-memory          = PolicyMemory()
 ppo_loss        = TrulyPpo(distribution, policy_kl_range, policy_params)
 value_loss      = ValueLoss(vf_loss_coef, value_clip)
 entropy_loss    = EntropyLoss(distribution, entropy_coef)
 
 policy          = Policy_Model(state_dim, action_dim).float().to(device)
 value           = Value_Model(state_dim).float().to(device)
+
 optimizer       = AdamW(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)
 
-agent   = AgentPPO(policy, value, advantage_function, distribution, ppo_loss, value_loss, entropy_loss, memory, optimizer, 
-    epochs, is_training_mode, batch_size, folder, device)
+agent   = AgentPPO(policy, value, advantage_function, distribution, ppo_loss, value_loss, entropy_loss, 
+    memory, optimizer, epochs, is_training_mode, batch_size, folder, device)
 
-runner      = IterRunner(agent, environment, is_training_mode, render, n_update, SummaryWriter(), n_plot_batch) # [Runner.remote(i_env, render, training_mode, n_update, Wrapper.is_discrete(), agent, max_action, None, n_plot_batch) for i_env in env]
+runner      = IterRunner(agent, environment, is_training_mode, render, n_update, plotter, n_plot_batch)
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()
