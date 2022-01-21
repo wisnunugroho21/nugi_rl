@@ -1,23 +1,13 @@
 from datetime import datetime
 
-from torch.utils.tensorboard import SummaryWriter
-
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
-from nugi_rl.train.runner.base import Runner
+from nugi_rl.helpers.plotter.base import Plotter
+from nugi_rl.train.runner.iteration.standard import IterRunner
 
-class BraxIterRunner(Runner):
-    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, 
-        writer: SummaryWriter = None) -> None:
-
-        self.agent              = agent
-        self.env                = env
-
-        self.render             = render
-        self.is_save_memory     = is_save_memory
-        self.n_update           = n_update
-        self.writer             = writer
-
+class BraxIterRunner(IterRunner):
+    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, plotter: Plotter = None, n_plot_batch: int = 1) -> None:
+        super().__init__(agent, env, is_save_memory, render, n_update, plotter, n_plot_batch)
         self.iter               = 0
 
     def run(self) -> tuple:
@@ -31,10 +21,7 @@ class BraxIterRunner(Runner):
             next_state, reward, done, _ = self.env.step(action)
             
             if self.is_save_memory:
-                self.agent.save_all(states, action, reward, done, next_state, logprob)
-
-            if self.writer is not None:
-                self.writer.add_scalar('Rewards', total_reward, self.iter)
+                self.agent.save_all(states, action, reward, done, next_state, logprob)            
                            
             states          = next_state
             total_reward    += reward.mean()
@@ -42,7 +29,12 @@ class BraxIterRunner(Runner):
             if self.render:
                 self.env.render()
 
-        print('Iter {} \t t_reward: {} \t real time: {}'.format(self.iter, total_reward, datetime.now().strftime("%H:%M:%S")))     
-        self.iter   += 1   
+        print('Iter {} \t t_reward: {} \t real time: {}'.format(self.iter, total_reward, datetime.now().strftime("%H:%M:%S")))
+        if self.plotter is not None and self.iter % self.n_plot_batch == 0:
+            self.plotter.plot({
+                'Rewards': total_reward
+            }) 
+
+        self.iter   += 1  
 
         return self.agent.get_obs(-self.n_update)

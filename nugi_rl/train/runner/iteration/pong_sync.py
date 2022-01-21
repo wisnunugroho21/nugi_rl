@@ -1,7 +1,5 @@
-from datetime import datetime
+from nugi_rl.helpers.plotter.base import Plotter
 import ray
-
-from torch.utils.tensorboard import SummaryWriter
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
@@ -12,8 +10,8 @@ from nugi_rl.train.runner.iteration.standard import IterRunner
 
 @ray.remote(num_cpus = 4)
 class PongSyncRunner(IterRunner):
-    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, writer: SummaryWriter = None, n_plot_batch: int = 100, tag: int = 1):
-        super().__init__(agent, env, is_save_memory, render, n_update, writer, n_plot_batch)
+    def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, plotter: Plotter = None, n_plot_batch: int = 100, tag: int = 1):
+        super().__init__(agent, env, is_save_memory, render, n_update, plotter, n_plot_batch)
 
         obs         = self.env.reset()  
         self.obs    = prepro_half_one_dim(obs)
@@ -54,9 +52,11 @@ class PongSyncRunner(IterRunner):
                 else:
                     print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
 
-                if self.i_episode % self.n_plot_batch == 0 and self.writer is not None:
-                    self.writer.add_scalar('Rewards', self.total_reward, self.i_episode)
-                    self.writer.add_scalar('Times', self.eps_time, self.i_episode)
+                if self.plotter is not None and self.i_episode % self.n_plot_batch == 0:
+                    self.plotter.plot({
+                        'Rewards': self.total_reward,
+                        'Times': self.eps_time
+                    })
 
                 obs         = self.env.reset()  
                 self.obs    = prepro_half_one_dim(obs)
