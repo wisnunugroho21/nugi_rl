@@ -10,7 +10,7 @@ from torch.optim.adamw import AdamW
 from nugi_rl.train.runner.iteration.brax import BraxIterRunner
 from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.ppo import AgentPPO
-from nugi_rl.distribution.continous.basic_continous import BasicContinous
+from nugi_rl.distribution.continous.basic import BasicContinous
 from nugi_rl.environment.wrapper.brax_wrapper import BraxWrapper
 from nugi_rl.loss.ppo.truly_ppo import TrulyPpo
 from nugi_rl.loss.value import ValueLoss

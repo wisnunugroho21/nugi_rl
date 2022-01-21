@@ -10,7 +10,7 @@ from torch.optim.adam import Adam
 from nugi_rl.train.runner.single_step.single_step_runner import SingleStepRunner
 from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.standard.sac import AgentSac
-from nugi_rl.distribution.continous.basic_continous import BasicContinous
+from nugi_rl.distribution.continous.basic import BasicContinous
 from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
 from nugi_rl.loss.sac.q_loss import QLoss
 from nugi_rl.loss.sac.policy_loss import PolicyLoss

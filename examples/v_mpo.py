@@ -12,7 +12,7 @@ from torch.optim.adamw import AdamW
 from nugi_rl.train.runner.iteration.standard import IterRunner
 from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.v_mpo import AgentVMPO
-from nugi_rl.distribution.continous.multivariate_continous import MultivariateContinous
+from nugi_rl.distribution.continous.multivariate import MultivariateContinous
 from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
 from nugi_rl.loss.v_mpo.phi_loss import PhiLoss
 from nugi_rl.loss.v_mpo.temperature_loss import TemperatureLoss
