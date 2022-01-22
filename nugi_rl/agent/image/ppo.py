@@ -17,6 +17,11 @@ class AgentImagePPO(AgentPPO):
         super().__init__(policy, value, distribution, policy_loss, value_loss, entropy_loss, memory, optimizer, ppo_epochs=ppo_epochs, is_training_mode=is_training_mode, batch_size=batch_size, folder=folder, device=device, policy_old=policy_old, value_old=value_old)
         self.trans = trans
 
+    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
+        states      = self.trans(states)
+        next_states = self.trans(next_states)
+        return super()._update_step(states, actions, rewards, dones, next_states)
+
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
             state           = self.trans(state).unsqueeze(0)
