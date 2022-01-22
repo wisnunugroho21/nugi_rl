@@ -18,8 +18,6 @@ from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageE
 from nugi_rl.memory.policy.base import PolicyMemory
 from nugi_rl.memory.clr import ClrMemory
 
-import kornia.augmentation as K
-
 class AgentImagePpoClr(AgentPPO):
     def __init__(self, policy: Module, value: Module, cnn: Module, projector: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, 
         policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, memory: PolicyMemory, aux_clr_memory: ClrMemory, optimizer: Optimizer, aux_clr_optimizer: Optimizer, 
