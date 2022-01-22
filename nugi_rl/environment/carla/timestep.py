@@ -24,8 +24,9 @@ import carla
 from nugi_rl.environment.carla.standard import CarlaEnv
 
 class CarlaTimestepEnv(CarlaEnv):
-    def __init__(self, im_height = 480, im_width = 480, im_preview = False, max_step = 512, index_pos = None):
-        super().__init__(im_height, im_width, im_preview, max_step, index_pos)
+    def __init__(self, start_pos_rot: list, model_car: str = 'model3', im_height: int = 480, im_width: int = 480, im_preview: bool = False, max_step: int = 512, n_timestep: int = 3):
+        super().__init__(start_pos_rot, model_car, im_height, im_width, im_preview, max_step)
+        self.n_timestep = n_timestep
 
     def reset(self):
         for actor in self.actor_list:
@@ -33,7 +34,7 @@ class CarlaTimestepEnv(CarlaEnv):
         del self.actor_list[:]        
 
         pos = self._get_pos()
-        pos = carla.Transform(carla.Location(x = pos[0], y = pos[1], z = 1.0), carla.Rotation(pitch = 0, yaw = pos[2], roll = 0))
+        pos = carla.Transform(carla.Location(x = pos[0], y = pos[1], z = pos[2]), carla.Rotation(pitch = pos[3], yaw = pos[4], roll = pos[5]))
         
         self.vehicle    = self.world.spawn_actor(self.model_3, pos)        
         self.vehicle.apply_control(carla.VehicleControl(throttle = 0, brake = 1.0, steer = 0))        
@@ -41,7 +42,7 @@ class CarlaTimestepEnv(CarlaEnv):
         self.cam_sensor = self.world.spawn_actor(self.rgb_cam, carla.Transform(carla.Location(x = 1.6, z = 1.7)), attach_to = self.vehicle)
         self.cam_sensor.listen(self.cam_queue.put)
 
-        for _ in range(2):
+        for _ in range(self.n_timestep - 1):
             self._tick_env()
         
         self.col_sensor = self.world.spawn_actor(self.col_detector, carla.Transform(), attach_to = self.vehicle)
@@ -59,7 +60,7 @@ class CarlaTimestepEnv(CarlaEnv):
 
         images = []
 
-        for _ in range(2):
+        for _ in range(self.n_timestep - 1):
             image_data  = np.zeros((self.im_height, self.im_width, 3), dtype = np.uint8)
             images.append(Image.fromarray(image_data, 'RGB'))
 
@@ -70,11 +71,11 @@ class CarlaTimestepEnv(CarlaEnv):
         
         return images, np.array([0, 0])
 
-    def step(self, action):
+    def step(self, action: list[float, float]):
         prev_loc    = self.vehicle.get_location()
         images      = []
 
-        for _ in range(3):
+        for _ in range(self.n_timestep):
             steer   = -1 if action[0] < -1 else 1 if action[0] > 1 else action[0]
             if action[1] >= 0:
                 throttle    = 1 if action[1] > 1 else action[1]
@@ -83,7 +84,7 @@ class CarlaTimestepEnv(CarlaEnv):
                 brake       = (-1 if action[1] < -1 else action[1]) * -1
                 throttle    = 0
 
-            self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), throttle = float(throttle), brake = float(brake)))
+            self.vehicle.apply_control(carla.VehicleControl(steer, throttle, brake))
 
             self._tick_env()
             images.append(self._process_image(self.cam_queue.get()))

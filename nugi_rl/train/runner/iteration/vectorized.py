@@ -2,10 +2,11 @@ import torch
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
+from nugi_rl.helpers.plotter.base import Plotter
 from nugi_rl.train.runner.iteration.standard import IterRunner
 
 class VectorizedRunner(IterRunner):
-    def __init__(self, agent: Agent, envs: list[Environment], is_save_memory: bool, render: bool, n_update: int, n_plot_batch: int = 100) -> None:
+    def __init__(self, agent: Agent, envs: list[Environment], is_save_memory: bool, render: bool, n_update: int, plotter: Plotter = None, n_plot_batch: int = 1) -> None:
         super().__init__(agent, envs, is_save_memory, render, n_update, plotter, n_plot_batch)
 
         self.t_updates          = [0 for _ in self.env]

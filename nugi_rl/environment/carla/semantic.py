@@ -3,8 +3,8 @@ import numpy as np
 from nugi_rl.environment.carla.standard import CarlaEnv
 
 class CarlaSemanticEnv(CarlaEnv):
-    def __init__(self, im_height = 480, im_width = 480, im_preview = False, max_step = 512, index_pos = None):
-        super().__init__(im_height, im_width, im_preview, max_step, index_pos)
+    def __init__(self, start_pos_rot: list, model_car: str = 'model3', im_height: int = 480, im_width: int = 480, im_preview: bool = False, max_step: int = 512):
+        super().__init__(start_pos_rot, model_car, im_height, im_width, im_preview, max_step)
 
         blueprint_library   = self.world.get_blueprint_library()
         self.rgb_cam        = blueprint_library.find('sensor.camera.semantic_segmentation')

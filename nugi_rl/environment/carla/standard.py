@@ -23,23 +23,17 @@ import carla
 from nugi_rl.environment.base import Environment
 
 class CarlaEnv(Environment):
-    def __init__(self, im_height = 480, im_width = 480, im_preview = False, max_step = 512, index_pos = None):
+    def __init__(self, start_pos_rot: list, model_car: str = 'model3', im_height: int = 480, im_width: int = 480, im_preview: bool = False, max_step: int = 512):
         self.cur_step           = 0
         self.collision_hist     = []
         self.crossed_line_hist  = []
         self.actor_list         = []
-        self.init_pos           = [
-            [-149.1, -94.7, 89.3],
-            [-152.3, -96.5, 90.8],
-            [-141.9, -33.6, -89.0],
-            [-145.5, -33.6, -89.6],
-        ]
 
+        self.start_pos_rot          = start_pos_rot
         self.im_height              = im_height
         self.im_width               = im_width
         self.im_preview             = im_preview
         self.max_step               = max_step
-        self.index_pos              = index_pos
         self.observation_space      = Box(low = -1.0, high = 1.0, shape = (im_height, im_width))
         self.action_space           = Box(low = -1.0, high = 1.0, shape = (2, 1))
 
@@ -47,7 +41,7 @@ class CarlaEnv(Environment):
         self.world          = client.get_world()
         blueprint_library   = self.world.get_blueprint_library()
 
-        self.model_3        = blueprint_library.filter('model3')[0]        
+        self.model_3        = blueprint_library.filter(model_car)[0]        
         self.col_detector   = blueprint_library.find('sensor.other.collision')
         self.crl_detector   = blueprint_library.find('sensor.other.lane_invasion')
         self.rgb_cam        = blueprint_library.find('sensor.camera.rgb')
@@ -68,11 +62,8 @@ class CarlaEnv(Environment):
         del self.actor_list[:]
 
     def _get_pos(self):
-        if self.index_pos is not None:
-            return self.init_pos[self.index_pos]
-        else:
-            idx_pos = np.random.randint(len(self.init_pos))
-            return self.init_pos[idx_pos]
+        idx_pos = np.random.randint(self.start_pos_rot)
+        return self.start_pos_rot[idx_pos]
 
     def _process_image(self, image):
         i = np.array(image.raw_data)
@@ -105,13 +96,13 @@ class CarlaEnv(Environment):
     def get_action_dim(self):
         return 2
 
-    def reset(self):
+    def reset(self) -> None:
         for actor in self.actor_list:
             actor.destroy()
         del self.actor_list[:]        
 
         pos = self._get_pos()
-        pos = carla.Transform(carla.Location(x = pos[0], y = pos[1], z = 1.0), carla.Rotation(pitch = 0, yaw = pos[2], roll = 0))
+        pos = carla.Transform(carla.Location(x = pos[0], y = pos[1], z = pos[2]), carla.Rotation(pitch = pos[3], yaw = pos[4], roll = pos[5]))
         
         self.vehicle    = self.world.spawn_actor(self.model_3, pos)        
         self.vehicle.apply_control(carla.VehicleControl(throttle = 0, brake = 1.0, steer = 0))        
@@ -141,7 +132,7 @@ class CarlaEnv(Environment):
         
         return image, np.array([0, 0])
 
-    def step(self, action):
+    def step(self, action: list[float, float]):
         prev_loc    = self.vehicle.get_location()
 
         steer   = -1 if action[0] < -1 else 1 if action[0] > 1 else action[0]
@@ -152,7 +143,7 @@ class CarlaEnv(Environment):
             brake       = (-1 if action[1] < -1 else action[1]) * -1
             throttle    = 0
 
-        self.vehicle.apply_control(carla.VehicleControl(steer = float(steer), throttle = float(throttle), brake = float(brake)))
+        self.vehicle.apply_control(carla.VehicleControl(steer, throttle, brake))
 
         self._tick_env()
         self.cur_step   += 1
