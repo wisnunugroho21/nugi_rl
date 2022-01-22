@@ -1,8 +1,5 @@
 import gym
-import random
-import numpy as np
 import torch
-import os
 
 from torch.optim.adamw import AdamW
 
@@ -30,16 +27,15 @@ reward_threshold        = 1000 # Set threshold for reward. The learning will sto
 n_plot_batch            = 1 # How many episode you want to plot the result
 n_iteration             = 100000000 # How many episode you want to run
 n_update                = 1024 # How many episode before you update the Policy 
-n_saved                 = 1
+n_saved                 = 1 # How many iteration before you save the model
 
-policy_kl_range         = 0.03
-policy_params           = 5
-value_clip              = None
-entropy_coef            = 0.1
-vf_loss_coef            = 1.0
-batch_size              = 32
-epochs                  = 5
-action_std              = 1.0
+policy_kl_range         = 0.03 # KL range (Delta) for Truly PPO  
+policy_params           = 5 # Policy params (Alpha) for Truly PPO
+value_clip              = None # Clipping for Value Loss
+entropy_coef            = 0.1 # Coefficient for Entropy Loss
+value_loss_coef         = 1.0 # Coefficient for Value Loss
+batch_size              = 32 # The size of batch for each update
+epochs                  = 5 # The amount of epochs for each update
 gamma                   = 0.95
 learning_rate           = 3e-4
 
@@ -51,9 +47,10 @@ state_dim               = None
 action_dim              = None
 max_action              = None
 
-config = { load_weights, save_weights, is_training_mode, render, reward_threshold, n_plot_batch, n_iteration,
-    n_update, n_saved, policy_kl_range, policy_params, value_clip, entropy_coef, vf_loss_coef, batch_size,
-    epochs, action_std, gamma, learning_rate, device_name, env_name
+config = { 
+    load_weights, save_weights, is_training_mode, render, reward_threshold, n_plot_batch, n_iteration,
+    n_update, n_saved, policy_kl_range, policy_params, value_clip, entropy_coef, value_loss_coef, batch_size,
+    epochs, gamma, learning_rate, device_name, env_name
 }
 
 #####################################################################################################################################################
@@ -73,7 +70,7 @@ plotter             = WeightBiasPlotter(config, 'BipedalWalker_v1', entity = "wi
 
 memory          = PolicyMemory()
 ppo_loss        = TrulyPpo(distribution, policy_kl_range, policy_params)
-value_loss      = ValueLoss(vf_loss_coef, value_clip)
+value_loss      = ValueLoss(value_loss_coef, value_clip)
 entropy_loss    = EntropyLoss(distribution, entropy_coef)
 
 policy          = Policy_Model(state_dim, action_dim).float().to(device)
