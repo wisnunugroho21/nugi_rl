@@ -66,10 +66,10 @@ class AgentVMPO(Agent):
         self.value_optimizer.zero_grad()
 
         action_datas, temperature, alpha    = self.policy(states)
-        old_action_datas, _, _              = self.old_policy(states, True)       
+        old_action_datas, _, _              = self.old_policy(states)       
         values                              = self.value(states)
-        old_values                          = self.old_value(states, True)
-        next_values                         = self.value(next_states, True)
+        old_values                          = self.old_value(states)
+        next_values                         = self.value(next_states)
 
         adv         = self.gae(rewards, values, next_values, dones).detach()        
         

@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from torch import Tensor
+
 class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Policy_Model, self).__init__()
@@ -22,15 +24,12 @@ class Policy_Model(nn.Module):
           nn.Sigmoid()
         )
         
-    def forward(self, states, detach = False):
+    def forward(self, states: Tensor) -> tuple:
       x     = self.nn_layer(states)
       mean  = self.mean_layer(x[:, :64])
       std   = self.std_layer(x[:, 64:])
 
-      if detach:
-        return (mean.detach(), std.detach())
-      else:
-        return (mean, std)
+      return (mean, std)
       
 class Q_Model(nn.Module):
     def __init__(self, state_dim, action_dim):
@@ -44,10 +43,7 @@ class Q_Model(nn.Module):
           nn.Linear(64, 1)
         )
         
-    def forward(self, states, actions, detach = False):
+    def forward(self, states: Tensor, actions: Tensor) -> tuple:
       x   = torch.cat((states, actions), -1)
 
-      if detach:
-        return self.nn_layer(x).detach()
-      else:
-        return self.nn_layer(x)
+      return self.nn_layer(x)

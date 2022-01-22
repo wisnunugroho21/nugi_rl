@@ -26,13 +26,13 @@ class AgentTd3Cql(AgentTd3):
         predicted_q1        = self.soft_q1(states, actions)
         predicted_q2        = self.soft_q2(states, actions)
 
-        predicted_actions   = self.policy(states, True)
+        predicted_actions   = self.policy(states)
         naive_q1_value      = self.soft_q1(states, predicted_actions)
         naive_q2_value      = self.soft_q2(states, predicted_actions)
 
-        next_actions        = self.policy(next_states, True)
-        target_next_q1      = self.target_q1(next_states, next_actions, True)
-        target_next_q2      = self.target_q2(next_states, next_actions, True)
+        next_actions        = self.policy(next_states)
+        target_next_q1      = self.target_q1(next_states, next_actions)
+        target_next_q2      = self.target_q2(next_states, next_actions)
 
         loss  = self.qLoss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, rewards, dones) + \
             self.cqlRegLoss(predicted_q1, predicted_q2, naive_q1_value, naive_q2_value)

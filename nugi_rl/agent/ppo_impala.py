@@ -65,9 +65,9 @@ class AgentImpalaPPO(Agent):
 
         cur_logprobs        = self.logprob(states, actions)
 
-        old_action_datas    = self.policy_old(states, True)
-        old_values          = self.value_old(states, True)
-        next_values         = self.value(next_states, True)
+        old_action_datas    = self.policy_old(states)
+        old_values          = self.value_old(states)
+        next_values         = self.value(next_states)
 
         adv = self.gae(rewards, values, next_values, dones, logprobs, cur_logprobs).detach()
 

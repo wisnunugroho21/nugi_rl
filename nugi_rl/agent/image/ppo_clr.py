@@ -54,13 +54,13 @@ class AgentImagePpoClr(AgentPPO):
         action_datas        = self.policy(res)
         values              = self.value(res)
 
-        res_old             = self.cnn_old(states, True)
+        res_old             = self.cnn_old(states)
 
-        old_action_datas    = self.policy_old(res_old, True)
-        old_values          = self.value_old(res_old, True)
+        old_action_datas    = self.policy_old(res_old)
+        old_values          = self.value_old(res_old)
 
-        next_res            = self.cnn(next_states, True)
-        next_values         = self.value(next_res, True)
+        next_res            = self.cnn(next_states)
+        next_values         = self.value(next_res)
 
         adv = self.gae(rewards, values, next_values, dones).detach()
 
@@ -77,8 +77,8 @@ class AgentImagePpoClr(AgentPPO):
         res_anchor        = self.cnn(input_images)
         encoded_anchor    = self.projector(res_anchor)
 
-        res_target        = self.cnn_old(target_images, True)
-        encoded_target    = self.projector_old(res_target, True)
+        res_target        = self.cnn_old(target_images)
+        encoded_target    = self.projector_old(res_target)
 
         loss = self.aux_clr_loss(encoded_anchor, encoded_target)
 

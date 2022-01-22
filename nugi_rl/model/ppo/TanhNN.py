@@ -18,14 +18,11 @@ class Policy_Model(nn.Module):
           nn.Linear(64, action_dim)
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> tuple:
+    def forward(self, states: Tensor) -> tuple:
       mean  = self.nn_layer(states)
       std   = self.actor_std.exp()
       
-      if detach:
-        return (mean.detach(), std.detach())
-      else:
-        return (mean, std)
+      return (mean, std)
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
@@ -39,8 +36,5 @@ class Value_Model(nn.Module):
           nn.Linear(64, 1)
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> Tensor:
-      if detach:
-        return self.nn_layer(states).detach()
-      else:
-        return self.nn_layer(states)
+    def forward(self, states: Tensor) -> Tensor:
+      return self.nn_layer(states)

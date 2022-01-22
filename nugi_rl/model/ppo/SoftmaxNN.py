@@ -14,13 +14,9 @@ class Policy_Model(nn.Module):
           nn.Softmax(-1)
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> tuple:
+    def forward(self, states: Tensor) -> tuple:
       action_datas = self.nn_layer(states).detach()
-
-      if detach:
-        return (action_datas.detach(), )
-      else:
-        return (action_datas, )
+      return (action_datas.detach(), )
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
@@ -34,8 +30,5 @@ class Value_Model(nn.Module):
           nn.Linear(640, 1)
         )
         
-    def forward(self, states: Tensor, detach: bool = False) -> Tensor:
-      if detach:
-        return self.nn_layer(states).detach()
-      else:
-        return self.nn_layer(states)
+    def forward(self, states: Tensor) -> Tensor:
+      return self.nn_layer(states)
