@@ -1,10 +1,10 @@
-gym
-opencv-python
 torch 
 torchvision 
 torchaudio
 numpy
-ray
-Pillow
 matplotlib
 pandas
+Pillow
+gym
+opencv-python
+# ray
