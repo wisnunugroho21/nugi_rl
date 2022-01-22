@@ -74,9 +74,9 @@ class AgentPPO(Agent):
         action_datas, _     = self.policy(states)
         values              = self.value(states)
 
-        old_action_datas, _ = self.policy_old(states, True)
-        old_values          = self.value_old(states, True)
-        next_values         = self.value(next_states, True)
+        old_action_datas, _ = self.policy_old(states)
+        old_values          = self.value_old(states)
+        next_values         = self.value(next_states)
 
         adv = self.gae(rewards, values, next_values, dones).detach()
 
@@ -92,8 +92,8 @@ class AgentPPO(Agent):
 
         action_datas, values    = self.policy(states)
 
-        returns                 = self.value(states, True)
-        old_action_datas, _     = self.policy_old(states, True)
+        returns                 = self.value(states)
+        old_action_datas, _     = self.policy_old(states)
 
         loss = self.aux_loss(action_datas, old_action_datas, values, returns)
         

@@ -57,9 +57,9 @@ class AgentDdpg(Agent):
     def _update_step_q(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> Tensor:
         self.soft_q_optimizer.zero_grad()
 
-        next_actions    = self.policy(next_states, True)
+        next_actions    = self.policy(next_states)
         predicted_q     = self.soft_q(states, actions)
-        target_next_q   = self.target_q(next_states, next_actions, True)
+        target_next_q   = self.target_q(next_states, next_actions)
 
         loss  = self.qLoss(predicted_q, target_next_q, rewards, dones)
 

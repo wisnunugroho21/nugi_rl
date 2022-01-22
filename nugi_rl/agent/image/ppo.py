@@ -10,10 +10,10 @@ from nugi_rl.distribution.base import Distribution
 from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
-from nugi_rl.memory.policy.base import PolicyMemory
+from nugi_rl.memory.policy.image import ImagePolicyMemory
 
 class AgentImagePPO(AgentPPO):  
-    def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: PolicyMemory, optimizer: Optimizer, trans: Compose, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None):
+    def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: ImagePolicyMemory, optimizer: Optimizer, trans: Compose, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None):
         super().__init__(policy, value, distribution, policy_loss, value_loss, entropy_loss, memory, optimizer, ppo_epochs=ppo_epochs, is_training_mode=is_training_mode, batch_size=batch_size, folder=folder, device=device, policy_old=policy_old, value_old=value_old)
         self.trans = trans
 

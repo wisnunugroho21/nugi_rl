@@ -2,6 +2,8 @@
 import torch
 import torch.nn as nn
 
+from torch import Tensor
+
 class Policy_Model(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Policy_Model, self).__init__()
@@ -30,14 +32,11 @@ class Policy_Model(nn.Module):
           nn.Linear(64, action_dim)
         )
         
-    def forward(self, states, detach = False):
+    def forward(self, states: Tensor) -> Tensor:
       mean  = self.nn_layer(states)
       std   = self.actor_std.exp()
       
-      if detach:
-        return (mean.detach(), std.detach()), self.temperature.detach(), (self.alpha_mean.detach(), self.alpha_cov.detach())
-      else:
-        return (mean, std), self.temperature, (self.alpha_mean, self.alpha_cov)
+      return (mean, std), self.temperature, (self.alpha_mean, self.alpha_cov)
       
 class Value_Model(nn.Module):
     def __init__(self, state_dim):
@@ -51,8 +50,5 @@ class Value_Model(nn.Module):
           nn.Linear(64, 1)
         )
         
-    def forward(self, states, detach = False):
-      if detach:
-        return self.nn_layer(states).detach()
-      else:
-        return self.nn_layer(states)
+    def forward(self, states: Tensor) -> Tensor:
+      return self.nn_layer(states)

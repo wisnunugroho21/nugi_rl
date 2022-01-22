@@ -105,19 +105,19 @@ class AgentPPO(Agent):
         self.policy_optimizer.zero_grad()
 
         action_datas        = self.policy(states)
-        old_action_datas    = self.policy_old(states, True)
+        old_action_datas    = self.policy_old(states)
 
         ex_values           = self.ex_value(states)
-        old_ex_values       = self.ex_value_old(states, True)
-        next_ex_values      = self.ex_value(next_states, True)
+        old_ex_values       = self.ex_value_old(states)
+        next_ex_values      = self.ex_value(next_states)
 
         in_values           = self.in_value(states)
-        old_in_values       = self.in_value_old(states, True)
-        next_in_values      = self.in_value(next_states, True)
+        old_in_values       = self.in_value_old(states)
+        next_in_values      = self.in_value(next_states)
 
         obs                 = normalize(next_states, mean_obs, std_obs, 5).detach()
-        state_preds         = self.rnd_predict(obs, True)
-        state_targets       = self.rnd_target(obs, True)
+        state_preds         = self.rnd_predict(obs)
+        state_targets       = self.rnd_target(obs)
 
         in_rewards  = ((state_targets - state_preds).pow(2) * 0.5 / (std_in_rewards.mean() + 1e-6)).detach()
 

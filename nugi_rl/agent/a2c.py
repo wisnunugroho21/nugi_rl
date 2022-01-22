@@ -60,8 +60,8 @@ class AgentA2C(Agent):
         action_datas        = self.policy(states)
         values              = self.value(states)
 
-        old_values          = self.value_old(states, True)
-        next_values         = self.value(next_states, True)
+        old_values          = self.value_old(states)
+        next_values         = self.value(next_states)
 
         loss = self.policy_loss(action_datas, values, next_values, actions, rewards, dones) + \
             self.value_loss(values, next_values, rewards, dones, old_values) + \

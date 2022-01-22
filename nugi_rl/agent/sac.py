@@ -67,14 +67,14 @@ class AgentSac(Agent):
     def _update_step_q(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> Tensor:
         self.soft_q_optimizer.zero_grad()
 
-        next_action_datas   = self.policy(next_states, True)
+        next_action_datas   = self.policy(next_states)
         next_actions        = self.distribution.sample(*next_action_datas)
 
         predicted_q1        = self.soft_q1(states, actions)
         predicted_q2        = self.soft_q2(states, actions)
 
-        target_next_q1      = self.target_q1(next_states, next_actions, True)
-        target_next_q2      = self.target_q2(next_states, next_actions, True)
+        target_next_q1      = self.target_q1(next_states, next_actions)
+        target_next_q2      = self.target_q2(next_states, next_actions)
 
         loss  = self.qLoss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, next_action_datas, next_actions, rewards, dones)
 
