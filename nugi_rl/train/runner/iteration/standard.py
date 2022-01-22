@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
 from nugi_rl.helpers.plotter.base import Plotter
@@ -42,9 +40,7 @@ class IterRunner(Runner):
 
             if done:                
                 self.i_episode  += 1
-                now = datetime.now()
-
-                print('Episode {} \t t_reward: {} \t eps time: {} \t real time: {}'.format(self.i_episode, self.total_reward, self.eps_time, now.strftime("%H:%M:%S")))
+                print('Episode {} \t t_reward: {} \t eps time: {}'.format(self.i_episode, self.total_reward, self.eps_time))
 
                 if self.plotter is not None and self.i_episode % self.n_plot_batch == 0:
                     self.plotter.plot({

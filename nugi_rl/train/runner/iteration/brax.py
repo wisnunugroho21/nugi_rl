@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
 from nugi_rl.helpers.plotter.base import Plotter
@@ -29,7 +27,7 @@ class BraxIterRunner(IterRunner):
             if self.render:
                 self.env.render()
 
-        print('Iter {} \t t_reward: {} \t real time: {}'.format(self.iter, total_reward, datetime.now().strftime("%H:%M:%S")))
+        print('Iter {} \t t_reward: {}'.format(self.iter, total_reward))
         if self.plotter is not None and self.iter % self.n_plot_batch == 0:
             self.plotter.plot({
                 'Rewards': total_reward

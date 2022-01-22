@@ -1,9 +1,7 @@
-from datetime import datetime
+import torch
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
-
-import torch
 from nugi_rl.helpers.math import prepro_half_one_dim
 from nugi_rl.helpers.plotter.base import Plotter
 from nugi_rl.train.runner.iteration.standard import IterRunner
@@ -40,9 +38,8 @@ class PongRunner(IterRunner):
 
             if done:                
                 self.i_episode  += 1
-                now = datetime.now()
 
-                print('Episode {} \t t_reward: {} \t eps time: {} \t real time: {}'.format(self.i_episode, self.total_reward, self.eps_time, now.strftime("%H:%M:%S")))
+                print('Episode {} \t t_reward: {} \t eps time: {}'.format(self.i_episode, self.total_reward, self.eps_time))
 
                 if self.i_episode % self.n_plot_batch == 0 and self.plotter is not None:
                     self.plotter.plot({

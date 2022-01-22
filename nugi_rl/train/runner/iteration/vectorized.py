@@ -1,5 +1,4 @@
 import torch
-from datetime import datetime
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
@@ -36,9 +35,8 @@ class VectorizedRunner(IterRunner):
 
                 if done:                
                     self.i_episode  += 1
-                    now = datetime.now()
 
-                    print('Agent {} Episode {} \t t_reward: {} \t eps time: {} \t real time: {}'.format(index, self.i_episode[index], self.total_reward[index], self.eps_time[index], now.strftime("%H:%M:%S")))
+                    print('Agent {} Episode {} \t t_reward: {} \t eps time: {}'.format(index, self.i_episode[index], self.total_reward[index], self.eps_time[index]))
 
                     if self.plotter is not None and self.i_episode % self.n_plot_batch == 0:
                         self.plotter.plot({
