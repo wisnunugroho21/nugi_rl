@@ -40,7 +40,7 @@ class SingleStepRunner(Runner):
             self.i_episode  += 1
             print('Episode {} \t t_reward: {} \t time: {} '.format(self.i_episode, self.total_reward, self.eps_time))
 
-            if self.pl is not None and self.i_episode % self.n_plot_batch == 0:
+            if self.plotter is not None and self.i_episode % self.n_plot_batch == 0:
                 self.plotter.plot({
                     'Rewards': self.total_reward,
                     'Times': self.eps_time
