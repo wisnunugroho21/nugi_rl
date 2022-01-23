@@ -4,32 +4,26 @@ from torch import device, Tensor
 
 from nugi_rl.environment.base import Environment
 
-class GymWrapper(Environment):
+class EnvWrapper(Environment):
     def __init__(self, env, agent_device: device):
-        self.env = env
-        self.agent_device = agent_device        
+        self.env            = env
+        self.agent_device   = agent_device        
 
     def is_discrete(self):
-        return type(self.env.action_space) is not gym.spaces.Box
+        raise NotImplementedError
 
     def get_obs_dim(self):
-        if type(self.env.observation_space) is not gym.spaces.Box:
-            return self.env.observation_space.n
-        else:
-            return self.env.observation_space.shape[0]
+        raise NotImplementedError
             
     def get_action_dim(self):
-        if self.is_discrete():
-            return self.env.action_space.n
-        else:
-            return self.env.action_space.shape[0]
+        raise NotImplementedError
 
     def reset(self) -> Tensor:
         state = self.env.reset()
         return torch.tensor(state).float().to(self.agent_device)
 
     def step(self, action: Tensor) -> tuple:
-        action = action.squeeze().tolist()
+        action = action.squeeze().numpy()
         next_state, reward, done, info = self.env.step(action)
 
         next_state = torch.tensor(next_state).float().to(self.agent_device)

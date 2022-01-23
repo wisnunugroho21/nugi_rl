@@ -1,6 +1,5 @@
 from torch import Tensor
 
-
 class Environment():
     def is_discrete(self) -> bool:
         raise NotImplementedError
