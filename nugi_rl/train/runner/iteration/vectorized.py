@@ -2,7 +2,7 @@ import torch
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
-from nugi_rl.helpers.plotter.base import Plotter
+from nugi_rl.utilities.plotter.base import Plotter
 from nugi_rl.train.runner.iteration.standard import IterRunner
 
 class VectorizedRunner(IterRunner):

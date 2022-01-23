@@ -3,7 +3,7 @@ import ray
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
 from nugi_rl.train.runner.iteration.standard import IterRunner
-from nugi_rl.helpers.plotter.base import Plotter
+from nugi_rl.utilities.plotter.base import Plotter
 
 @ray.remote(num_cpus = 4)
 class SyncRunner(IterRunner):

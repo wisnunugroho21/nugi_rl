@@ -1,7 +1,7 @@
 from nugi_rl.agent.base import Agent
 from nugi_rl.environment.base import Environment
 from nugi_rl.train.runner.base import Runner
-from nugi_rl.helpers.plotter.base import Plotter
+from nugi_rl.utilities.plotter.base import Plotter
 
 class EpisodicRunner(Runner):
     def __init__(self, agent: Agent, env: Environment, is_save_memory: bool, render: bool, n_update: int, plotter: Plotter = None, n_plot_batch: int = 1) -> None:

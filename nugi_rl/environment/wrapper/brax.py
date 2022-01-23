@@ -1,3 +1,5 @@
+import gym
+
 from brax.envs.to_torch import JaxToTorchWrapper
 from brax.envs import _envs, create_gym_env
 from functools import partial
@@ -5,11 +7,13 @@ from functools import partial
 from nugi_rl.environment.wrapper.gym import GymWrapper
 
 class BraxWrapper(GymWrapper):
-    def __init__(self, env, gym):
-        self.env = JaxToTorchWrapper(env)
-        self._register_brax_gym(gym)
+    def __init__(self, env_name):
+        self._register_brax_gym()
 
-    def _register_brax_gym(gym):
+        env = gym.make(env_name)
+        self.env = JaxToTorchWrapper(env)        
+
+    def _register_brax_gym(self):
         for env_name, env_class in _envs.items():
             env_id      = f"brax_{env_name}-v0"
             entry_point = partial(create_gym_env, env_name=env_name)
