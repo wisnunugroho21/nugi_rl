@@ -29,12 +29,12 @@ class PolicyMemory(PolicyMemory):
 
     def save(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
         if len(self) >= self.capacity:
-            self.states = self.states[1:]
-            self.actions = self.actions[1:]
-            self.rewards = self.rewards[1:]
-            self.dones = self.dones[1:]
-            self.next_states = self.next_states[1:]
-            self.logprobs = self.logprobs[1:]
+            self.states         = self.states[1:]
+            self.actions        = self.actions[1:]
+            self.rewards        = self.rewards[1:]
+            self.dones          = self.dones[1:]
+            self.next_states    = self.next_states[1:]
+            self.logprobs       = self.logprobs[1:]
 
         if len(self) == 0:
             self.states         = state.unsqueeze(0)

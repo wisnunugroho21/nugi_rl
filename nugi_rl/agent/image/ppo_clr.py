@@ -4,7 +4,6 @@ from torch.nn import Module
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
 from torch import device
-from torchvision.transforms import Compose
 
 from copy import deepcopy
 
@@ -14,18 +13,20 @@ from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.loss.clr.base import CLR
+from nugi_rl.memory.policy.image import ImagePolicyMemory
 from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
 from nugi_rl.memory.policy.base import PolicyMemory
 from nugi_rl.memory.clr import ClrMemory
+from nugi_rl.utilities.augmentation.base import Augmentation
 
-class AgentImagePpoClr(AgentPPO):
+class AgentImagePpoClr(AgentPPO):        
     def __init__(self, policy: Module, value: Module, cnn: Module, projector: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, 
-        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, memory: PolicyMemory, aux_clr_memory: ClrMemory, optimizer: Optimizer, aux_clr_optimizer: Optimizer, 
-        trans: Compose, ppo_epochs: int = 10, aux_clr_epochs: int = 5, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
-        device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None, cnn_old: Module = None, projector_old: Module = None):
+        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, aux_clr_loss: CLR, memory: ImagePolicyMemory, aux_clr_memory: ClrMemory, optimizer: Optimizer, aux_clr_optimizer: Optimizer, 
+        trans: Augmentation, ppo_epochs: int = 10, aux_clr_epochs: int = 5, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
+        device: device = torch.device('cuda'), policy_old: Module = None, value_old: Module = None, cnn_old: Module = None, projector_old: Module = None, dont_unsqueeze = False):
 
-        super().__init__(policy, value, gae, distribution, policy_loss, value_loss, entropy_loss, memory, optimizer, ppo_epochs = ppo_epochs, is_training_mode = is_training_mode, 
-            batch_size = batch_size, folder = folder, device = device, policy_old = policy_old, value_old = value_old)
+        super().__init__(policy, value, gae, distribution, policy_loss, value_loss, entropy_loss, memory, optimizer, ppo_epochs, 
+            is_training_mode, batch_size, folder, device, policy_old, value_old, dont_unsqueeze)
 
         self.cnn                = cnn
         self.projector          = projector
@@ -111,7 +112,7 @@ class AgentImagePpoClr(AgentPPO):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans(state).unsqueeze(0)          
+            state           = self.trans.augment(state).unsqueeze(0)          
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -125,7 +126,7 @@ class AgentImagePpoClr(AgentPPO):
 
     def logprobs(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans(state).unsqueeze(0)
+            state           = self.trans.augment(state).unsqueeze(0)
             action          = action.unsqueeze(0)
 
             action_datas    = self.policy(state)
