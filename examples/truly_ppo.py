@@ -7,14 +7,14 @@ from nugi_rl.train.runner.iteration.standard import IterRunner
 from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.ppo import AgentPPO
 from nugi_rl.distribution.continous.basic import BasicContinous
-from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.environment.wrapper.gym import GymWrapper
 from nugi_rl.loss.ppo.truly_ppo import TrulyPpo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
 from nugi_rl.model.ppo.TanhNN import Policy_Model, Value_Model
 from nugi_rl.memory.policy.standard import PolicyMemory
-from nugi_rl.helpers.plotter.weight_bias import WeightBiasPlotter
+from nugi_rl.utilities.plotter.weight_bias import WeightBiasPlotter
 
 ############## Hyperparameters ##############
 

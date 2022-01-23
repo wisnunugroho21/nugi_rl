@@ -7,12 +7,12 @@ from nugi_rl.train.runner.single_step.standard import SingleStepRunner
 from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.sac import AgentSac
 from nugi_rl.distribution.continous.basic import BasicContinous
-from nugi_rl.environment.wrapper.gym_wrapper import GymWrapper
+from nugi_rl.environment.wrapper.gym import GymWrapper
 from nugi_rl.loss.sac.policy_loss import PolicyLoss
 from nugi_rl.loss.sac.q_loss import QLoss
 from nugi_rl.model.sac.TanhStdNN import Policy_Model, Q_Model
 from nugi_rl.memory.policy.standard import PolicyMemory
-from nugi_rl.helpers.plotter.weight_bias import WeightBiasPlotter
+from nugi_rl.utilities.plotter.weight_bias import WeightBiasPlotter
 
 ############## Hyperparameters ##############
 
