@@ -59,7 +59,7 @@ if action_dim is None:
     action_dim = environment.get_action_dim()
 
 distribution        = BasicContinous()
-plotter             = WeightBiasPlotter(config, 'BipedalWalker_v1', entity = "wisnunugroho21")
+plotter             = WeightBiasPlotter(config, 'BipedalWalker_v1', entity = "your entity")
 
 memory              = PolicyMemory()
 q_loss              = QLoss(distribution)

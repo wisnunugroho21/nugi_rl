@@ -65,7 +65,7 @@ if action_dim is None:
 
 distribution        = BasicContinous()
 advantage_function  = GeneralizedAdvantageEstimation(gamma)
-plotter             = WeightBiasPlotter(config, 'BipedalWalker_v1', entity = "wisnunugroho21")
+plotter             = WeightBiasPlotter(config, 'BipedalWalker_v1', entity = "your entity")
 
 memory          = PolicyMemory()
 ppo_loss        = PpoClip(distribution, policy_clip)
