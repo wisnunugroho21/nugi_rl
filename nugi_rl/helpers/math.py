@@ -34,13 +34,13 @@ def prepo_full(I: Tensor) -> Tensor:
 
 def prepo_full_one_dim(I: Tensor) -> Tensor:
     I = prepo_full(I)
-    I = I.astype(np.float32).ravel()
+    I = I.float().flatten()
     I = I / 255.0
     return I
 
 def prepro_half_one_dim(I: Tensor) -> Tensor:
     I = prepro_half(I)
-    I = I.float().ravel()
+    I = I.float().flatten()
     return I
 
 def prepo_crop(I: Tensor) -> Tensor:
