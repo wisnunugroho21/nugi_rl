@@ -7,10 +7,10 @@ from functools import partial
 from nugi_rl.environment.wrapper.gym import GymWrapper
 
 class BraxWrapper(GymWrapper):
-    def __init__(self, env_name):
+    def __init__(self, env_name, episode_length):
         self._register_brax_gym()
 
-        env = gym.make(env_name)
+        env = gym.make(env_name, episode_length = episode_length)
         self.env = JaxToTorchWrapper(env)        
 
     def _register_brax_gym(self):

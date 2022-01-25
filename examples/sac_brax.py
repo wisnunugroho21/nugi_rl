@@ -3,16 +3,14 @@ import torch
 
 from torch.optim.adamw import AdamW
 
-from nugi_rl.train.runner.iteration.standard import IterRunner
+from nugi_rl.train.runner.single_step.standard import SingleStepRunner
 from nugi_rl.train.executor.standard import Executor
-from nugi_rl.agent.ppo import AgentPPO
+from nugi_rl.agent.sac import AgentSac
 from nugi_rl.distribution.continous.basic import BasicContinous
 from nugi_rl.environment.wrapper.brax import BraxWrapper
-from nugi_rl.loss.ppo.truly_ppo import TrulyPpo
-from nugi_rl.loss.value import ValueLoss
-from nugi_rl.loss.entropy import EntropyLoss
-from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
-from nugi_rl.model.ppo.TanhNN import Policy_Model, Value_Model
+from nugi_rl.loss.sac.policy_loss import PolicyLoss
+from nugi_rl.loss.sac.q_loss import QLoss
+from nugi_rl.model.sac.TanhStdNN import Policy_Model, Q_Model
 from nugi_rl.memory.policy.standard import PolicyMemory
 from nugi_rl.utilities.plotter.weight_bias import WeightBiasPlotter
 
@@ -29,18 +27,14 @@ n_iteration             = 100000000 # How many episode you want to run
 n_update                = 1024 # How many episode before you update the Policy 
 n_saved                 = 1 # How many iteration before you save the model
 
-policy_kl_range         = 0.03 # KL range (Delta) for Truly PPO  
-policy_params           = 5 # Policy params (Alpha) for Truly PPO
-value_clip              = None # Clipping for Value Loss
-entropy_coef            = 0.1 # Coefficient for Entropy Loss
-value_loss_coef         = 1.0 # Coefficient for Value Loss
+alpha                   = 0.2 # Coefficient that control how matters log_prob in policy loss
+soft_tau                = 0.95 # the soft update coefficient (polyak update)
 batch_size              = 32 # The size of batch for each update
 epochs                  = 5 # The amount of epochs for each update
-gamma                   = 0.95
 learning_rate           = 3e-4
 
 device_name             = 'cuda'
-env_name                = 'brax_ant-v0'
+env_name                = 'BipedalWalker-v3'
 folder                  = 'weights'
 
 state_dim               = None
@@ -49,8 +43,8 @@ max_action              = None
 
 config = { 
     load_weights, save_weights, is_training_mode, render, reward_threshold, n_plot_batch, n_iteration,
-    n_update, n_saved, policy_kl_range, policy_params, value_clip, entropy_coef, value_loss_coef, batch_size,
-    epochs, gamma, learning_rate, device_name, env_name
+    n_update, n_saved, alpha, soft_tau, batch_size,
+    epochs, learning_rate, device_name, env_name
 }
 
 #####################################################################################################################################################
@@ -65,22 +59,23 @@ if action_dim is None:
     action_dim = environment.get_action_dim()
 
 distribution        = BasicContinous()
-advantage_function  = GeneralizedAdvantageEstimation(gamma)
-plotter             = WeightBiasPlotter(config, 'Brax_Ant_v1', entity = "wisnunugroho21")
+plotter             = WeightBiasPlotter(config, 'BipedalWalker_v1', entity = "your entity")
 
-memory          = PolicyMemory()
-ppo_loss        = TrulyPpo(distribution, policy_kl_range, policy_params)
-value_loss      = ValueLoss(value_loss_coef, value_clip)
-entropy_loss    = EntropyLoss(distribution, entropy_coef)
+memory              = PolicyMemory()
+q_loss              = QLoss(distribution)
+policy_loss         = PolicyLoss(distribution, alpha)
 
-policy          = Policy_Model(state_dim, action_dim).float().to(device)
-value           = Value_Model(state_dim).float().to(device)
-optimizer       = AdamW(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)
+policy              = Policy_Model(state_dim, action_dim).float().to(device)
+soft_q1             = Q_Model(state_dim, action_dim).float().to(device)
+soft_q2             = Q_Model(state_dim, action_dim).float().to(device)
 
-agent   = AgentPPO(policy, value, advantage_function, distribution, ppo_loss, value_loss, entropy_loss, memory, optimizer, 
-    epochs, is_training_mode, batch_size, folder, device)
+policy_optimizer    = AdamW(list(policy.parameters()), lr = learning_rate)        
+soft_q_optimizer    = AdamW(list(soft_q1.parameters()) + list(soft_q2.parameters()), lr = learning_rate)
 
-runner      = IterRunner(agent, environment, is_training_mode, render, n_update, plotter, n_plot_batch)
+agent   = AgentSac(soft_q1, soft_q2, policy, distribution, q_loss, policy_loss, memory, soft_q_optimizer, policy_optimizer,
+    is_training_mode, batch_size, epochs, soft_tau, folder, device)
+
+runner      = SingleStepRunner(agent, environment, is_training_mode, render, plotter, n_plot_batch)
 executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
 
 executor.execute()

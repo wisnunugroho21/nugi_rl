@@ -43,8 +43,7 @@ max_action              = None
 
 config = { 
     load_weights, save_weights, is_training_mode, render, reward_threshold, n_plot_batch, n_iteration,
-    n_update, n_saved, alpha, soft_tau, batch_size,
-    epochs, learning_rate, device_name, env_name
+    n_saved, alpha, soft_tau, batch_size, epochs, learning_rate, device_name, env_name
 }
 
 #####################################################################################################################################################
