@@ -14,7 +14,7 @@ class TrulyPpo(Ppo):
 
     def forward(self, action_datas: tuple, old_action_datas: tuple, actions: Tensor, advantages: Tensor) -> Tensor:
         logprobs        = self.distribution.logprob(*action_datas, actions)
-        old_logprobs    = (self.distribution.logprob(*old_action_datas, actions) + 1e-6).detach()
+        old_logprobs    = (self.distribution.logprob(*old_action_datas, actions) + 1e-3).detach()
 
         ratios          = (logprobs - old_logprobs).exp()       
         Kl              = self.distribution.kldivergence(*old_action_datas, *action_datas)
