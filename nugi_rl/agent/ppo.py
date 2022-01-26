@@ -63,7 +63,7 @@ class AgentPPO(Agent):
         values              = self.value(states)
 
         old_action_datas    = self.policy_old(states)
-        old_values          = self.value_old(states,)
+        old_values          = self.value_old(states)
         next_values         = self.value(next_states)
 
         adv = self.gae(rewards, values, next_values, dones).detach()

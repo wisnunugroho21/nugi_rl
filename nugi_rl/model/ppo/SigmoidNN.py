@@ -23,7 +23,7 @@ class Policy_Model(nn.Module):
       action = self.nn_layer(states)
       action = action.reshape(-1, self.action_dim, self.bins)
 
-      return (action.detach(), )
+      return (action, )
 
 class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
