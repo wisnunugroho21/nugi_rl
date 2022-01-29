@@ -8,12 +8,12 @@ class RndMemory(Memory):
         self.capacity           = capacity
         self.observations       = []
 
-        self.mean_obs           = torch.zeros(state_dim).to(device)
-        self.std_obs            = torch.zeros(state_dim).to(device)
+        self.mean_obs           = torch.zeros(state_dim, device = device)
+        self.std_obs            = torch.zeros(state_dim, device = device)
 
-        self.std_in_rewards     = torch.zeros(1).to(device)
-        self.total_number_obs   = torch.zeros(1).to(device)
-        self.total_number_rwd   = torch.zeros(1).to(device)
+        self.std_in_rewards     = torch.zeros(1, device = device)
+        self.total_number_obs   = torch.zeros(1, device = device)
+        self.total_number_rwd   = torch.zeros(1, device = device)
 
     def __len__(self):
         return len(self.observations)

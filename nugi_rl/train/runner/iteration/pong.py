@@ -19,7 +19,11 @@ class PongRunner(IterRunner):
             action      = self.agent.act(self.states)
             logprob     = self.agent.logprob(self.states, action)
 
-            action_gym  = action + 1 if action != 0 else torch.tensor(0)
+            action_gym  = torch.where(
+                    action != 0,
+                    action + 1,
+                    action
+                )
 
             next_obs, reward, done, _ = self.env.step(action_gym)
             next_obs    = prepro_half_one_dim(next_obs)
