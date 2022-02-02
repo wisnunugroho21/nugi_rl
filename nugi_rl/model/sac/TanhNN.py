@@ -22,11 +22,6 @@ class Policy_Model(nn.Module):
           nn.Linear(64, action_dim),
           nn.Tanh()
         )
-
-        self.std_layer = nn.Sequential(
-          nn.Linear(64, action_dim),
-          nn.Sigmoid()
-        )
         
     def forward(self, states: Tensor) -> tuple:
       x     = self.nn_layer(states)
