@@ -12,9 +12,10 @@ class GeneralizedAdvantageEstimation(nn.Module):
         gae     = 0
         adv     = []     
 
-        delta   = rewards + (1.0 - dones) * self.gamma * next_values - values          
+        delta   = rewards + (1.0 - dones) * self.gamma * next_values
         for step in reversed(range(len(rewards))):  
             gae = delta[step] + (1.0 - dones[step]) * (1.0 - self.gamma) * gae
             adv.insert(0, gae)
-            
-        return torch.stack(adv)
+
+        adv = torch.stack(adv)
+        return adv - values
