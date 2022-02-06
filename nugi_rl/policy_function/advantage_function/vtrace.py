@@ -15,7 +15,7 @@ class VtraceAdvantageEstimation(nn.Module):
         limit   = torch.FloatTensor([1.0])
         ratio   = torch.min(limit, (learner_logprobs - worker_logprobs).exp())
 
-        delta   = rewards + (1.0 - dones) * self.gamma * next_values - values
+        delta   = rewards + (1.0 - dones) * self.gamma * next_values
         delta   = ratio * delta
 
         for step in reversed(range(len(rewards))):
@@ -23,4 +23,5 @@ class VtraceAdvantageEstimation(nn.Module):
             gae   = delta[step] + ratio * gae
             adv.insert(0, gae)
             
-        return torch.stack(adv)
+        adv = torch.stack(adv)
+        return adv - values
