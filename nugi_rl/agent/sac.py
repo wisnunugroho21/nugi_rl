@@ -16,7 +16,7 @@ from nugi_rl.helpers.pytorch_utils import copy_parameters
 class AgentSac(Agent):
     def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, distribution: Distribution, q_loss: QLoss, policy_loss: PolicyLoss, memory: PolicyMemory, 
         soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, soft_tau: float = 0.95, 
-        folder: str = 'model', device: device = torch.device('cuda:0'), target_q1: Module = None, target_q2: Module = None, dont_unsqueeze = False) -> None:
+        folder: str = 'model', device: device = torch.device('cuda:0'), target_policy: Module = None, target_q1: Module = None, target_q2: Module = None, dont_unsqueeze = False) -> None:
 
         self.dont_unsqueeze     = dont_unsqueeze
         self.batch_size         = batch_size
@@ -29,6 +29,7 @@ class AgentSac(Agent):
         self.soft_q1            = soft_q1
         self.soft_q2            = soft_q2
 
+        self.target_policy      = target_policy
         self.target_q1          = target_q1
         self.target_q2          = target_q2
 
@@ -43,6 +44,9 @@ class AgentSac(Agent):
         
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
+
+        if self.target_policy is None:
+            self.target_policy = deepcopy(self.policy)
 
         if self.target_q1 is None:
             self.target_q1 = deepcopy(self.soft_q1)
@@ -67,7 +71,7 @@ class AgentSac(Agent):
     def _update_step_q(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> Tensor:
         self.soft_q_optimizer.zero_grad()
 
-        next_action_datas   = self.policy(next_states)
+        next_action_datas   = self.target_policy(next_states)
         next_actions        = self.distribution.sample(*next_action_datas)
 
         predicted_q1        = self.soft_q1(states, actions)
@@ -115,16 +119,17 @@ class AgentSac(Agent):
         
     def update(self) -> None:
         for _ in range(self.epochs):
-            indices     = torch.randperm(len(self.memory))[:self.batch_size]
-            indices[-1] = torch.IntTensor([len(self.memory) - 1])
+            indices     = torch.randperm(len(self.memory))[:self.batch_size - 1]
+            indices     = torch.concat((indices, torch.tensor([len(self.memory) - 1])), dim = 0)
 
             dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
             for states, actions, rewards, dones, next_states, _ in dataloader:                
                 self._update_step_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
                 self._update_step_policy(states.to(self.device))
 
-                self.target_q1 = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
-                self.target_q2 = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
+                self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
+                self.target_q1      = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
+                self.target_q2      = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.memory.get(start_position, end_position)
