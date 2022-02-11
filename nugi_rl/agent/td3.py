@@ -17,7 +17,7 @@ class AgentTd3(Agent):
     def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, q_loss: QLoss, policy_loss: PolicyLoss, memory: PolicyMemory, 
         soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, 
         soft_tau: float = 0.95, folder: str = 'model', device: device = torch.device('cuda:0'), 
-        target_q1: Module = None, target_q2: Module = None, dont_unsqueeze = False) -> None:
+        target_policy: Module = None, target_q1: Module = None, target_q2: Module = None, dont_unsqueeze = False) -> None:
 
         self.dont_unsqueeze     = dont_unsqueeze
         self.batch_size         = batch_size
@@ -30,6 +30,7 @@ class AgentTd3(Agent):
         self.soft_q1            = soft_q1
         self.soft_q2            = soft_q2
 
+        self.target_policy      = target_policy
         self.target_q1          = target_q1
         self.target_q2          = target_q2
 
@@ -44,6 +45,9 @@ class AgentTd3(Agent):
         self.soft_q_optimizer   = soft_q_optimizer
         self.policy_optimizer   = policy_optimizer
 
+        if self.target_policy is None:
+            self.target_policy = deepcopy(self.policy)
+
         if self.target_q1 is None:
             self.target_q1 = deepcopy(self.soft_q1)
 
@@ -56,7 +60,7 @@ class AgentTd3(Agent):
         predicted_q1        = self.soft_q1(states, actions)
         predicted_q2        = self.soft_q2(states, actions)
 
-        next_actions        = self.policy(next_states)
+        next_actions        = self.target_policy(next_states)
         target_next_q1      = self.target_q1(next_states, next_actions)
         target_next_q2      = self.target_q2(next_states, next_actions)
 
@@ -104,8 +108,9 @@ class AgentTd3(Agent):
                 self._update_step_q(states, actions, rewards, dones, next_states)
                 self._update_step_policy(states)
 
-                self.target_q1 = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
-                self.target_q2 = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
+                self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
+                self.target_q1      = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
+                self.target_q2      = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.memory.get(start_position, end_position)

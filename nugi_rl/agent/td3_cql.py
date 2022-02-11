@@ -30,7 +30,7 @@ class AgentTd3Cql(AgentTd3):
         naive_q1_value      = self.soft_q1(states, predicted_actions)
         naive_q2_value      = self.soft_q2(states, predicted_actions)
 
-        next_actions        = self.policy(next_states)
+        next_actions        = self.target_policy(next_states)
         target_next_q1      = self.target_q1(next_states, next_actions)
         target_next_q2      = self.target_q2(next_states, next_actions)
 
