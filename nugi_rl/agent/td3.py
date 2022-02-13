@@ -100,8 +100,8 @@ class AgentTd3(Agent):
         
     def update(self) -> None:
         for _ in range(self.epochs):
-            indices     = torch.randperm(len(self.memory))[:self.batch_size]
-            indices[-1] = torch.IntTensor([len(self.memory) - 1])
+            indices     = torch.randperm(len(self.memory))[:self.batch_size - 1]
+            indices     = torch.concat((indices, torch.tensor([len(self.memory) - 1])), dim = 0)
 
             dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
             for states, actions, rewards, dones, next_states, _ in dataloader:                
