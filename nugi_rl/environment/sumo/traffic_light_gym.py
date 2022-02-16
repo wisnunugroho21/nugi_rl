@@ -261,8 +261,10 @@ class SumoEnv:
         traci.trafficlight.setPhase("lampu_lalu_lintas", action * 2)
         traci.simulationStep()
 
-        print(traci.trafficlight.getControlledLinks("lampu_lalu_lintas")) 
-        print('----')       
+        """ print(traci.trafficlight.getControlledLinks("lampu_lalu_lintas")) 
+        print('----')  """
+              
+        linkIndexes = traci.trafficlight.getControlledLinks("lampu_lalu_lintas")
 
         kendaraan_array = [
             self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0')) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1')),
@@ -298,8 +300,9 @@ class SumoEnv:
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
         banyak_kendaraan_tersangkut = 0
-        for linkIndex in range(24):
-            banyak_kendaraan_tersangkut += traci.trafficlight.getBlockingVehicles("lampu_lalu_lintas", linkIndex)
+        for linkIndex in range(len(linkIndexes)):
+            blockingVehicles = traci.trafficlight.getBlockingVehicles("lampu_lalu_lintas", linkIndex)
+            banyak_kendaraan_tersangkut += len(blockingVehicles)
 
         waktu_delay_bawah   = 1 - (kecepatan_kendaraan_bawah / kecepatan_diperbolehkan_bawah)
         waktu_delay_kanan   = 1 - (kecepatan_kendaraan_kanan / kecepatan_diperbolehkan_kanan)
