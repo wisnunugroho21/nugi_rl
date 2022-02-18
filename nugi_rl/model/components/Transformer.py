@@ -66,11 +66,11 @@ class MultiHeadAttention(nn.Module):
         return interacted
 
 class FeedForward(nn.Module):
-    def __init__(self, d_model: int):
+    def __init__(self, d_model: int, b: int = 4):
         super().__init__()
         
-        self.fc1        = nn.Linear(d_model, 2048)
-        self.fc2        = nn.Linear(2048, d_model)
+        self.fc1        = nn.Linear(d_model, d_model * b)
+        self.fc2        = nn.Linear(d_model * b, d_model)
         self.dropout    = nn.Dropout(0.1)
 
     def forward(self, x: Tensor) -> Tensor:
