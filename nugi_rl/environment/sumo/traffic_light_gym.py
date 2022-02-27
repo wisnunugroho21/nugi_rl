@@ -341,14 +341,14 @@ class SumoEnv:
         waktu_travel_kiri    = 1 - (kecepatan_kendaraan_kiri / kecepatan_diperbolehkan_kiri)     
         waktu_travel_atas    = 1 - (kecepatan_kendaraan_atas / kecepatan_diperbolehkan_atas)
 
-        reward += (waktu_travel_bawah + waktu_menunggu_bawah * -0.1) 
-        reward += (waktu_travel_kanan + waktu_menunggu_kanan * -0.1)
-        reward += (waktu_travel_kiri + waktu_menunggu_kiri * -0.1)
-        reward += (waktu_travel_atas + waktu_menunggu_atas * -0.1)
-        # reward += (phase_changed * -0.5)
+        reward += (waktu_travel_bawah * -0.25 + waktu_menunggu_bawah * -0.25) 
+        reward += (waktu_travel_kanan * -0.25 + waktu_menunggu_kanan * -0.25)
+        reward += (waktu_travel_kiri * -0.25 + waktu_menunggu_kiri * -0.25)
+        reward += (waktu_travel_atas * -0.25 + waktu_menunggu_atas * -0.25)
+        reward += (phase_changed * -0.5)
         # reward += (banyak_lolos_perempatan - banyak_antrian_perempatan)
-        reward += (banyak_kendaraan_tabrakan * -1.0)
-        reward += (banyak_kendaraan_tersangkut * -0.2)
+        reward += (banyak_kendaraan_tabrakan * -2.0)
+        reward += (banyak_kendaraan_tersangkut * -0.5)
         
         self.time += 1
         done = traci.simulation.getMinExpectedNumber() <= 0
