@@ -2,6 +2,8 @@ import gym
 import torch
 from torch import device, Tensor
 
+from typing import Any, List, Tuple, Union
+
 from nugi_rl.environment.base import Environment
 
 class GymWrapper(Environment):
@@ -24,15 +26,27 @@ class GymWrapper(Environment):
         else:
             return self.env.action_space.shape[0]
 
-    def reset(self) -> Tensor:
-        state = self.env.reset()
-        return torch.tensor(state).float().to(self.agent_device)
+    def reset(self) -> Union[Tensor, List[Tensor]]:
+        next_state = self.env.reset()
 
-    def step(self, action: Tensor) -> tuple:
+        if isinstance(next_state, list):
+            for i in range(len(next_state)):
+                next_state[i] = torch.tensor(next_state[i]).float().to(self.agent_device)
+        else:
+            next_state  = torch.tensor(next_state).float().to(self.agent_device)
+
+        return next_state
+
+    def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, Any]:
         action = action.squeeze().cpu().numpy()
         next_state, reward, done, info = self.env.step(action)
 
-        next_state = torch.tensor(next_state).float().to(self.agent_device)
+        if isinstance(next_state, list):
+            for i in range(len(next_state)):
+                next_state[i] = torch.tensor(next_state[i]).float().to(self.agent_device)
+        else:
+            next_state  = torch.tensor(next_state).float().to(self.agent_device)
+
         reward = torch.tensor(reward).float().to(self.agent_device)
         done = torch.tensor(done).float().to(self.agent_device)
 

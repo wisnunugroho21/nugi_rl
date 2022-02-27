@@ -5,6 +5,7 @@ from torch.optim import Optimizer
 from torch import device, Tensor
 
 from copy import deepcopy
+from typing import List, Union
 
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
@@ -75,9 +76,14 @@ class AgentPPO(Agent):
         loss.backward()
         self.optimizer.step()
 
-    def act(self, state: Tensor) -> Tensor:
+    def act(self, state: Union[Tensor, List[Tensor]]) -> Tensor:
         with torch.inference_mode():
-            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
+            if isinstance(state, list):
+                for i in range(len(state)):
+                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
+            else:
+                state = state if self.dont_unsqueeze else state.unsqueeze(0)
+
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -89,11 +95,15 @@ class AgentPPO(Agent):
               
         return action
 
-    def logprob(self, state: Tensor, action: Tensor) -> Tensor:
+    def logprob(self, state: Union[Tensor, List[Tensor]], action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
-            action          = action if self.dont_unsqueeze else action.unsqueeze(0)
+            if isinstance(state, list):
+                for i in range(len(state)):
+                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
+            else:
+                state = state if self.dont_unsqueeze else state.unsqueeze(0)
 
+            action          = action if self.dont_unsqueeze else action.unsqueeze(0)
             action_datas    = self.policy(state)
 
             logprobs        = self.distribution.logprob(*action_datas, action)
