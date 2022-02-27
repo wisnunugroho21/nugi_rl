@@ -5,23 +5,27 @@ from torch import Tensor
 from nugi_rl.model.components.Transformer import EncoderLayer, DecoderLayer
 
 class GlobalExtractor(nn.Module):
-    def __init__(self, dim: int) -> None:
+    def __init__(self, dim: int, num_layers = 2) -> None:
         super().__init__()
 
-        self.object_queries = nn.parameter.Parameter(
-            torch.ones(1, 1, dim)
-        )
+        object_queries = torch.ones(1, 1, dim)
+        self.register_buffer('object_queries', object_queries)
 
-        self.encoder_1 = EncoderLayer(dim, heads = 4)
-        self.encoder_2 = EncoderLayer(dim, heads = 4)
-        self.decoder = DecoderLayer(dim, heads = 4)
+        self.encoder    = nn.ModuleList([EncoderLayer(dim, heads = 4, b = 8) for _ in range(num_layers)])
+        self.decoder    = nn.ModuleList([DecoderLayer(dim, heads = 4, b = 8) for _ in range(num_layers)])
 
     def forward(self, inputs: Tensor, mask: Tensor) -> Tensor:
-        mask = self.transform_mask(mask)
+        src_mask        = self.transform_mask(mask)
+        src_embeddings  = inputs
+        tgt_embeddings  = self.object_queries
 
-        x = self.encoder_1(inputs, mask)
-        x = self.encoder_2(x, mask)
-        return self.decoder(self.object_queries, x)
+        for layer in self.encoder:
+            src_embeddings = layer(src_embeddings, src_mask)
+
+        for layer in self.decoder:
+            tgt_embeddings = layer(tgt_embeddings, src_embeddings)
+
+        return tgt_embeddings
 
     def transform_mask(self, mask: Tensor) -> Tensor:
         mask = mask != -1
@@ -33,32 +37,35 @@ class Policy_Model(nn.Module):
 
         self.feedforward_1 = nn.Sequential(
             nn.Linear(state_dim, 256),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(256, 64),
-            nn.ReLU(),
+            nn.GELU(),
         )
 
-        self.extractors = nn.ModuleList(
-            [GlobalExtractor(64) for _ in range(4)]
+        self.feedforward_3 = nn.Sequential(
+            nn.Linear(8, 64),
+            nn.GELU(),
         )
+
+        self.extractors = GlobalExtractor(64)
 
         self.feedforward_2 = nn.Sequential(
-            nn.Linear(256, 32),
-            nn.ReLU(),
-            nn.Linear(32, action_dim),
+            nn.Linear(128, 16),
+            nn.GELU(),
+            nn.Linear(16, action_dim),
             nn.Softmax(-1)
         )
 
     def forward(self, states: Tensor, detach: bool = False) -> tuple:
-        masks = states.permute(1, 0, 2, 3)[:, :, :, -1]
+        masks = states[0][:, :, -1]    
 
-        datas = self.feedforward_1(states)
-        datas = datas.permute(1, 0, 2, 3)
+        x = self.feedforward_1(states[0])
+        x = self.extractors(x, masks).squeeze(1)
 
-        extracted = [extractor(data, mask) for extractor, data, mask in zip(self.extractors, datas, masks)]
+        x2 = self.feedforward_3(states[1])
+        x = torch.cat([x, x2], dim = 1)
 
-        datas = torch.stack(extracted).squeeze(2).permute(1, 0, 2).flatten(1)        
-        action = self.feedforward_2(datas)
+        action = self.feedforward_2(x)
 
         if detach:
             return (action.detach(), )
@@ -71,37 +78,36 @@ class Value_Model(nn.Module):
 
         self.feedforward_1 = nn.Sequential(
             nn.Linear(state_dim, 256),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(256, 64),
-            nn.ReLU(),
+            nn.GELU(),
         )
 
-        self.feedforward_1 = nn.Sequential(
-            nn.Linear(state_dim, 64),
-            nn.ReLU(),
+        self.feedforward_3 = nn.Sequential(
+            nn.Linear(8, 64),
+            nn.GELU(),
         )
 
-        self.extractors = nn.ModuleList(
-            [GlobalExtractor(64) for _ in range(4)]
-        )
+        self.extractors = GlobalExtractor(64)
 
         self.feedforward_2 = nn.Sequential(
-            nn.Linear(256, 32),
-            nn.ReLU(),
-            nn.Linear(32, 1)
+            nn.Linear(128, 16),
+            nn.GELU(),
+            nn.Linear(16, 1)
         )
 
     def forward(self, states: Tensor, detach: bool = False) -> Tensor:
-        masks = states.permute(1, 0, 2, 3)[:, :, :, -1]
+        masks = states[0][:, :, -1]
 
-        datas = self.feedforward_1(states)
-        datas = datas.permute(1, 0, 2, 3)
+        x = self.feedforward_1(states[0])
+        x = self.extractors(x, masks).squeeze(1)
 
-        extracted = [extractor(data, mask) for extractor, data, mask in zip(self.extractors, datas, masks)]
+        x2 = self.feedforward_3(states[1])
+        x = torch.cat([x, x2], dim = 1)
 
-        datas = torch.stack(extracted).squeeze(2).permute(1, 0, 2).flatten(1)
+        value = self.feedforward_2(x)
 
         if detach:
-            return self.feedforward_2(datas).detach()
+            return value.detach()
         else:
-            return self.feedforward_2(datas)
+            return value

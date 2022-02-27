@@ -99,11 +99,9 @@ class SumoEnv:
 
     def _generate_probs_route(self) -> list:
         level = np.random.choice(3)
-        print('level: ', level)
 
         if level == 0:
             sc = np.random.choice(4)
-            print('sc: ', sc)
             
             if sc == 0:
                 return [1.0 / 3, 0, 1.0 / 3, 0, 0, 0, 
@@ -123,7 +121,6 @@ class SumoEnv:
 
         elif level == 1:
             sc = np.random.choice(6)
-            print('sc: ', sc)
 
             if sc == 0:
                 return [1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 0, 0, 
@@ -151,7 +148,6 @@ class SumoEnv:
 
         elif level == 2:
             sc = np.random.choice(4)
-            print('sc: ', sc)
 
             if sc == 0:
                 return [1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9, 1.0 / 9,
@@ -220,13 +216,13 @@ class SumoEnv:
         #             2.0 / 18, 2.0 / 18, 1.0 / 18, 1.0 / 18, 2.0 / 18, 2.0 / 18]
 
     def _get_data_kendaraan(self, kendaraan_ids: list, position: int) -> list:
-        return list(map(lambda id: [traci.vehicle.getLanePosition(id), traci.vehicle.getSpeed(id), position], kendaraan_ids))
+        return list(map(lambda id: [traci.vehicle.getLanePosition(id) / 200, traci.vehicle.getSpeed(id), position], kendaraan_ids))
     
     def reset(self) -> np.ndarray:
         if self.run:
             traci.close()
 
-        sumoBinary = checkBinary('sumo-gui')
+        sumoBinary = checkBinary('sumo')
 
         self._generate_routefile("nugi_rl/environment/sumo/test1.rou.xml") # first, generate the route file for this simulation          
             
@@ -245,13 +241,31 @@ class SumoEnv:
         self.waktu_merah_kanan = 0
         self.waktu_merah_kiri = 0
 
-        kendaraan_array = [[0], [0], [0], [0]]
-        for idx in range(len(kendaraan_array)):
-            start = np.full((1, 3), -0.5)
-            zeros = np.full((50, 3), -1)
-            kendaraan_array[idx] = np.concatenate([start, zeros], 0)
+        panjang_antrian_bawah           = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
+        panjang_antrian_kanan           = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
+        panjang_antrian_kiri            = traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kiri_ke_tengah_1')
+        panjang_antrian_atas            = traci.lane.getLastStepHaltingNumber('atas_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('atas_ke_tengah_1')        
 
-        return np.stack(kendaraan_array)
+        waktu_menunggu_bawah            = traci.lane.getWaitingTime('bawah_ke_tengah_0') + traci.lane.getWaitingTime('bawah_ke_tengah_1')
+        waktu_menunggu_kanan            = traci.lane.getWaitingTime('kanan_ke_tengah_0') + traci.lane.getWaitingTime('kanan_ke_tengah_1')
+        waktu_menunggu_kiri             = traci.lane.getWaitingTime('kiri_ke_tengah_0') + traci.lane.getWaitingTime('kiri_ke_tengah_1')
+        waktu_menunggu_atas             = traci.lane.getWaitingTime('atas_ke_tengah_0') + traci.lane.getWaitingTime('atas_ke_tengah_1')
+
+        obs2 = [
+            panjang_antrian_bawah, panjang_antrian_kanan, 
+            panjang_antrian_kiri, panjang_antrian_atas,
+            waktu_menunggu_bawah / (panjang_antrian_bawah + 1e-3), waktu_menunggu_kanan / (panjang_antrian_kanan + 1e-3),
+            waktu_menunggu_kiri / (panjang_antrian_kiri + 1e-3), panjang_antrian_atas / (waktu_menunggu_atas + 1e-3)
+        ]
+            
+        start = np.full((1, 3), -0.5)
+        zeros = np.full((150, 3), -1)
+        kendaraan_array = np.concatenate([start, zeros], 0)
+
+        obs = np.stack(kendaraan_array)
+        obs2 = np.stack(obs2)
+
+        return [obs, obs2]
     
     def step(self, action) -> tuple: 
         phase_changed = 0
@@ -265,17 +279,22 @@ class SumoEnv:
         traci.trafficlight.setPhase("lampu_lalu_lintas", action * 2)
         traci.simulationStep()
 
-        """ print(traci.trafficlight.getControlledLinks("lampu_lalu_lintas")) 
-        print('----')  """
-              
-        linkIndexes = traci.trafficlight.getControlledLinks("lampu_lalu_lintas")
+        kendaraan_array = self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0'), 1) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1'), 2) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0'), 3) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1'), 4) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0'), 5) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1'), 6) + \
+            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_0'), 7) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_1'), 8)
 
-        kendaraan_array = [
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_0'), 0) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('bawah_ke_tengah_1'), 1),
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_0'), 0) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('atas_ke_tengah_1'), 1),
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_0'), 0) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kiri_ke_tengah_1'), 1),
-            self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_0'), 0) + self._get_data_kendaraan(traci.lane.getLastStepVehicleIDs('kanan_ke_tengah_1'), 1)
-        ]
+        start = np.full((1, 3), -0.5)
+        if len(kendaraan_array) > 0:       
+            zeros   = np.full((150 - len(kendaraan_array), 3), -1)
+            obs     = np.array(kendaraan_array)
+            obs     = np.concatenate([start, obs, zeros], 0)
+
+        else:
+            zeros   = np.full((150, 3), -1) 
+            obs     = np.concatenate([start, zeros], 0)
+        
+        obs = np.stack(obs)
         
         panjang_antrian_bawah           = traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('bawah_ke_tengah_1')
         panjang_antrian_kanan           = traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_0') + traci.lane.getLastStepHaltingNumber('kanan_ke_tengah_1')
@@ -297,6 +316,13 @@ class SumoEnv:
         kecepatan_diperbolehkan_kiri    = traci.lane.getMaxSpeed('kiri_ke_tengah_0') + traci.lane.getMaxSpeed('kiri_ke_tengah_1')
         kecepatan_diperbolehkan_atas    = traci.lane.getMaxSpeed('atas_ke_tengah_0') + traci.lane.getMaxSpeed('atas_ke_tengah_1')
 
+        obs2 = [
+            panjang_antrian_bawah, panjang_antrian_kanan, 
+            panjang_antrian_kiri, panjang_antrian_atas,
+            waktu_menunggu_bawah / (panjang_antrian_bawah + 1e-3), waktu_menunggu_kanan / (panjang_antrian_kanan + 1e-3),
+            waktu_menunggu_kiri / (panjang_antrian_kiri + 1e-3), panjang_antrian_atas / (waktu_menunggu_atas + 1e-3)
+        ]
+
         # banyak_lolos_perempatan     = traci.edge.getLastStepVehicleNumber('titik_tengah')
         # banyak_antrian_perempatan   = traci.edge.getLastStepHaltingNumber('titik_tengah')
             
@@ -304,19 +330,21 @@ class SumoEnv:
         banyak_kendaraan_tabrakan = traci.simulation.getCollidingVehiclesNumber()
 
         banyak_kendaraan_tersangkut = 0
+        linkIndexes = traci.trafficlight.getControlledLinks("lampu_lalu_lintas")
+
         for linkIndex in range(len(linkIndexes)):
             blockingVehicles = traci.trafficlight.getBlockingVehicles("lampu_lalu_lintas", linkIndex)
             banyak_kendaraan_tersangkut += len(blockingVehicles)
 
-        waktu_delay_bawah   = 1 - (kecepatan_kendaraan_bawah / kecepatan_diperbolehkan_bawah)
-        waktu_delay_kanan   = 1 - (kecepatan_kendaraan_kanan / kecepatan_diperbolehkan_kanan)
-        waktu_delay_kiri    = 1 - (kecepatan_kendaraan_kiri / kecepatan_diperbolehkan_kiri)     
-        waktu_delay_atas    = 1 - (kecepatan_kendaraan_atas / kecepatan_diperbolehkan_atas)
+        waktu_travel_bawah   = 1 - (kecepatan_kendaraan_bawah / kecepatan_diperbolehkan_bawah)
+        waktu_travel_kanan   = 1 - (kecepatan_kendaraan_kanan / kecepatan_diperbolehkan_kanan)
+        waktu_travel_kiri    = 1 - (kecepatan_kendaraan_kiri / kecepatan_diperbolehkan_kiri)     
+        waktu_travel_atas    = 1 - (kecepatan_kendaraan_atas / kecepatan_diperbolehkan_atas)
 
-        reward += (panjang_antrian_bawah * -0.1 + waktu_delay_bawah * -0.1 + waktu_menunggu_bawah * -0.1) 
-        reward += (panjang_antrian_kanan * -0.1 + waktu_delay_kanan * -0.1 + waktu_menunggu_kanan * -0.1)
-        reward += (panjang_antrian_kiri * -0.1 + waktu_delay_kiri * -0.1 + waktu_menunggu_kiri * -0.1)
-        reward += (panjang_antrian_atas * -0.1 + waktu_delay_atas * -0.1 + waktu_menunggu_atas * -0.1)
+        reward += (waktu_travel_bawah + waktu_menunggu_bawah * -0.1) 
+        reward += (waktu_travel_kanan + waktu_menunggu_kanan * -0.1)
+        reward += (waktu_travel_kiri + waktu_menunggu_kiri * -0.1)
+        reward += (waktu_travel_atas + waktu_menunggu_atas * -0.1)
         # reward += (phase_changed * -0.5)
         # reward += (banyak_lolos_perempatan - banyak_antrian_perempatan)
         reward += (banyak_kendaraan_tabrakan * -1.0)
@@ -328,7 +356,7 @@ class SumoEnv:
         if not done:
             done = self.time > 30000        
 
-        out_arr = []
+        """ out_arr = []
         for arr in kendaraan_array:  
             start = np.full((1, 3), -0.5)
 
@@ -339,7 +367,7 @@ class SumoEnv:
             else:
                 zeros   = np.full((50, 3), -1) 
                 obs     = np.concatenate([start, zeros], 0)
-            out_arr.append(obs)
+            out_arr.append(obs) """
 
         """ if len(kendaraan_array) > 0:       
             zeros   = np.full((50 - len(arr), 3), -1)
@@ -348,11 +376,13 @@ class SumoEnv:
 
         else:
             zeros   = np.full((150, 3), -1) 
-            obs     = np.concatenate([start, zeros], 0) """
-
+            obs     = np.concatenate([start, zeros], 0) """        
+        
         info = {
             "colliding": banyak_kendaraan_tabrakan,
             "blocking": banyak_kendaraan_tersangkut
         }
+
+        obs2 = np.stack(obs2)
             
-        return np.stack(out_arr), reward, done, info
+        return [obs, obs2], reward, done, info

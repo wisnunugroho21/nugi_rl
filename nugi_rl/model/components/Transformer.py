@@ -34,11 +34,9 @@ class MultiHeadAttention(nn.Module):
         self.key        = nn.Linear(d_model, d_model)
         self.value      = nn.Linear(d_model, d_model)
         self.out        = nn.Linear(d_model, d_model)
-        self.dropout    = nn.Dropout(0.1)
+        # self.dropout    = nn.Dropout(0.1)
 
-        self.scl_params = nn.parameter.Parameter(
-            torch.tensor([math.sqrt(self.d_k)])
-        )
+        self.scl_params = math.sqrt(self.d_k)
         
     def forward(self, query: Tensor, key: Tensor, value: Tensor, mask: Tensor = None) -> Tensor:
         query   = self.query(query)
@@ -49,15 +47,15 @@ class MultiHeadAttention(nn.Module):
         key     = key.view(key.shape[0], self.heads, -1, self.d_k)
         value   = value.view(value.shape[0], self.heads, -1, self.d_k)
        
-        scores      = query @ key.transpose(2, 3)
-        scores      = scores / self.scl_params
+        scores  = query @ key.transpose(2, 3)
+        scores  = scores / self.scl_params
         
         if mask is not None:
             min_type_value  = torch.finfo(scores.dtype).min
             scores  = scores.masked_fill(mask == 0, min_type_value)
              
         weights     = F.softmax(scores, dim = -1)
-        weights     = self.dropout(weights)
+        # weights     = self.dropout(weights)
 
         context     = weights @ value
         context     = context.transpose(1, 2).flatten(2)
@@ -71,16 +69,16 @@ class FeedForward(nn.Module):
         
         self.fc1        = nn.Linear(d_model, d_model * b)
         self.fc2        = nn.Linear(d_model * b, d_model)
-        self.dropout    = nn.Dropout(0.1)
+        # self.dropout    = nn.Dropout(0.1)
 
     def forward(self, x: Tensor) -> Tensor:
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)
+        x = F.gelu(self.fc1(x))
+        # x = self.dropout(x)
         x = self.fc2(x)
         return x
 
 class EncoderLayer(nn.Module):
-    def __init__(self, d_model: int, heads: int):
+    def __init__(self, d_model: int, heads: int, b: int = 4):
         super().__init__()
 
         self.layernorm1     = nn.LayerNorm(d_model)
@@ -88,7 +86,7 @@ class EncoderLayer(nn.Module):
 
         self.self_multihead = MultiHeadAttention(heads, d_model)
         
-        self.feed_forward   = FeedForward(d_model)
+        self.feed_forward   = FeedForward(d_model, b = b)
         self.dropout        = nn.Dropout(0.1)
 
     def forward(self, embeddings: Tensor, mask: Tensor = None) -> Tensor:
@@ -101,7 +99,7 @@ class EncoderLayer(nn.Module):
         return encoded
 
 class DecoderLayer(nn.Module):    
-    def __init__(self, d_model: int, heads: int):
+    def __init__(self, d_model: int, heads: int, b: int = 4):
         super().__init__()
 
         self.layernorm1     = nn.LayerNorm(d_model)
@@ -111,7 +109,7 @@ class DecoderLayer(nn.Module):
         self.self_multihead = MultiHeadAttention(heads, d_model)
         self.src_multihead  = MultiHeadAttention(heads, d_model)
 
-        self.feed_forward   = FeedForward(d_model)
+        self.feed_forward   = FeedForward(d_model, b = b)
         self.dropout        = nn.Dropout(0.1)
         
     def forward(self, embeddings: Tensor, encoded: Tensor, target_mask: Tensor = None) -> Tensor:
