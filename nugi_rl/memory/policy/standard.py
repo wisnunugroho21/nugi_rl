@@ -53,8 +53,6 @@ class PolicyMemory(PolicyMemory):
                 self.states         = self.states[1:]
                 self.next_states    = self.next_states[1:]
 
-            torch.cat()
-
         if len(self) == 0:            
             self.actions        = action.unsqueeze(0)
             self.rewards        = reward.unsqueeze(0)
