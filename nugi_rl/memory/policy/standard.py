@@ -23,14 +23,6 @@ class PolicyMemory(PolicyMemory):
         return self.dones.shape[0]
 
     def __getitem__(self, idx):
-        actions = self.actions[idx]
-        if len(actions.shape) == 1:
-            actions = actions.unsqueeze(-1)
-
-        logprobs = self.logprobs[idx]
-        if len(logprobs.shape) == 1:
-            logprobs = logprobs.unsqueeze(-1)
-
         if isinstance(self.states, list):
             states  = []
             for s in self.states:
@@ -44,7 +36,7 @@ class PolicyMemory(PolicyMemory):
             states = self.states[idx]
             next_states = self.next_states[idx]
 
-        return states, actions, self.rewards[idx].unsqueeze(-1), self.dones[idx].unsqueeze(-1), next_states, logprobs
+        return states, self.actions[idx], self.rewards[idx].unsqueeze(-1), self.dones[idx].unsqueeze(-1), next_states, self.logprobs[idx]
 
     def save(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
         if len(self) >= self.capacity:
