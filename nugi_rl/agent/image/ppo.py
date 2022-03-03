@@ -4,6 +4,8 @@ from torch.nn import Module
 from torch.optim import Optimizer
 from torch import device
 
+from typing import List, Union
+
 from nugi_rl.agent.ppo import AgentPPO
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.loss.ppo.base import Ppo
@@ -23,9 +25,14 @@ class AgentImagePPO(AgentPPO):
             is_training_mode, batch_size, folder, device, policy_old, value_old, dont_unsqueeze)
         self.trans = trans
 
-    def act(self, state: Tensor) -> Tensor:
+    def act(self, state: Union[Tensor, List[Tensor]]) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans.augment(state).unsqueeze(0)
+            if isinstance(state, list):
+                for i in range(len(state)):
+                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
+            else:
+                state = state if self.dont_unsqueeze else state.unsqueeze(0)
+                
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -37,9 +44,14 @@ class AgentImagePPO(AgentPPO):
               
         return action
 
-    def logprobs(self, state, action: Tensor) -> Tensor:
+    def logprobs(self, state, action: Union[Tensor, List[Tensor]]) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans.augment(state).unsqueeze(0)
+            if isinstance(state, list):
+                for i in range(len(state)):
+                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
+            else:
+                state = state if self.dont_unsqueeze else state.unsqueeze(0)
+
             action          = action.unsqueeze(0)
 
             action_datas    = self.policy(state)

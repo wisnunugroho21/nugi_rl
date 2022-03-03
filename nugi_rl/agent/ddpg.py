@@ -5,6 +5,7 @@ from torch.optim import Optimizer
 from torch import device, Tensor
 
 from copy import deepcopy
+from typing import List, Union
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.loss.ddpg.policy_loss import PolicyLoss
@@ -70,20 +71,25 @@ class AgentDdpg(Agent):
         loss.backward()
         self.soft_q_optimizer.step() 
 
-    def act(self, state: Tensor) -> Tensor:
+    def act(self, state: Union[Tensor, List[Tensor]]) -> Tensor:
         with torch.inference_mode():
-            state   = state if self.dont_unsqueeze else state.unsqueeze(0)
+            if isinstance(state, list):
+                for i in range(len(state)):
+                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
+            else:
+                state = state if self.dont_unsqueeze else state.unsqueeze(0)
+
             action  = self.policy(state).squeeze(0)
               
         return action
 
-    def logprob(self, state: Tensor, action: Tensor) -> Tensor:
+    def logprob(self, state: Union[Tensor, List[Tensor]], action: Tensor) -> Tensor:
         return torch.tensor([0], device = self.device)
 
-    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
-    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
+    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
         self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         
     def update(self) -> None:

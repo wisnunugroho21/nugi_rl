@@ -10,11 +10,17 @@ class ImagePolicyMemory(PolicyMemory):
         self.trans = trans
 
     def __getitem__(self, idx):
-        states      = self.trans.augment(self.states[idx])
-        next_states = self.trans.augment(self.next_states[idx])
-        logprobs    = self.logprobs[idx]
-        
-        if len(logprobs.shape) == 1:
-            logprobs = logprobs.unsqueeze(-1)
+        if isinstance(self.states, list):
+            states  = []
+            for s in self.states:
+                states.append(self.trans.augment(s[idx]))
 
-        return states, self.actions[idx], self.rewards[idx].unsqueeze(-1), self.dones[idx].unsqueeze(-1), next_states, logprobs
+            next_states = []
+            for ns in self.next_states:
+                next_states.append(self.trans.augment(ns[idx]))
+                
+        else:
+            states      = self.trans.augment(self.states[idx])
+            next_states = self.trans.augment(self.next_states[idx])
+
+        return states, self.actions[idx], self.rewards[idx].unsqueeze(-1), self.dones[idx].unsqueeze(-1), next_states, self.logprobs[idx]

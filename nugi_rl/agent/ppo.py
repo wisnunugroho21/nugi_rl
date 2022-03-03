@@ -57,7 +57,7 @@ class AgentPPO(Agent):
           self.policy.eval()
           self.value.eval()
 
-    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
+    def _update_step(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]]) -> None:
         self.optimizer.zero_grad()
 
         action_datas        = self.policy(states)
@@ -111,10 +111,10 @@ class AgentPPO(Agent):
 
         return logprobs
 
-    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
-    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
+    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
         self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         
     def update(self) -> None:

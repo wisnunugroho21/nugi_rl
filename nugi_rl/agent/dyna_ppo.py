@@ -5,18 +5,19 @@ from torch.optim import Optimizer
 from torch import device, Tensor
 
 from copy import deepcopy
-from typing import List, Union
 
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.agent.base import Agent
-from nugi_rl.loss.a2c import A2C
+from nugi_rl.loss.ppo.base import Ppo
 from nugi_rl.loss.value import ValueLoss
 from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.memory.policy.base import PolicyMemory
+from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
 
-class AgentA2C(Agent):  
-    def __init__(self, policy: Module, value: Module, distribution: Distribution, policy_loss: A2C, value_loss: ValueLoss, entropy_loss: EntropyLoss, 
-        memory: PolicyMemory, optimizer: Optimizer, ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
+class AgentPPO(Agent):  
+    def __init__(self, policy: Module, value: Module, gae: GeneralizedAdvantageEstimation, distribution: Distribution, 
+        policy_loss: Ppo, value_loss: ValueLoss, entropy_loss: EntropyLoss, memory: PolicyMemory, optimizer: Optimizer, 
+        ppo_epochs: int = 10, is_training_mode: bool = True, batch_size: int = 32, folder: str = 'model', 
         device: device = torch.device('cuda:0'), policy_old: Module = None, value_old: Module = None, dont_unsqueeze = False) -> None:
 
         self.dont_unsqueeze     = dont_unsqueeze
@@ -33,13 +34,13 @@ class AgentA2C(Agent):
 
         self.distribution       = distribution
         self.memory             = memory
+        self.gae                = gae
         
         self.policy_loss        = policy_loss
         self.value_loss         = value_loss
         self.entropy_loss       = entropy_loss
 
         self.optimizer          = optimizer
-
         self.device             = device
 
         if self.policy_old is None:
@@ -55,30 +56,58 @@ class AgentA2C(Agent):
           self.policy.eval()
           self.value.eval()
 
-    def _update_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
+    def _update_policy_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
         self.optimizer.zero_grad()
 
         action_datas        = self.policy(states)
         values              = self.value(states)
 
+        old_action_datas    = self.policy_old(states)
         old_values          = self.value_old(states)
         next_values         = self.value(next_states)
 
-        loss = self.policy_loss(action_datas, values, next_values, actions, rewards, dones) + \
-            self.value_loss(values, next_values, rewards, dones, old_values) + \
+        adv = self.gae(rewards, values, next_values, dones).detach()
+
+        loss = self.policy_loss(action_datas, old_action_datas, actions, adv) + \
+            self.value_loss(values, adv, old_values) + \
             self.entropy_loss(action_datas)
         
         loss.backward()
         self.optimizer.step()
 
-    def act(self, state: Union[Tensor, List[Tensor]]) -> Tensor:
-        with torch.inference_mode():
-            if isinstance(state, list):
-                for i in range(len(state)):
-                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
-            else:
-                state = state if self.dont_unsqueeze else state.unsqueeze(0)
+    def _update_model_step(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> None:
+        self.optimizer.zero_grad()
 
+        action_datas        = self.policy(states)
+        values              = self.value(states)
+
+        old_action_datas    = self.policy_old(states)
+        old_values          = self.value_old(states)
+        next_values         = self.value(next_states)
+
+        adv = self.gae(rewards, values, next_values, dones).detach()
+
+        loss = self.policy_loss(action_datas, old_action_datas, actions, adv) + \
+            self.value_loss(values, adv, old_values) + \
+            self.entropy_loss(action_datas)
+        
+        loss.backward()
+        self.optimizer.step()
+
+    def _update_policy(self) -> None:
+        self.policy_old.load_state_dict(self.policy.state_dict())
+        self.value_old.load_state_dict(self.value.state_dict())
+
+        for _ in range(self.ppo_epochs):
+            dataloader = DataLoader(self.memory, self.batch_size, shuffle = False)
+            for states, actions, rewards, dones, next_states, _ in dataloader:
+                self._update_step(states, actions, rewards, dones, next_states)
+
+        self.memory.clear()
+
+    def act(self, state: Tensor) -> Tensor:
+        with torch.inference_mode():
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -90,15 +119,11 @@ class AgentA2C(Agent):
               
         return action
 
-    def logprob(self, state: Union[Tensor, List[Tensor]], action: Tensor) -> Tensor:
+    def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            if isinstance(state, list):
-                for i in range(len(state)):
-                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
-            else:
-                state = state if self.dont_unsqueeze else state.unsqueeze(0)
-
+            state           = state if self.dont_unsqueeze else state.unsqueeze(0)
             action          = action if self.dont_unsqueeze else action.unsqueeze(0)
+
             action_datas    = self.policy(state)
 
             logprobs        = self.distribution.logprob(*action_datas, action)
@@ -106,10 +131,10 @@ class AgentA2C(Agent):
 
         return logprobs
 
-    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
-    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
+    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
         self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         
     def update(self) -> None:
@@ -130,7 +155,7 @@ class AgentA2C(Agent):
         self.memory.clear(start_position, end_position)
 
     def load_weights(self) -> None:
-        model_checkpoint = torch.load(self.folder + '/ppg.pth', map_location = self.device)
+        model_checkpoint = torch.load(self.folder + '/ppo.tar', map_location = self.device)
         self.policy.load_state_dict(model_checkpoint['policy_state_dict'])        
         self.value.load_state_dict(model_checkpoint['value_state_dict'])
         
@@ -150,4 +175,4 @@ class AgentA2C(Agent):
             'policy_state_dict': self.policy.state_dict(),
             'value_state_dict': self.value.state_dict(),
             'ppo_optimizer_state_dict': self.optimizer.state_dict(),
-        }, self.folder + '/ppg.pth')    
+        }, self.folder + '/ppo.tar')

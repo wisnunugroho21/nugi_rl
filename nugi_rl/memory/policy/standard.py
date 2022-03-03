@@ -38,7 +38,7 @@ class PolicyMemory(PolicyMemory):
 
         return states, self.actions[idx], self.rewards[idx].unsqueeze(-1), self.dones[idx].unsqueeze(-1), next_states, self.logprobs[idx]
 
-    def save(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+    def save(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
         if len(self) >= self.capacity:
             self.actions        = self.actions[1:]
             self.rewards        = self.rewards[1:]
@@ -105,21 +105,19 @@ class PolicyMemory(PolicyMemory):
                 next_states = self.next_states[start_position : end_position + 1]
 
         else:
-            states      = self.states[start_position :]
             actions     = self.actions[start_position :]
             rewards     = self.rewards[start_position :]
             dones       = self.dones[start_position :]
-            next_states = self.next_states[start_position :]
             logprobs    = self.logprobs[start_position :]
 
             if isinstance(self.states, list):
                 states  = self.states
                 next_states = self.next_states
 
-                for i in range(len(self.states)):
+                for i in range(len(states)):
                     states[i] = states[i][start_position :]
 
-                for i in range(len(self.next_states)):
+                for i in range(len(next_states)):
                     next_states[i] = next_states[i][start_position :]
             else:
                 states      = self.states[start_position :]
@@ -192,7 +190,6 @@ class PolicyMemory(PolicyMemory):
                 
                 for i in range(ln_ns):
                     self.next_states.append(torch.tensor([]))
-
             else:
                 del self.states
                 del self.next_states
