@@ -31,12 +31,14 @@ class AgentSACtemperature(AgentSac):
 
         action_datas, alpha = self.policy(states)
         actions             = self.distribution.sample(*action_datas)
-        alpha               = alpha.detach()
+
+        target_action_datas, _  = self.target_policy(states)
+        target_actions          = self.distribution.sample(*target_action_datas)
 
         q_value1        = self.soft_q1(states, actions)
         q_value2        = self.soft_q2(states, actions)
 
-        loss = self.policyLoss(action_datas, actions, q_value1, q_value2, alpha)
+        loss = self.policyLoss(action_datas, actions, q_value1, q_value2, alpha) + self.temperature_loss(target_action_datas, target_actions, alpha)
 
         loss.backward()
         self.policy_optimizer.step()
@@ -59,18 +61,6 @@ class AgentSACtemperature(AgentSac):
 
         loss.backward()
         self.soft_q_optimizer.step()
-
-    def _update_step_temperature(self, states: Tensor) -> None:
-        self.policy_optimizer.zero_grad()
-
-        with torch.no_grad():
-            action_datas, alpha = self.policy(states)
-            actions             = self.distribution.sample(*action_datas)
-
-        loss = self.temperature_loss(action_datas, actions, alpha)
-
-        loss.backward()
-        self.policy_optimizer.step()    
 
     def act(self, state: Union[Tensor, List[Tensor]]) -> Tensor:
         with torch.inference_mode():
@@ -106,18 +96,3 @@ class AgentSACtemperature(AgentSac):
             logprobs        = logprobs.squeeze(0)
 
         return logprobs
-
-    def update(self) -> None:
-        for _ in range(self.epochs):
-            indices     = torch.randperm(len(self.memory))[:self.batch_size - 1]
-            indices     = torch.concat((indices, torch.tensor([len(self.memory) - 1])), dim = 0)
-
-            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
-            for states, actions, rewards, dones, next_states, _ in dataloader:                
-                self._update_step_q(states, actions, rewards, dones, next_states)
-                self._update_step_policy(states)
-                self._update_step_temperature(states)
-
-                self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
-                self.target_q1      = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
-                self.target_q2      = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
