@@ -6,11 +6,11 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 640),
+          nn.Linear(state_dim, 64),
           nn.ReLU(),
-          nn.Linear(640, 640),
+          nn.Linear(64, 64),
           nn.ReLU(),
-          nn.Linear(640, action_dim),
+          nn.Linear(64, action_dim),
           nn.Softmax(-1)
         )
         
@@ -23,11 +23,11 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-          nn.Linear(state_dim, 640),
+          nn.Linear(state_dim, 64),
           nn.ReLU(),
-          nn.Linear(640, 640),
+          nn.Linear(64, 64),
           nn.ReLU(),
-          nn.Linear(640, 1)
+          nn.Linear(64, 1)
         )
         
     def forward(self, states: Tensor) -> Tensor:

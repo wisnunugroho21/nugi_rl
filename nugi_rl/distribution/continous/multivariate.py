@@ -9,9 +9,9 @@ class MultivariateContinous(Distribution):
     def sample(self, mean: Tensor, std: Tensor) -> Tensor:
         std = torch.diag_embed(std)
 
-        distribution    = MultivariateNormal(mean, std)
-        action          = distribution.sample().squeeze(0)
-        return action
+        distribution    = MultivariateNormal(torch.zeros_like(mean), torch.ones_like(std))
+        rand            = distribution.sample().squeeze(0)
+        return mean + std * rand
         
     def entropy(self, mean: Tensor, std: Tensor) -> Tensor:
         std = torch.diag_embed(std)

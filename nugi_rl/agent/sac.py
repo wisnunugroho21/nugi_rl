@@ -134,8 +134,8 @@ class AgentSac(Agent):
 
             dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
             for states, actions, rewards, dones, next_states, _ in dataloader:                
-                self._update_step_q(states.to(self.device), actions.to(self.device), rewards.to(self.device), dones.to(self.device), next_states.to(self.device))
-                self._update_step_policy(states.to(self.device))
+                self._update_step_q(states, actions, rewards, dones, next_states)
+                self._update_step_policy(states)
 
                 self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
                 self.target_q1      = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)

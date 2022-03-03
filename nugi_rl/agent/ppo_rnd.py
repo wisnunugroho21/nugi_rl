@@ -161,7 +161,7 @@ class AgentPPO(Agent):
         for _ in range(self.rnd_epochs):
             dataloader  = DataLoader(self.rnd_memory, self.batch_size, shuffle = False)       
             for obs in dataloader:
-                self._update_step_rnd(obs.to(self.device), self.rnd_memory.mean_obs.to(self.device), self.rnd_memory.std_obs.to(self.device))
+                self._update_step_rnd(obs, self.rnd_memory.mean_obs.to(self.device), self.rnd_memory.std_obs.to(self.device))
 
         intrinsic_rewards = self._compute_intrinsic_reward(self.rnd_memory.get().to(self.device), self.rnd_memory.mean_obs.to(self.device), self.rnd_memory.std_obs.to(self.device))
         
