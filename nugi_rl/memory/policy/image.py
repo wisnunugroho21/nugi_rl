@@ -11,13 +11,8 @@ class ImagePolicyMemory(PolicyMemory):
 
     def __getitem__(self, idx):
         if isinstance(self.states, list):
-            states  = []
-            for s in self.states:
-                states.append(self.trans.augment(s[idx]))
-
-            next_states = []
-            for ns in self.next_states:
-                next_states.append(self.trans.augment(ns[idx]))
+            states  = [self.trans.augment(s[idx]) for s in self.states]
+            next_states = [self.trans.augment(ns[idx]) for ns in self.next_states]
                 
         else:
             states      = self.trans.augment(self.states[idx])

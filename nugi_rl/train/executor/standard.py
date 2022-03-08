@@ -36,7 +36,7 @@ class Executor(Executor):
                     if self.save_weights:
                         if i_iteration % self.n_saved == 0:
                             self.agent.save_weights()
-                            print('weights saved')
+                            # print('weights saved')
 
         except KeyboardInterrupt:
             print('Stopped by User')

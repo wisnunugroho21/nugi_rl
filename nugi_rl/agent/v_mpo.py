@@ -89,8 +89,7 @@ class AgentVMPO(Agent):
     def act(self, state: Union[Tensor, List[Tensor]]) -> Tensor:
         with torch.inference_mode():
             if isinstance(state, list):
-                for i in range(len(state)):
-                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
+                state = [s if self.dont_unsqueeze else s.unsqueeze(0) for s in state]
             else:
                 state = state if self.dont_unsqueeze else state.unsqueeze(0)
 
@@ -108,8 +107,7 @@ class AgentVMPO(Agent):
     def logprob(self, state: Union[Tensor, List[Tensor]], action: Tensor) -> Tensor:
         with torch.inference_mode():
             if isinstance(state, list):
-                for i in range(len(state)):
-                    state[i] = state[i] if self.dont_unsqueeze else state[i].unsqueeze(0)
+                state = [s if self.dont_unsqueeze else s.unsqueeze(0) for s in state]
             else:
                 state = state if self.dont_unsqueeze else state.unsqueeze(0)
 
