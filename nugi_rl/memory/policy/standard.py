@@ -9,7 +9,7 @@ class PolicyMemory(PolicyMemory):
     def __init__(self, capacity = 1000000, datas = None):
         self.capacity       = capacity
 
-        if datas is None :
+        if datas is None:
             self.states         = torch.tensor([])
             self.actions        = torch.tensor([])
             self.rewards        = torch.tensor([])
@@ -67,9 +67,8 @@ class PolicyMemory(PolicyMemory):
             self.logprobs       = torch.cat((self.logprobs, logprob.unsqueeze(0)), dim = 0)
 
             if isinstance(state, list):
-                for i in range(len(state)):
-                    self.states[i]      = torch.cat((self.states[i],  state[i].unsqueeze(0)), dim = 0)
-                    self.next_states[i] = torch.cat((self.next_states[i], next_state[i].unsqueeze(0)), dim = 0)
+                self.states = [torch.cat((ss,  s.unsqueeze(0)), dim = 0) for ss, s in zip(self.states, state)]
+                self.states = [torch.cat((nss,  ns.unsqueeze(0)), dim = 0) for nss, ns in zip(self.next_states, next_state)]
             else:
                 self.states         = torch.cat((self.states, state.unsqueeze(0)), dim = 0)
                 self.next_states    = torch.cat((self.next_states, next_state.unsqueeze(0)), dim = 0)

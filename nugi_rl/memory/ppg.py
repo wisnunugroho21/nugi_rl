@@ -12,30 +12,31 @@ class PPGMemory(Memory):
         return self.states.shape[0]
 
     def __getitem__(self, idx):
-        return self.states[idx]
+        if isinstance(self.states, list):
+            states  = [s[idx] for s in self.states]                
+        else:
+            states  = self.states[idx]
+
+        return states
 
     def save(self, state: Tensor) -> None:
         if len(self) >= self.capacity:
             self.states = self.states[1:]
 
             if isinstance(state, list):
-                for i in range(len(self.states)):
-                    self.states = self.states[i][1:]
+                self.states = [s[1:] for s in self.states]
             else:
                 self.states = self.states[1:]
 
         if len(self) == 0:
             if isinstance(state, list):
-                self.states         = []
-                for i in range(len(state)):                    
-                    self.states.append(state[i].unsqueeze(0))
+                self.states = [s.unsqueeze(0) for s in self.states]
             else:
                 self.states = state.unsqueeze(0)
             
         else:
             if isinstance(state, list):
-                for i in range(len(state)):
-                    self.states[i]  = torch.cat((self.states[i],  state[i].unsqueeze(0)), dim = 0)
+                self.states = [torch.cat((ss,  s.unsqueeze(0)), dim = 0) for ss, s in zip(self.states, state)]
             else:
                 self.states = torch.cat((self.states, state.unsqueeze(0)), dim = 0)
 
@@ -45,43 +46,43 @@ class PPGMemory(Memory):
 
     def get(self, start_position: int = 0, end_position: int = None):
         if end_position is not None and end_position != -1:
-            states  = self.states[start_position : end_position + 1]
+            if isinstance(self.states, list):
+                states  = [s[start_position : end_position + 1] for s in self.states]
+            else:
+                states  = self.states[start_position : end_position + 1]
 
         else:
-            states  = self.states[start_position :]
+            if isinstance(self.states, list):
+                states  = [s[start_position :] for s in self.states]
+            else:
+                states  = self.states[start_position :]
 
         return states
 
     def clear(self, start_position: int = 0, end_position: int = None) -> None:
         if start_position is not None and start_position > 0 and end_position is not None and end_position != -1:
             if isinstance(self.states, list):
-                for i in range(len(self.states)):
-                    self.states[i]  = torch.cat([self.states[i][ : start_position], self.states[i][end_position + 1 : ]])
+                self.states         = [torch.cat([s[ : start_position], s[end_position + 1 : ]]) for s in self.states]
             else:
-                self.states = torch.cat([self.states[ : start_position], self.states[end_position + 1 : ]])
-        
+                self.states         = torch.cat([self.states[ : start_position], self.states[end_position + 1 : ]])
+
         elif start_position is not None and start_position > 0:
             if isinstance(self.states, list):
-                for i in range(len(self.states)):
-                    self.states[i] = self.states[i][ : start_position]
+                self.states         = [s[ : start_position] for s in self.states]
             else:
-                self.states = self.states[ : start_position]
-        
+                self.states         = self.states[ : start_position]
+
         elif end_position is not None and end_position != -1:
             if isinstance(self.states, list):
-                for i in range(len(self.states)):
-                    self.states[i] = self.states[i][end_position + 1 : ]
+                self.states         = [s[end_position + 1 : ] for s in self.states]
             else:
-                self.states = self.states[end_position + 1 : ]
+                self.states         = self.states[end_position + 1 : ]
             
         else:
             if isinstance(self.states, list):
-                ln_s    = len(self.states)
+                ln_s = len(self.states)
                 del self.states
-                self.states = []
-
-                for i in range(ln_s):
-                    self.states.append(torch.tensor([]))
+                self.states = [torch.tensor([]) for _ in range(ln_s)]
             else:
                 del self.states
                 self.states = torch.tensor([])

@@ -18,16 +18,11 @@ class SNGTemplateMemory(Memory):
 
     def __getitem__(self, idx):
         if isinstance(self.states, list):
-            states  = []
-            for s in self.states:
-                states.append(s[idx])
-
-            next_states = []
-            for ns in self.next_states:
-                next_states.append(ns[idx])
+            states      = [s[idx] for s in self.states]
+            next_states = [ns[idx] for ns in self.next_states]
                 
         else:
-            states = self.states[idx]
+            states      = self.states[idx]
             next_states = self.next_states[idx]
 
         return states, self.goals[idx], next_states
@@ -37,9 +32,8 @@ class SNGTemplateMemory(Memory):
             self.goals  = self.goals[1:]
 
             if isinstance(state, list):
-                for i in range(len(self.states)):
-                    self.states      = self.states[i][1:]
-                    self.next_states = self.next_states[i][1:]
+                self.states         = [s[1:] for s in self.states]
+                self.next_states    = [ns[1:] for ns in self.next_states]
             else:
                 self.states         = self.states[1:]
                 self.next_states    = self.next_states[1:]
@@ -48,12 +42,8 @@ class SNGTemplateMemory(Memory):
             self.goals  = goal.unsqueeze(0)
 
             if isinstance(state, list):
-                self.states         = []
-                self.next_states    = []
-
-                for i in range(len(state)):                    
-                    self.states.append(state[i].unsqueeze(0))
-                    self.next_states.append(next_state[i].unsqueeze(0))
+                self.states         = [s[i].unsqueeze(0) for s in self.states]
+                self.next_states    = [ns[i].unsqueeze(0) for ns in self.next_states]
             else:
                 self.states         = state.unsqueeze(0)
                 self.next_states    = next_state.unsqueeze(0)
@@ -62,14 +52,13 @@ class SNGTemplateMemory(Memory):
             self.goals  = torch.cat((self.goals, goal.unsqueeze(0)), dim = 0)
 
             if isinstance(state, list):
-                for i in range(len(state)):
-                    self.states[i]      = torch.cat((self.states[i],  state[i].unsqueeze(0)), dim = 0)
-                    self.next_states[i] = torch.cat((self.next_states[i], next_state[i].unsqueeze(0)), dim = 0)
+                self.states = [torch.cat((ss,  s.unsqueeze(0)), dim = 0) for ss, s in zip(self.states, state)]
+                self.states = [torch.cat((nss,  ns.unsqueeze(0)), dim = 0) for nss, ns in zip(self.next_states, next_state)]
             else:
                 self.states         = torch.cat((self.states, state.unsqueeze(0)), dim = 0)
                 self.next_states    = torch.cat((self.next_states, next_state.unsqueeze(0)), dim = 0)
 
-    def save_all(self, states: Tensor, goals: Tensor, next_states: Tensor) -> None:
+    def save_all(self, states: Union[Tensor, List[Tensor]], goals: Tensor, next_states: Union[Tensor, List[Tensor]]) -> None:
         for state, goal, next_state in zip(states, goals, next_states):
             self.save(state, goal, next_state)
 
@@ -78,14 +67,8 @@ class SNGTemplateMemory(Memory):
             goals = self.goals[start_position : end_position + 1]
 
             if isinstance(self.states, list):
-                states      = self.states
-                next_states = self.next_states
-
-                for i in range(len(states)):
-                    states[i] = states[i][start_position : end_position + 1]
-                
-                for i in range(len(next_states)):
-                    next_states[i] = next_states[i][start_position : end_position + 1]
+                states      = [s[start_position : end_position + 1] for s in self.states]
+                next_states = [ns[start_position : end_position + 1] for ns in self.next_states]
             else:
                 states      = self.states[start_position : end_position + 1]
                 next_states = self.next_states[start_position : end_position + 1]
@@ -94,14 +77,8 @@ class SNGTemplateMemory(Memory):
             goals = self.goals[start_position :]
 
             if isinstance(self.states, list):
-                states  = self.states
-                next_states = self.next_states
-
-                for i in range(len(states)):
-                    states[i] = states[i][start_position :]
-
-                for i in range(len(next_states)):
-                    next_states[i] = next_states[i][start_position :]
+                states      = [s[start_position :] for s in self.states]
+                next_states = [ns[start_position :] for ns in self.next_states]
             else:
                 states      = self.states[start_position :]
                 next_states = self.next_states[start_position :]
@@ -113,11 +90,8 @@ class SNGTemplateMemory(Memory):
             self.goals = torch.cat([self.goals[ : start_position], self.goals[end_position + 1 : ]])
 
             if isinstance(self.states, list):
-                for i in range(len(self.states)):
-                    self.states[i]  = torch.cat([self.states[i][ : start_position], self.states[i][end_position + 1 : ]])
-                
-                for i in range(len(self.next_states)):
-                    self.next_states[i] = torch.cat([self.next_states[i][ : start_position], self.next_states[end_position + 1 : ]])
+                self.states         = [torch.cat([s[ : start_position], s[end_position + 1 : ]]) for s in self.states]
+                self.next_states    = [torch.cat([ns[ : start_position], ns[end_position + 1 : ]]) for ns in self.next_states]
             else:
                 self.states         = torch.cat([self.states[ : start_position], self.states[end_position + 1 : ]])
                 self.next_states    = torch.cat([self.next_states[ : start_position], self.next_states[end_position + 1 : ]])
@@ -126,11 +100,8 @@ class SNGTemplateMemory(Memory):
             self.goals = self.goals[ : start_position]
 
             if isinstance(self.states, list):
-                for i in range(len(self.states)):
-                    self.states[i] = self.states[i][ : start_position]
-                
-                for i in range(len(self.next_states)):
-                    self.next_states[i] = self.next_states[i][ : start_position]
+                self.states         = [s[ : start_position] for s in self.states]
+                self.next_states    = [ns[ : start_position] for ns in self.next_states]
             else:
                 self.states         = self.states[ : start_position]
                 self.next_states    = self.next_states[ : start_position]
@@ -139,11 +110,8 @@ class SNGTemplateMemory(Memory):
             self.goals = self.goals[end_position + 1 : ]
 
             if isinstance(self.states, list):
-                for i in range(len(self.states)):
-                    self.states[i] = self.states[i][end_position + 1 : ]
-                
-                for i in range(len(self.next_states)):
-                    self.next_states[i] = self.next_states[i][end_position + 1 : ]
+                self.states         = [s[end_position + 1 : ] for s in self.states]
+                self.next_states    = [ns[end_position + 1 : ] for ns in self.next_states]
             else:
                 self.states         = self.states[end_position + 1 : ]
                 self.next_states    = self.next_states[end_position + 1 : ]
@@ -156,14 +124,8 @@ class SNGTemplateMemory(Memory):
                 del self.states
                 del self.next_states
 
-                self.states         = []
-                self.next_states    = []
-
-                for i in range(ln_s):
-                    self.states.append(torch.tensor([]))
-                
-                for i in range(ln_ns):
-                    self.next_states.append(torch.tensor([]))
+                self.states         = [torch.tensor([]) for _ in range(ln_s)]
+                self.next_states    = [torch.tensor([]) for _ in range(ln_ns)]
             else:
                 del self.states
                 del self.next_states
