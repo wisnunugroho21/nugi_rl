@@ -112,7 +112,7 @@ class AgentImagePpoClr(AgentPPO):
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans.augment(state).unsqueeze(0)          
+            state           = self.trans(state).unsqueeze(0)          
             action_datas    = self.policy(state)
             
             if self.is_training_mode:
@@ -126,7 +126,7 @@ class AgentImagePpoClr(AgentPPO):
 
     def logprobs(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            state           = self.trans.augment(state).unsqueeze(0)
+            state           = self.trans(state).unsqueeze(0)
             action          = action.unsqueeze(0)
 
             action_datas    = self.policy(state)

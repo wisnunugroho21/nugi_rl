@@ -11,11 +11,11 @@ class ImagePolicyMemory(PolicyMemory):
 
     def __getitem__(self, idx):
         if isinstance(self.states, list):
-            states  = [self.trans.augment(s[idx]) for s in self.states]
-            next_states = [self.trans.augment(ns[idx]) for ns in self.next_states]
+            states  = [self.trans(s[idx]) for s in self.states]
+            next_states = [self.trans(ns[idx]) for ns in self.next_states]
                 
         else:
-            states      = self.trans.augment(self.states[idx])
-            next_states = self.trans.augment(self.next_states[idx])
+            states      = self.trans(self.states[idx])
+            next_states = self.trans(self.next_states[idx])
 
         return states, self.actions[idx], self.rewards[idx].unsqueeze(-1), self.dones[idx].unsqueeze(-1), next_states, self.logprobs[idx]

@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor
+from typing import List, Tuple, Union
 
 from nugi_rl.memory.base import Memory
 
@@ -19,7 +20,7 @@ class PPGMemory(Memory):
 
         return states
 
-    def save(self, state: Tensor) -> None:
+    def save(self, state: Union[Tensor, List[Tensor]]) -> None:
         if len(self) >= self.capacity:
             self.states = self.states[1:]
 
@@ -40,11 +41,11 @@ class PPGMemory(Memory):
             else:
                 self.states = torch.cat((self.states, state.unsqueeze(0)), dim = 0)
 
-    def save_all(self, states: Tensor) -> None:
+    def save_all(self, states: Union[Tensor, List[Tensor]]) -> None:
         for state in zip(states):
             self.save(state)
 
-    def get(self, start_position: int = 0, end_position: int = None):
+    def get(self, start_position: int = 0, end_position: int = None) -> Tuple[Union[Tensor, List[Tensor]], Union[Tensor, List[Tensor]]]:
         if end_position is not None and end_position != -1:
             if isinstance(self.states, list):
                 states  = [s[start_position : end_position + 1] for s in self.states]
