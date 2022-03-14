@@ -136,16 +136,16 @@ class AgentImagePpoClr(AgentPPO):
 
         return logprobs
 
+    def update(self) -> None:
+        self._update_ppo()
+        self._update_aux_clr()
+
     def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
     def save_memory(self, memory: PolicyMemory) -> None:
         states, actions, rewards, dones, next_states, logprobs = memory.get()
-        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
-        
-    def update(self) -> None:
-        self._update_ppo()
-        self._update_aux_clr()
+        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)    
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.memory.get(start_position, end_position)

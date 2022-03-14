@@ -157,19 +157,19 @@ class AgentPPO(Agent):
 
         return logprobs
 
-    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
-        self.policy_memory.save(state, action, reward, done, next_state, logprob)
-
-    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
-        self.policy_memory.save_all(states, actions, rewards, dones, next_states, logprobs)
-        
     def update(self) -> None:
         self._update_policy()
         self.i_update += 1
 
         if self.i_update % self.n_aux_update == 0:
             self._update_aux()
-            self.i_update = 0 
+            self.i_update = 0
+
+    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
+        self.policy_memory.save(state, action, reward, done, next_state, logprob)
+
+    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
+        self.policy_memory.save_all(states, actions, rewards, dones, next_states, logprobs)
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.policy_memory.get(start_position, end_position)

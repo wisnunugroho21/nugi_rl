@@ -112,12 +112,6 @@ class AgentImpalaPPO(Agent):
 
         return logprobs
 
-    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
-        self.memory.save(state, action, reward, done, next_state, logprob)
-
-    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
-        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
-        
     def update(self) -> None:
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_old.load_state_dict(self.value.state_dict())
@@ -128,6 +122,12 @@ class AgentImpalaPPO(Agent):
                self._update_step(states, actions, rewards, dones, next_states, logprobs)
 
         self.memory.clear()
+
+    def save_obs(self, state: Tensor, action: Tensor, reward: Tensor, done: Tensor, next_state: Tensor, logprob: Tensor) -> None:
+        self.memory.save(state, action, reward, done, next_state, logprob)
+
+    def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
+        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)    
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.memory.get(start_position, end_position)

@@ -119,12 +119,6 @@ class AgentSac(Agent):
 
         return logprobs
 
-    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
-        self.memory.save(state, action, reward, done, next_state, logprob)
-
-    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
-        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
-        
     def update(self) -> None:
         for _ in range(self.epochs):
             indices     = torch.randperm(len(self.memory))[:self.batch_size - 1]
@@ -138,6 +132,12 @@ class AgentSac(Agent):
                 self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
                 self.target_q1      = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
                 self.target_q2      = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
+
+    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
+        self.memory.save(state, action, reward, done, next_state, logprob)
+
+    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
+        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)    
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.memory.get(start_position, end_position)

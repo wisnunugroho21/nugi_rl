@@ -196,6 +196,14 @@ class AgentPPO(Agent):
 
         return logprobs
 
+    def update(self, type) -> None:
+        if type == 'episodic':
+            self._update_ppo()            
+        elif type == 'iter':
+            self._update_rnd()            
+        else:
+            raise Exception('choose type update properly (episodic, iter)')
+
     def save_all(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor, logprobs: Tensor) -> None:
         self.policy_memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         self.rnd_memory.save_all(next_states)
@@ -209,14 +217,6 @@ class AgentPPO(Agent):
 
         self.policy_memory.save_all(states, actions, rewards, dones, next_states, logprobs)
         self.rnd_memory.save_all(next_states)
-        
-    def update(self, type) -> None:
-        if type == 'episodic':
-            self._update_ppo()            
-        elif type == 'iter':
-            self._update_rnd()            
-        else:
-            raise Exception('choose type update properly (episodic, iter)')
 
     def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
         return self.policy_memory.get(start_position, end_position)
