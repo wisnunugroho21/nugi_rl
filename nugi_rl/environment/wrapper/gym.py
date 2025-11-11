@@ -1,59 +1,61 @@
-import gym
 import torch
-from torch import device, Tensor
-
-from typing import Any, List, Tuple, Union
+import gymnasium as gym
+from gymnasium import Env
+from torch import Tensor, device
 
 from nugi_rl.environment.base import Environment
 
+
 class GymWrapper(Environment):
-    def __init__(self, env, agent_device: device):
+    def __init__(self, env: Env, agent_device: device) -> None:
         self.env = env
-        self.agent_device = agent_device        
+        self.agent_device = agent_device
 
-    def is_discrete(self):
-        return type(self.env.action_space) is not gym.spaces.Box
+    def is_discrete(self) -> bool:
+        return type(self.env.action_space) is gym.spaces.Discrete
 
-    def get_obs_dim(self):
-        if type(self.env.observation_space) is not gym.spaces.Box:
-            return self.env.observation_space.n
-        else:
-            return self.env.observation_space.shape[0]
-            
-    def get_action_dim(self):
-        if self.is_discrete():
-            return self.env.action_space.n
-        else:
-            return self.env.action_space.shape[0]
+    def get_obs_dim(self) -> int:
+        if (self.env.observation_space.shape is None)
+            return 0
 
-    def reset(self) -> Union[Tensor, List[Tensor]]:
-        next_state = self.env.reset()
+        return self.env.observation_space.shape[0]
 
-        if isinstance(next_state, list):
-            for i in range(len(next_state)):
-                next_state[i] = torch.tensor(next_state[i]).float().to(self.agent_device)
-        else:
-            next_state  = torch.tensor(next_state).float().to(self.agent_device)
+    def get_action_dim(self) -> int:
+        if (self.env.action_space.shape is None)
+            return 0
 
-        return next_state
+        return self.env.action_space.shape[0]
 
-    def step(self, action: Tensor) -> Tuple[Tensor, Tensor, Tensor, Any]:
-        action = action.squeeze().cpu().numpy()
-        next_state, reward, done, info = self.env.step(action)
+    def reset(self) -> Tensor:
+        next_state, _ = self.env.reset()
 
         if isinstance(next_state, list):
-            for i in range(len(next_state)):
-                next_state[i] = torch.tensor(next_state[i]).float().to(self.agent_device)
+            next_state_tensor = torch.stack(
+                [torch.tensor(ns).float().to(self.agent_device) for ns in next_state]
+            )
         else:
-            next_state  = torch.tensor(next_state).float().to(self.agent_device)
+            next_state_tensor = torch.tensor(next_state).float().to(self.agent_device)
+
+        return next_state_tensor
+
+    def step(self, action: Tensor) -> tuple[Tensor, Tensor, Tensor]:
+        action_np = action.squeeze().cpu().numpy()
+        next_state, reward, done, _, _ = self.env.step(action_np)
+
+        if isinstance(next_state, list):
+            next_state_tensor = torch.stack(
+                [torch.tensor(ns).float().to(self.agent_device) for ns in next_state]
+            )
+        else:
+            next_state_tensor = torch.tensor(next_state).float().to(self.agent_device)
 
         reward = torch.tensor(reward).float().to(self.agent_device)
         done = torch.tensor(done).float().to(self.agent_device)
 
-        return next_state, reward, done, info
+        return next_state_tensor, reward, done
 
-    def render(self):
+    def render(self) -> None:
         self.env.render()
 
-    def close(self):
+    def close(self) -> None:
         self.env.close()

@@ -1,168 +1,243 @@
-import torch
-from torch.nn import Module
-from torch.utils.data import DataLoader, SubsetRandomSampler
-from torch.optim import Optimizer
-from torch import device, Tensor
-
 from copy import deepcopy
-from typing import List, Union
 
-from nugi_rl.distribution.base import Distribution
+import torch
+from torch import Tensor, device
+from torch.nn import Module
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader, SubsetRandomSampler
+
 from nugi_rl.agent.base import Agent
+from nugi_rl.distribution.base import Distribution
+from nugi_rl.helpers.pytorch_utils import copy_parameters
 from nugi_rl.loss.sac.policy_loss import PolicyLoss
 from nugi_rl.loss.sac.q_loss import QLoss
 from nugi_rl.memory.policy.base import PolicyMemory
-from nugi_rl.helpers.pytorch_utils import copy_parameters
+
 
 class AgentSac(Agent):
-    def __init__(self, soft_q1: Module, soft_q2: Module, policy: Module, distribution: Distribution, q_loss: QLoss, policy_loss: PolicyLoss, memory: PolicyMemory, 
-        soft_q_optimizer: Optimizer, policy_optimizer: Optimizer, is_training_mode: bool = True, batch_size: int = 32, epochs: int = 1, soft_tau: float = 0.95, 
-        folder: str = 'model', device: device = torch.device('cuda:0'), target_policy: Module = None, target_q1: Module = None, target_q2: Module = None, dont_unsqueeze = False) -> None:
+    def __init__(
+        self,
+        soft_q1: Module,
+        soft_q2: Module,
+        policy: Module,
+        distribution: Distribution,
+        q_loss: QLoss,
+        policy_loss: PolicyLoss,
+        memory: PolicyMemory,
+        soft_q_optimizer: Optimizer,
+        policy_optimizer: Optimizer,
+        is_training_mode: bool = True,
+        batch_size: int = 32,
+        epochs: int = 1,
+        soft_tau: float = 0.95,
+        folder: str = "model",
+        device: device = torch.device("cuda:0"),
+        target_policy: Module | None = None,
+        target_q1: Module | None = None,
+        target_q2: Module | None = None,
+        dont_unsqueeze=False,
+    ) -> None:
+        self.dont_unsqueeze = dont_unsqueeze
+        self.batch_size = batch_size
+        self.is_training_mode = is_training_mode
+        self.folder = folder
+        self.epochs = epochs
+        self.soft_tau = soft_tau
 
-        self.dont_unsqueeze     = dont_unsqueeze
-        self.batch_size         = batch_size
-        self.is_training_mode   = is_training_mode
-        self.folder             = folder
-        self.epochs             = epochs
-        self.soft_tau           = soft_tau
+        self.policy = policy
+        self.soft_q1 = soft_q1
+        self.soft_q2 = soft_q2
 
-        self.policy             = policy
-        self.soft_q1            = soft_q1
-        self.soft_q2            = soft_q2
+        self.distribution = distribution
+        self.memory = memory
 
-        self.target_policy      = target_policy
-        self.target_q1          = target_q1
-        self.target_q2          = target_q2
+        self.qLoss = q_loss
+        self.policyLoss = policy_loss
 
-        self.distribution       = distribution
-        self.memory             = memory
-        
-        self.qLoss              = q_loss
-        self.policyLoss         = policy_loss
+        self.device = device
+        self.q_update = 1
 
-        self.device             = device
-        self.q_update           = 1
-        
-        self.soft_q_optimizer   = soft_q_optimizer
-        self.policy_optimizer   = policy_optimizer
+        self.soft_q_optimizer = soft_q_optimizer
+        self.policy_optimizer = policy_optimizer
 
-        if self.target_policy is None:
+        if target_policy is None:
             self.target_policy = deepcopy(self.policy)
+        else:
+            self.target_policy = target_policy
 
-        if self.target_q1 is None:
+        if target_q1 is None:
             self.target_q1 = deepcopy(self.soft_q1)
+        else:
+            self.target_q1 = target_q1
 
-        if self.target_q2 is None:
+        if target_q2 is None:
             self.target_q2 = deepcopy(self.soft_q2)
+        else:
+            self.target_q2 = target_q2
 
     def _update_step_policy(self, states: Tensor) -> None:
         self.policy_optimizer.zero_grad()
 
-        action_datas    = self.policy(states)
-        actions         = self.distribution.sample(*action_datas)
+        action_datas = self.policy(states)
+        actions = self.distribution.sample(action_datas)
 
-        q_value1        = self.soft_q1(states, actions)
-        q_value2        = self.soft_q2(states, actions)
+        q_value1 = self.soft_q1(states, actions)
+        q_value2 = self.soft_q2(states, actions)
 
         loss = self.policyLoss(action_datas, actions, q_value1, q_value2)
 
         loss.backward()
         self.policy_optimizer.step()
 
-    def _update_step_q(self, states: Tensor, actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Tensor) -> Tensor:
+    def _update_step_q(
+        self,
+        states: Tensor,
+        actions: Tensor,
+        rewards: Tensor,
+        dones: Tensor,
+        next_states: Tensor,
+    ) -> None:
         self.soft_q_optimizer.zero_grad()
 
-        next_action_datas   = self.target_policy(next_states)
-        next_actions        = self.distribution.sample(*next_action_datas)
+        next_action_datas = self.target_policy(next_states)
+        next_actions = self.distribution.sample(*next_action_datas)
 
-        predicted_q1        = self.soft_q1(states, actions)
-        predicted_q2        = self.soft_q2(states, actions)
+        predicted_q1 = self.soft_q1(states, actions)
+        predicted_q2 = self.soft_q2(states, actions)
 
-        target_next_q1      = self.target_q1(next_states, next_actions)
-        target_next_q2      = self.target_q2(next_states, next_actions)
+        target_next_q1 = self.target_q1(next_states, next_actions)
+        target_next_q2 = self.target_q2(next_states, next_actions)
 
-        loss  = self.qLoss(predicted_q1, predicted_q2, target_next_q1, target_next_q2, next_action_datas, next_actions, rewards, dones)
+        loss = self.qLoss(
+            predicted_q1,
+            predicted_q2,
+            target_next_q1,
+            target_next_q2,
+            next_action_datas,
+            next_actions,
+            rewards,
+            dones,
+        )
 
         loss.backward()
-        self.soft_q_optimizer.step() 
+        self.soft_q_optimizer.step()
 
-    def act(self, state: Union[Tensor, List[Tensor]]) -> Tensor:
+    def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
-            if isinstance(state, list):
-                state = [s if self.dont_unsqueeze else s.unsqueeze(0) for s in state]
-            else:
-                state = state if self.dont_unsqueeze else state.unsqueeze(0)
+            state = state if self.dont_unsqueeze else state.unsqueeze(0)
+            action_datas = self.policy(state)
 
-            action_datas    = self.policy(state)
-            
             if self.is_training_mode:
-                action = self.distribution.sample(*action_datas)
+                action = self.distribution.sample(action_datas)
             else:
                 action = self.distribution.deterministic(action_datas)
 
             action = action.squeeze(0)
-              
+
         return action
 
-    def logprob(self, state: Union[Tensor, List[Tensor]], action: Tensor) -> Tensor:
+    def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         with torch.inference_mode():
-            if isinstance(state, list):
-                state = [s if self.dont_unsqueeze else s.unsqueeze(0) for s in state]
-            else:
-                state = state if self.dont_unsqueeze else state.unsqueeze(0)
+            state = state if self.dont_unsqueeze else state.unsqueeze(0)
+            action = action if self.dont_unsqueeze else action.unsqueeze(0)
 
-            action          = action if self.dont_unsqueeze else action.unsqueeze(0)
-            action_datas    = self.policy(state)
+            action_datas = self.policy(state)
 
-            logprobs        = self.distribution.logprob(*action_datas, action)
-            logprobs        = logprobs.squeeze(0)
+            logprobs = self.distribution.logprob(action_datas, action)
+            logprobs = logprobs.squeeze(0)
 
         return logprobs
 
-    def update(self) -> None:
+    def update(self, config: str = "") -> None:
         for _ in range(self.epochs):
-            indices     = torch.randperm(len(self.memory))[:self.batch_size - 1]
-            indices     = torch.concat((indices, torch.tensor([len(self.memory) - 1])), dim = 0)
+            indices = torch.randperm(len(self.memory))[: self.batch_size - 1]
+            indices = torch.concat(
+                (indices, torch.tensor([len(self.memory) - 1])), dim=0
+            )
 
-            dataloader  = DataLoader(self.memory, self.batch_size, sampler = SubsetRandomSampler(indices))                
-            for states, actions, rewards, dones, next_states, _ in dataloader:                
+            dataloader = DataLoader(
+                self.memory, self.batch_size, sampler=SubsetRandomSampler(indices)
+            )
+            for states, actions, rewards, dones, next_states, _ in dataloader:
                 self._update_step_q(states, actions, rewards, dones, next_states)
                 self._update_step_policy(states)
 
-                self.target_policy  = copy_parameters(self.policy, self.target_policy, self.soft_tau)
-                self.target_q1      = copy_parameters(self.soft_q1, self.target_q1, self.soft_tau)
-                self.target_q2      = copy_parameters(self.soft_q2, self.target_q2, self.soft_tau)
+                self.target_policy = copy_parameters(
+                    self.policy, self.target_policy, self.soft_tau
+                )
+                self.target_q1 = copy_parameters(
+                    self.soft_q1, self.target_q1, self.soft_tau
+                )
+                self.target_q2 = copy_parameters(
+                    self.soft_q2, self.target_q2, self.soft_tau
+                )
 
-    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor) -> None:
+    def save_obs(
+        self,
+        state: Tensor,
+        action: Tensor,
+        reward: Tensor,
+        done: Tensor,
+        next_state: Tensor,
+        logprob: Tensor,
+    ) -> None:
         self.memory.save(state, action, reward, done, next_state, logprob)
 
-    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
-        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)    
+    def save_all(
+        self,
+        states: list[Tensor],
+        actions: list[Tensor],
+        rewards: list[Tensor],
+        dones: list[Tensor],
+        next_states: list[Tensor],
+        logprobs: list[Tensor],
+    ) -> None:
+        self.memory.save_all(states, actions, rewards, dones, next_states, logprobs)
 
-    def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
+    def get_obs(
+        self, start_position: int = 0, end_position: int | None = None
+    ) -> tuple[
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+    ]:
         return self.memory.get(start_position, end_position)
 
-    def clear_obs(self, start_position: int = 0, end_position: int = None) -> None:
+    def clear_obs(
+        self, start_position: int = 0, end_position: int | None = None
+    ) -> None:
         self.memory.clear(start_position, end_position)
 
     def load_weights(self) -> None:
-        model_checkpoint = torch.load(self.folder + '/sac.tar', map_location = self.device)
-        
-        self.policy.load_state_dict(model_checkpoint['policy_state_dict'])
-        self.soft_q1.load_state_dict(model_checkpoint['soft_q1_state_dict'])
-        self.soft_q2.load_state_dict(model_checkpoint['soft_q2_state_dict'])
-        self.target_q1.load_state_dict(model_checkpoint['target_q1_state_dict'])
-        self.target_q2.load_state_dict(model_checkpoint['target_q2_state_dict'])
-        self.policy_optimizer.load_state_dict(model_checkpoint['policy_optimizer_state_dict'])
-        self.soft_q_optimizer.load_state_dict(model_checkpoint['soft_q_optimizer_state_dict'])
+        model_checkpoint = torch.load(
+            self.folder + "/sac.tar", map_location=self.device
+        )
+
+        self.policy.load_state_dict(model_checkpoint["policy_state_dict"])
+        self.soft_q1.load_state_dict(model_checkpoint["soft_q1_state_dict"])
+        self.soft_q2.load_state_dict(model_checkpoint["soft_q2_state_dict"])
+        self.target_q1.load_state_dict(model_checkpoint["target_q1_state_dict"])
+        self.target_q2.load_state_dict(model_checkpoint["target_q2_state_dict"])
+        self.policy_optimizer.load_state_dict(
+            model_checkpoint["policy_optimizer_state_dict"]
+        )
+        self.soft_q_optimizer.load_state_dict(
+            model_checkpoint["soft_q_optimizer_state_dict"]
+        )
 
     def save_weights(self) -> None:
-        torch.save({
-            'policy_state_dict': self.policy.state_dict(),
-            'soft_q1_state_dict': self.soft_q1.state_dict(),
-            'soft_q2_state_dict': self.soft_q2.state_dict(),
-            'target_q1_state_dict': self.target_q1.state_dict(),
-            'target_q2_state_dict': self.target_q2.state_dict(),
-            'policy_optimizer_state_dict': self.policy_optimizer.state_dict(),
-            'soft_q_optimizer_state_dict': self.soft_q_optimizer.state_dict(),
-        }, self.folder + '/sac.tar')       
+        torch.save(
+            {
+                "policy_state_dict": self.policy.state_dict(),
+                "soft_q1_state_dict": self.soft_q1.state_dict(),
+                "soft_q2_state_dict": self.soft_q2.state_dict(),
+                "target_q1_state_dict": self.target_q1.state_dict(),
+                "target_q2_state_dict": self.target_q2.state_dict(),
+                "policy_optimizer_state_dict": self.policy_optimizer.state_dict(),
+                "soft_q_optimizer_state_dict": self.soft_q_optimizer.state_dict(),
+            },
+            self.folder + "/sac.tar",
+        )

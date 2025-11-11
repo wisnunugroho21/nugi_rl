@@ -2,6 +2,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from nugi_rl.utilities.plotter.base import Plotter
 
+
 class TensorboardPlotter(Plotter):
     def __init__(self, summary_writer: SummaryWriter) -> None:
         self.summary_writer = summary_writer
