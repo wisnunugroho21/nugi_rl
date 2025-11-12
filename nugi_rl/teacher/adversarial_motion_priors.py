@@ -79,7 +79,9 @@ class TeacherAdvMtnPrior(Teacher):
     def save_obs(self, state: Tensor, goal: Tensor, next_state: Tensor) -> None:
         self.memory.save(state, goal, next_state)
 
-    def save_all(self, states: Tensor, goals: Tensor, next_states: Tensor) -> None:
+    def save_all(
+        self, states: list[Tensor], goals: list[Tensor], next_states: list[Tensor]
+    ) -> None:
         self.memory.save_all(states, goals, next_states)
 
     def update(self) -> None:
@@ -102,10 +104,14 @@ class TeacherAdvMtnPrior(Teacher):
 
         self.memory.clear()
 
-    def get_obs(self, start_position: int = None, end_position: int = None) -> tuple:
-        return self.memory.get(start_position, end_position)
+    def get_obs(
+        self, start_position: int = 0, end_position: int | None = None
+    ) -> tuple:
+        return self.memory.get_policy(start_position, end_position)
 
-    def clear_obs(self, start_position: int = 0, end_position: int = None) -> None:
+    def clear_obs(
+        self, start_position: int = 0, end_position: int | None = None
+    ) -> None:
         self.memory.clear(start_position, end_position)
 
     def load_weights(self) -> None:

@@ -8,7 +8,9 @@ class Teacher:
     def save_obs(self, state: Tensor, goal: Tensor, next_state: Tensor) -> None:
         raise NotImplementedError
 
-    def save_all(self, states: Tensor, goals: Tensor, next_states: Tensor) -> None:
+    def save_all(
+        self, states: list[Tensor], goals: list[Tensor], next_states: list[Tensor]
+    ) -> None:
         raise NotImplementedError
 
     def get_obs(self, start_position: int = 0, end_position: int | None = None):

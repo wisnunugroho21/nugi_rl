@@ -15,7 +15,7 @@ class SyncExecutor(Executor):
         self,
         agent: Agent,
         n_iteration: int,
-        runner: Runner,
+        runner: list[Runner],
         save_weights: bool = False,
         n_saved: int = 10,
         load_weights: bool = False,
