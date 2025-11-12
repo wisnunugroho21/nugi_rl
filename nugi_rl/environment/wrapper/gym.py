@@ -44,7 +44,7 @@ class GymWrapper(Environment):
 
     def step(self, action: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         action_np = action.cpu().numpy()
-        next_state, reward, done, _, _ = self.env.step(action_np)
+        next_state, reward, done, truncated, _ = self.env.step(action_np)
 
         if isinstance(next_state, list):
             next_state_tensor = torch.stack(
@@ -54,7 +54,7 @@ class GymWrapper(Environment):
             next_state_tensor = torch.tensor(next_state).float().to(self.agent_device)
 
         reward = torch.tensor(reward).float().to(self.agent_device)
-        done = torch.tensor(done).float().to(self.agent_device)
+        done = torch.tensor(done or truncated).float().to(self.agent_device)
 
         return next_state_tensor, reward, done
 
