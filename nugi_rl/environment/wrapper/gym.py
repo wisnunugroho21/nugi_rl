@@ -1,5 +1,5 @@
-import torch
 import gymnasium as gym
+import torch
 from gymnasium import Env
 from torch import Tensor, device
 
@@ -15,16 +15,20 @@ class GymWrapper(Environment):
         return type(self.env.action_space) is gym.spaces.Discrete
 
     def get_obs_dim(self) -> int:
-        if (self.env.observation_space.shape is None)
+        if self.env.observation_space.shape is None:
             return 0
 
         return self.env.observation_space.shape[0]
 
     def get_action_dim(self) -> int:
-        if (self.env.action_space.shape is None)
+        if self.env.action_space.shape is None:
             return 0
 
-        return self.env.action_space.shape[0]
+        return (
+            self.env.action_space.n
+            if type(self.env.action_space) is gym.spaces.Discrete
+            else self.env.action_space.shape[0]
+        )
 
     def reset(self) -> Tensor:
         next_state, _ = self.env.reset()
@@ -39,7 +43,7 @@ class GymWrapper(Environment):
         return next_state_tensor
 
     def step(self, action: Tensor) -> tuple[Tensor, Tensor, Tensor]:
-        action_np = action.squeeze().cpu().numpy()
+        action_np = action.cpu().numpy()
         next_state, reward, done, _, _ = self.env.step(action_np)
 
         if isinstance(next_state, list):

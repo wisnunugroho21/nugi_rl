@@ -13,6 +13,7 @@ class BasicContinous(Distribution):
 
         distribution = Normal(torch.zeros_like(mean), torch.ones_like(std))
         rand = distribution.sample()
+
         return mean + std * rand
 
     def entropy(self, datas: Tensor) -> Tensor:

@@ -84,7 +84,9 @@ class AgentSac(Agent):
         q_value1 = self.soft_q1(states, actions)
         q_value2 = self.soft_q2(states, actions)
 
-        loss = self.policyLoss(action_datas, actions, q_value1, q_value2)
+        loss = self.policyLoss(
+            action_datas, actions, q_value1, q_value2, torch.Tensor([0.2])
+        )
 
         loss.backward()
         self.policy_optimizer.step()
@@ -100,7 +102,7 @@ class AgentSac(Agent):
         self.soft_q_optimizer.zero_grad()
 
         next_action_datas = self.target_policy(next_states)
-        next_actions = self.distribution.sample(*next_action_datas)
+        next_actions = self.distribution.sample(next_action_datas)
 
         predicted_q1 = self.soft_q1(states, actions)
         predicted_q2 = self.soft_q2(states, actions)
@@ -117,6 +119,7 @@ class AgentSac(Agent):
             next_actions,
             rewards,
             dones,
+            torch.Tensor([0.2]),
         )
 
         loss.backward()

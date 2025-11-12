@@ -14,17 +14,17 @@ class Policy_Model(nn.Module):
             nn.SiLU(),
             nn.Linear(128, 256),
             nn.SiLU(),
-            nn.Linear(256, 64),
+            nn.Linear(256, 128),
             nn.SiLU(),
-            nn.Linear(64, action_dim * bins),
+            nn.Linear(128, action_dim * bins),
             nn.Sigmoid(),
         )
 
-    def forward(self, states: Tensor) -> tuple:
+    def forward(self, states: Tensor) -> Tensor:
         action = self.nn_layer(states)
         action = action.reshape(-1, self.action_dim, self.bins)
 
-        return (action,)
+        return action
 
 
 class Value_Model(nn.Module):
@@ -32,13 +32,13 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim, 64),
+            nn.Linear(state_dim, 128),
             nn.SiLU(),
-            nn.Linear(64, 128),
+            nn.Linear(128, 256),
             nn.SiLU(),
-            nn.Linear(128, 32),
+            nn.Linear(256, 128),
             nn.SiLU(),
-            nn.Linear(32, 1),
+            nn.Linear(128, 1),
         )
 
     def forward(self, states: Tensor) -> Tensor:

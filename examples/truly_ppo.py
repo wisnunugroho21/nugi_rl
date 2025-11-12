@@ -1,62 +1,79 @@
-import gym
+import gymnasium as gym
 import torch
-
 from torch.optim.adamw import AdamW
 
-from nugi_rl.train.runner.iteration.standard import IterRunner
-from nugi_rl.train.executor.standard import Executor
 from nugi_rl.agent.ppo import AgentPPO
-from nugi_rl.distribution.continous.basic import BasicContinous
+from nugi_rl.distribution.discrete.basic import BasicDiscrete
 from nugi_rl.environment.wrapper.gym import GymWrapper
+from nugi_rl.loss.entropy import EntropyLoss
 from nugi_rl.loss.ppo.truly_ppo import TrulyPpo
 from nugi_rl.loss.value import ValueLoss
-from nugi_rl.loss.entropy import EntropyLoss
-from nugi_rl.policy_function.advantage_function.gae import GeneralizedAdvantageEstimation
-from nugi_rl.model.ppo.TanhNN import Policy_Model, Value_Model
-from nugi_rl.memory.policy.standard import PolicyMemory
-from nugi_rl.utilities.plotter.weight_bias import WeightBiasPlotter
+from nugi_rl.memory.policy.standard import StandardPolicyMemory
+from nugi_rl.model.ppo.SoftmaxNN import Policy_Model, Value_Model
+from nugi_rl.policy_function.advantage_function.gae import (
+    GeneralizedAdvantageEstimation,
+)
+from nugi_rl.train.executor.standard import StandardExecutor
+from nugi_rl.train.runner.iteration.standard import IterRunner
 
 ############## Hyperparameters ##############
 
-load_weights            = False # If you want to load the agent, set this to True
-save_weights            = False # If you want to save the agent, set this to True
-is_training_mode        = True # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
-render                  = True # If you want to display the image. Turn this off if you run this in Google Collab
-reward_threshold        = 1000 # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
+load_weights = False  # If you want to load the agent, set this to True
+save_weights = False  # If you want to save the agent, set this to True
+is_training_mode = True  # If you want to train the agent, set this to True. But set this otherwise if you only want to test it
+render = True  # If you want to display the image. Turn this off if you run this in Google Collab
+reward_threshold = 1000  # Set threshold for reward. The learning will stop if reward has pass threshold. Set none to sei this off
 
-n_plot_batch            = 1 # How many episode you want to plot the result
-n_iteration             = 100000000 # How many episode you want to run
-n_update                = 1024 # How many episode before you update the Policy 
-n_saved                 = 1 # How many iteration before you save the model
+n_plot_batch = 1  # How many episode you want to plot the result
+n_iteration = 100000000  # How many episode you want to run
+n_update = 1024  # How many episode before you update the Policy
+n_saved = 1  # How many iteration before you save the model
 
-policy_kl_range         = 0.03 # KL range (Delta) for Truly PPO  
-policy_params           = 5 # Policy params (Alpha) for Truly PPO
-value_clip              = None # Clipping for Value Loss
-entropy_coef            = 0.1 # Coefficient for Entropy Loss
-value_loss_coef         = 1.0 # Coefficient for Value Loss
-batch_size              = 32 # The size of batch for each update
-epochs                  = 5 # The amount of epochs for each update
-gamma                   = 0.95
-learning_rate           = 3e-4
+policy_kl_range = 0.03  # KL range (Delta) for Truly PPO
+policy_params = 5  # Policy params (Alpha) for Truly PPO
+value_clip = None  # Clipping for Value Loss
+entropy_coef = 0.1  # Coefficient for Entropy Loss
+value_loss_coef = 1.0  # Coefficient for Value Loss
+batch_size = 32  # The size of batch for each update
+epochs = 5  # The amount of epochs for each update
+gamma = 0.95
+learning_rate = 3e-4
 
-device_name             = 'cuda'
-env_name                = 'BipedalWalker-v3'
-folder                  = 'weights'
+device_name = "cpu"
+env_name = "CartPole-v1"
+folder = "weights"
 
-state_dim               = None
-action_dim              = None
-max_action              = None
+state_dim = None
+action_dim = None
+max_action = None
 
-config = { 
-    load_weights, save_weights, is_training_mode, render, reward_threshold, n_plot_batch, n_iteration,
-    n_update, n_saved, policy_kl_range, policy_params, value_clip, entropy_coef, value_loss_coef, batch_size,
-    epochs, gamma, learning_rate, device_name, env_name
+config = {
+    load_weights,
+    save_weights,
+    is_training_mode,
+    render,
+    reward_threshold,
+    n_plot_batch,
+    n_iteration,
+    n_update,
+    n_saved,
+    policy_kl_range,
+    policy_params,
+    value_clip,
+    entropy_coef,
+    value_loss_coef,
+    batch_size,
+    epochs,
+    gamma,
+    learning_rate,
+    device_name,
+    env_name,
 }
 
 #####################################################################################################################################################
 
-device              = torch.device(device_name)
-environment         = GymWrapper(gym.make(env_name), device)
+device = torch.device(device_name)
+environment = GymWrapper(gym.make(env_name), device)
 
 if state_dim is None:
     state_dim = environment.get_obs_dim()
@@ -64,23 +81,43 @@ if state_dim is None:
 if action_dim is None:
     action_dim = environment.get_action_dim()
 
-distribution        = BasicContinous()
-advantage_function  = GeneralizedAdvantageEstimation(gamma)
-plotter             = WeightBiasPlotter(config, 'BipedalWalker_v1', entity = "your entity")
+distribution = BasicDiscrete()
+advantage_function = GeneralizedAdvantageEstimation(gamma)
+plotter = None  # WeightBiasPlotter(config, "BipedalWalker_v1", entity="your entity")
 
-memory          = PolicyMemory()
-ppo_loss        = TrulyPpo(distribution, policy_kl_range, policy_params)
-value_loss      = ValueLoss(value_loss_coef, value_clip)
-entropy_loss    = EntropyLoss(distribution, entropy_coef)
+memory = StandardPolicyMemory()
+ppo_loss = TrulyPpo(distribution, policy_kl_range, policy_params)
+value_loss = ValueLoss(value_loss_coef, value_clip)
+entropy_loss = EntropyLoss(distribution, entropy_coef)
 
-policy          = Policy_Model(state_dim, action_dim).float().to(device)
-value           = Value_Model(state_dim).float().to(device)
-optimizer       = AdamW(list(policy.parameters()) + list(value.parameters()), lr = learning_rate)
+policy = Policy_Model(state_dim, action_dim).float().to(device)
+value = Value_Model(state_dim).float().to(device)
+optimizer = AdamW(
+    list(policy.parameters()) + list(value.parameters()), lr=learning_rate
+)
 
-agent   = AgentPPO(policy, value, advantage_function, distribution, ppo_loss, value_loss, entropy_loss, memory, optimizer, 
-    epochs, is_training_mode, batch_size, folder, device)
+agent = AgentPPO(
+    policy,
+    value,
+    advantage_function,
+    distribution,
+    ppo_loss,
+    value_loss,
+    entropy_loss,
+    memory,
+    optimizer,
+    epochs,
+    is_training_mode,
+    batch_size,
+    folder,
+    device,
+)
 
-runner      = IterRunner(agent, environment, is_training_mode, render, n_update, plotter, n_plot_batch)
-executor    = Executor(agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode)
+runner = IterRunner(
+    agent, environment, is_training_mode, render, n_update, plotter, n_plot_batch
+)
+executor = StandardExecutor(
+    agent, n_iteration, runner, save_weights, n_saved, load_weights, is_training_mode
+)
 
 executor.execute()

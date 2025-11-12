@@ -25,7 +25,7 @@ class PpoKl(Ppo):
         ).detach()
 
         ratios = (logprobs - old_logprobs).exp()
-        Kl = self.distribution.kldivergence(*old_action_datas, *action_datas)
+        Kl = self.distribution.kldivergence(old_action_datas, action_datas)
 
         pg_target = ratios * advantages - self.policy_params * Kl
         loss = pg_target.mean()

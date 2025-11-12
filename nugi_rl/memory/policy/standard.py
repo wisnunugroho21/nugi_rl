@@ -46,12 +46,12 @@ class StandardPolicyMemory(PolicyMemory):
             self.next_states = self.next_states[1:]
             self.logprobs = self.logprobs[1:]
 
-        self.states.append(state.unsqueeze(0))
-        self.actions.append(action.unsqueeze(0))
-        self.rewards.append(reward.unsqueeze(0))
-        self.dones.append(done.unsqueeze(0))
-        self.next_states.append(next_state[0].unsqueeze(0))
-        self.logprobs.append(logprob.unsqueeze(0))
+        self.states.append(state)
+        self.actions.append(action)
+        self.rewards.append(reward)
+        self.dones.append(done)
+        self.next_states.append(next_state)
+        self.logprobs.append(logprob)
 
     def get(
         self, start_position: int = 0, end_position: int | None = None

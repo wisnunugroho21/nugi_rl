@@ -10,18 +10,20 @@ class Policy_Model(nn.Module):
         self.actor_std = nn.parameter.Parameter(torch.zeros(action_dim))
 
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 64),
-            nn.ReLU(),
-            nn.Linear(64, action_dim),
+            nn.Linear(state_dim, 128),
+            nn.SiLU(),
+            nn.Linear(128, 256),
+            nn.SiLU(),
+            nn.Linear(256, 128),
+            nn.SiLU(),
+            nn.Linear(128, action_dim),
         )
 
-    def forward(self, states: Tensor) -> tuple:
+    def forward(self, states: Tensor) -> Tensor:
         mean = self.nn_layer(states)
         std = self.actor_std.exp()
 
-        return (mean, std)
+        return torch.stack([mean, std])
 
 
 class Value_Model(nn.Module):
@@ -29,11 +31,13 @@ class Value_Model(nn.Module):
         super(Value_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1),
+            nn.Linear(state_dim, 128),
+            nn.SiLU(),
+            nn.Linear(128, 256),
+            nn.SiLU(),
+            nn.Linear(256, 128),
+            nn.SiLU(),
+            nn.Linear(128, 1),
         )
 
     def forward(self, states: Tensor) -> Tensor:

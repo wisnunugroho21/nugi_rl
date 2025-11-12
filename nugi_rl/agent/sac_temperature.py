@@ -66,7 +66,7 @@ class AgentSACtemperature(AgentSac):
         actions = self.distribution.sample(action_datas)
 
         target_action_datas, _ = self.target_policy(states)
-        target_actions = self.distribution.sample(*target_action_datas)
+        target_actions = self.distribution.sample(target_action_datas)
 
         q_value1 = self.soft_q1(states, actions)
         q_value2 = self.soft_q2(states, actions)
@@ -90,8 +90,8 @@ class AgentSACtemperature(AgentSac):
 
         _, alpha = self.policy(states)
 
-        next_action_datas, _ = self.target_policy(next_states)
-        next_actions = self.distribution.sample(*next_action_datas)
+        next_action_datas = self.target_policy(next_states)
+        next_actions = self.distribution.sample(next_action_datas)
 
         predicted_q1 = self.soft_q1(states, actions)
         predicted_q2 = self.soft_q2(states, actions)
@@ -117,7 +117,7 @@ class AgentSACtemperature(AgentSac):
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
             state = state if self.dont_unsqueeze else state.unsqueeze(0)
-            action_datas, _ = self.policy(state)
+            action_datas = self.policy(state)
 
             if self.is_training_mode:
                 action = self.distribution.sample(action_datas)
@@ -133,7 +133,7 @@ class AgentSACtemperature(AgentSac):
             state = state if self.dont_unsqueeze else state.unsqueeze(0)
             action = action if self.dont_unsqueeze else action.unsqueeze(0)
 
-            action_datas, _ = self.policy(state)
+            action_datas = self.policy(state)
 
             logprobs = self.distribution.logprob(action_datas, action)
             logprobs = logprobs.squeeze(0)

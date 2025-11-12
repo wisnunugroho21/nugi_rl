@@ -73,7 +73,7 @@ class Policy_Model(nn.Module):
         if detach:
             return (action.detach(),)
         else:
-            return (action,)
+            return action
 
 
 class Value_Model(nn.Module):

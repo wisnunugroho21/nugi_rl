@@ -31,7 +31,7 @@ class TrulyPpo(Ppo):
         ).detach()
 
         ratios = (logprobs - old_logprobs).exp()
-        Kl = self.distribution.kldivergence(*old_action_datas, *action_datas)
+        Kl = self.distribution.kldivergence(old_action_datas, action_datas)
 
         pg_targets = torch.where(
             (Kl >= self.policy_kl_range) & (ratios > 1.0),

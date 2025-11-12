@@ -26,13 +26,13 @@ class DiscretizationWrapper(Environment):
         return type(self.env.action_space) is gym.spaces.Discrete
 
     def get_obs_dim(self) -> int:
-        if (self.env.observation_space.shape is None)
+        if self.env.observation_space.shape is None:
             return 0
 
         return self.env.observation_space.shape[0]
 
     def get_action_dim(self) -> int:
-        if (self.env.action_space.shape is None)
+        if self.env.action_space.shape is None:
             return 0
 
         return self.env.action_space.shape[0]

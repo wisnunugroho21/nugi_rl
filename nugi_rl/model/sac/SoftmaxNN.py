@@ -8,17 +8,19 @@ class Policy_Model(nn.Module):
         super(Policy_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, action_dim),
+            nn.Linear(state_dim, 128),
+            nn.SiLU(),
+            nn.Linear(128, 256),
+            nn.SiLU(),
+            nn.Linear(256, 128),
+            nn.SiLU(),
+            nn.Linear(128, action_dim),
             nn.Softmax(-1),
         )
 
     def forward(self, states: Tensor) -> tuple:
         action_datas = self.nn_layer(states)
-        return (action_datas,)
+        return action_datas
 
 
 class Q_Model(nn.Module):
@@ -26,11 +28,13 @@ class Q_Model(nn.Module):
         super(Q_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim + 1, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1),
+            nn.Linear(state_dim, 128),
+            nn.SiLU(),
+            nn.Linear(128, 256),
+            nn.SiLU(),
+            nn.Linear(256, 128),
+            nn.SiLU(),
+            nn.Linear(128, 1),
         )
 
     def forward(self, states, actions: Tensor) -> tuple:

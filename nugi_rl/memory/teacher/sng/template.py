@@ -30,8 +30,8 @@ class SNGTemplateMemory(Memory):
 
         self.goals.append(goal)
 
-        self.states.append(state.unsqueeze(0))
-        self.next_states.append(next_state.unsqueeze(0))
+        self.states.append(state)
+        self.next_states.append(next_state)
 
     def save_all(
         self,
