@@ -38,7 +38,7 @@ class MultiHeadAttention(nn.Module):
         self.out = nn.Linear(d_model, d_model)
         self.dropout = nn.Dropout(0.1)
 
-        self.scl_params = math.sqrt(self.d_k)
+        self.scl_params = torch.tensor([self.d_k]).sqrt().detach()
 
     def forward(
         self, query: Tensor, key: Tensor, value: Tensor, mask: Tensor | None = None
@@ -51,8 +51,7 @@ class MultiHeadAttention(nn.Module):
         key = key.view(key.shape[0], self.heads, -1, self.d_k)
         value = value.view(value.shape[0], self.heads, -1, self.d_k)
 
-        scores = query @ key.transpose(2, 3)
-        scores = scores / self.scl_params
+        scores = (query @ key.transpose(2, 3)) / self.scl_params
 
         if mask is not None:
             min_type_value = torch.finfo(scores.dtype).min
@@ -61,8 +60,7 @@ class MultiHeadAttention(nn.Module):
         weights = F.softmax(scores, dim=-1)
         weights = self.dropout(weights)
 
-        context = weights @ value
-        context = context.transpose(1, 2).flatten(2)
+        context = (weights @ value).transpose(1, 2).flatten(2)
 
         interacted = self.out(context)
         return interacted
