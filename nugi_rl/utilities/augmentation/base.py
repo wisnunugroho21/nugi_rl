@@ -1,12 +1,10 @@
-from torch import Tensor
-from PIL.Image import Image
 import torch.nn as nn
+from torch import Tensor
 
-from typing import Union
 
 class Augmentation(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        
-    def forward(self, inputs: Union[Image, Tensor]) -> Tensor:
+
+    def forward(self, inputs: Tensor) -> Tensor:
         raise NotImplementedError

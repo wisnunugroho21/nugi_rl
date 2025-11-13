@@ -1,27 +1,53 @@
 from torch import Tensor
-from nugi_rl.memory.base import Memory
-from typing import List, Union
 
-class Agent():
+
+class Agent:
     def act(self, state: Tensor) -> Tensor:
         raise NotImplementedError
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
         raise NotImplementedError
 
-    def save_obs(self, state: Union[Tensor, List[Tensor]], action: Tensor, reward: Tensor, done: Tensor, next_state: Union[Tensor, List[Tensor]], logprob: Tensor)-> None:
+    def update(self, config: str = "") -> None:
         raise NotImplementedError
 
-    def save_all(self, states: Union[Tensor, List[Tensor]], actions: Tensor, rewards: Tensor, dones: Tensor, next_states: Union[Tensor, List[Tensor]], logprobs: Tensor) -> None:
+    def save_obs(
+        self,
+        state: Tensor,
+        action: Tensor,
+        reward: Tensor,
+        done: Tensor,
+        next_state: Tensor,
+        logprob: Tensor,
+    ) -> None:
         raise NotImplementedError
 
-    def update(self) -> None:
+    def save_all(
+        self,
+        states: list[Tensor],
+        actions: list[Tensor],
+        rewards: list[Tensor],
+        dones: list[Tensor],
+        next_states: list[Tensor],
+        logprobs: list[Tensor],
+    ) -> None:
         raise NotImplementedError
 
-    def get_obs(self, start_position: int = 0, end_position: int = None):
+    def get_obs(
+        self, start_position: int = 0, end_position: int | None = None
+    ) -> tuple[
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+        list[Tensor],
+    ]:
         raise NotImplementedError
 
-    def clear_obs(self, start_position: int = 0, end_position: int = None) -> None:
+    def clear_obs(
+        self, start_position: int = 0, end_position: int | None = None
+    ) -> None:
         raise NotImplementedError
 
     def load_weights(self) -> None:

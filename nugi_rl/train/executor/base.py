@@ -1,3 +1,3 @@
-class Executor():
+class Executor:
     def execute(self):
         raise NotImplementedError
