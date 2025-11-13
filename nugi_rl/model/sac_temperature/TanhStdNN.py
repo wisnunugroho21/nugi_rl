@@ -40,7 +40,7 @@ class Q_Model(nn.Module):
             nn.Linear(64, 1),
         )
 
-    def forward(self, states: Tensor, actions: Tensor) -> tuple:
+    def forward(self, states: Tensor, actions: Tensor) -> Tensor:
         x = torch.cat((states, actions), -1)
 
         return self.nn_layer(x)

@@ -33,7 +33,7 @@ class Q_Model(nn.Module):
         super(Q_Model, self).__init__()
 
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim, 128),
+            nn.Linear(state_dim + action_dim, 128),
             nn.SiLU(),
             nn.Linear(128, 256),
             nn.SiLU(),
@@ -42,7 +42,7 @@ class Q_Model(nn.Module):
             nn.Linear(128, 1),
         )
 
-    def forward(self, states: Tensor, actions: Tensor) -> tuple:
+    def forward(self, states: Tensor, actions: Tensor) -> Tensor:
         x = torch.cat((states, actions), -1)
 
         return self.nn_layer(x)

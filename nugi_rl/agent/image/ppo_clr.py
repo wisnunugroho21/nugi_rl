@@ -113,11 +113,15 @@ class AgentImagePpoClr(AgentPPO):
         next_res = self.cnn(next_states)
         next_values = self.value(next_res)
 
-        adv = self.gae(rewards, values, next_values, dones).detach()
+        advantages = self.gae(rewards, values, next_values, dones).detach()
+        returns = (advantages + values).detach()
+        advantages = (
+            (advantages - advantages.mean()) / (advantages.std() + +1e-6)
+        ).detach()
 
         loss = (
-            self.policy_loss(action_datas, old_action_datas, actions, adv)
-            + self.value_loss(values, adv, old_values)
+            self.policy_loss(action_datas, old_action_datas, actions, advantages)
+            + self.value_loss(values, returns, old_values)
             + self.entropy_loss(action_datas)
         )
 

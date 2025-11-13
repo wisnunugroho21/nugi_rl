@@ -164,7 +164,7 @@ class AgentPPO(Agent):
         old_in_values = self.in_value_old(states)
         next_in_values = self.in_value(next_states)
 
-        obs = normalize(next_states, mean_obs, std_obs, 5).detach()
+        obs = normalize(next_states, mean_obs, std_obs, torch.tensor([5])).detach()
         state_preds = self.rnd_predict(obs)
         state_targets = self.rnd_target(obs)
 
@@ -175,13 +175,19 @@ class AgentPPO(Agent):
         ex_adv = self.gae(ex_rewards, ex_values, next_ex_values, dones).detach()
         in_adv = self.gae(in_rewards, in_values, next_in_values, dones).detach()
 
+        ex_returns = (ex_adv + ex_values).detach()
+        ex_adv = ((ex_adv - ex_adv.mean()) / (ex_adv.std() + +1e-6)).detach()
+
+        in_returns = (in_adv + in_values).detach()
+        in_adv = ((in_adv - in_adv.mean()) / (in_adv.std() + +1e-6)).detach()
+
         loss = (
             self.policy_coef
             * self.policy_loss(action_datas, old_action_datas, actions, ex_adv)
             + self.rnd_coef
             * self.policy_loss(action_datas, old_action_datas, actions, in_adv)
-            + self.value_loss(ex_values, ex_adv, old_ex_values)
-            + self.value_loss(in_values, in_adv, old_in_values)
+            + self.value_loss(ex_values, ex_returns, old_ex_values)
+            + self.value_loss(in_values, in_returns, old_in_values)
         )
 
         loss.backward()

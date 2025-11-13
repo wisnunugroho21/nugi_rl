@@ -73,7 +73,7 @@ config = {
 #####################################################################################################################################################
 
 device = torch.device(device_name)
-environment = GymWrapper(gym.make(env_name), device)
+environment = GymWrapper(gym.make(env_name, render_mode="human"), device)
 
 if state_dim is None:
     state_dim = environment.get_obs_dim()
