@@ -32,7 +32,6 @@ class AgentSac(Agent):
         soft_tau: float = 0.95,
         folder: str = "model",
         device: device = torch.device("cuda:0"),
-        target_policy: Module | None = None,
         target_q1: Module | None = None,
         target_q2: Module | None = None,
         dont_unsqueeze=False,
@@ -59,11 +58,6 @@ class AgentSac(Agent):
 
         self.soft_q_optimizer = soft_q_optimizer
         self.policy_optimizer = policy_optimizer
-
-        if target_policy is None:
-            self.target_policy = deepcopy(self.policy)
-        else:
-            self.target_policy = target_policy
 
         if target_q1 is None:
             self.target_q1 = deepcopy(self.soft_q1)
@@ -101,7 +95,7 @@ class AgentSac(Agent):
     ) -> None:
         self.soft_q_optimizer.zero_grad()
 
-        next_action_datas = self.target_policy(next_states)
+        next_action_datas = self.policy(next_states)
         next_actions = self.distribution.sample(next_action_datas)
 
         predicted_q1 = self.soft_q1(states, actions)
@@ -165,9 +159,6 @@ class AgentSac(Agent):
                 self._update_step_q(states, actions, rewards, dones, next_states)
                 self._update_step_policy(states)
 
-                self.target_policy = copy_parameters(
-                    self.policy, self.target_policy, self.soft_tau
-                )
                 self.target_q1 = copy_parameters(
                     self.soft_q1, self.target_q1, self.soft_tau
                 )
