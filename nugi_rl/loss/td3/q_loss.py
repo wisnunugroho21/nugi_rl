@@ -18,7 +18,7 @@ class QLoss(nn.Module):
         done: Tensor,
     ) -> Tensor:
         target_value = torch.min(target_next_q1, target_next_q2)
-        target_q_value = (reward + (1 - done) * self.gamma * target_value).detach()
+        target_q_value = (reward + (1.0 - done) * self.gamma * target_value).detach()
 
         q_value_loss1 = ((target_q_value - predicted_q1).pow(2) * 0.5).mean()
         q_value_loss2 = ((target_q_value - predicted_q2).pow(2) * 0.5).mean()

@@ -28,6 +28,10 @@ class AgentTd3(Agent):
         batch_size: int = 32,
         epochs: int = 1,
         soft_tau: float = 0.95,
+        action_noise_std: float = 0.1,
+        target_action_noise: tuple[float, float] = (-0.2, 0.2),
+        action_range: tuple[float, float] = (-1.0, 1.0),
+        policy_update_delay: int = 2,
         folder: str = "model",
         device: device = torch.device("cuda:0"),
         target_policy: Module | None = None,
@@ -41,6 +45,10 @@ class AgentTd3(Agent):
         self.folder = folder
         self.epochs = epochs
         self.soft_tau = soft_tau
+        self.action_noise_std = action_noise_std
+        self.target_action_noise = target_action_noise
+        self.action_range = action_range
+        self.policy_update_delay = policy_update_delay
 
         self.policy = policy
         self.soft_q1 = soft_q1
@@ -52,7 +60,7 @@ class AgentTd3(Agent):
         self.policyLoss = policy_loss
 
         self.device = device
-        self.q_update = 1
+        self.q_update = 0
 
         self.soft_q_optimizer = soft_q_optimizer
         self.policy_optimizer = policy_optimizer
@@ -82,14 +90,23 @@ class AgentTd3(Agent):
     ) -> None:
         self.soft_q_optimizer.zero_grad()
 
-        predicted_q1 = self.soft_q1(states, actions)
-        predicted_q2 = self.soft_q2(states, actions)
+        predicted_q1: Tensor = self.soft_q1(states, actions)
+        predicted_q2: Tensor = self.soft_q2(states, actions)
 
-        next_actions = self.target_policy(next_states)
-        target_next_q1 = self.target_q1(next_states, next_actions)
-        target_next_q2 = self.target_q2(next_states, next_actions)
+        action_noise = torch.normal(torch.tensor([0.0]), torch.tensor([1.0]))
+        action_noise = action_noise.clamp(
+            self.target_action_noise[0], self.target_action_noise[1]
+        )
 
-        loss = self.qLoss(
+        target_next_actions: Tensor = self.target_policy(next_states)
+        target_next_actions = (target_next_actions + action_noise).clamp(
+            self.action_range[0], self.action_range[1]
+        )
+
+        target_next_q1: Tensor = self.target_q1(next_states, target_next_actions)
+        target_next_q2: Tensor = self.target_q2(next_states, target_next_actions)
+
+        loss: Tensor = self.qLoss(
             predicted_q1, predicted_q2, target_next_q1, target_next_q2, rewards, dones
         )
 
@@ -99,20 +116,27 @@ class AgentTd3(Agent):
     def _update_step_policy(self, states) -> None:
         self.policy_optimizer.zero_grad()
 
-        actions = self.policy(states)
+        actions: Tensor = self.policy(states)
 
-        q_value1 = self.soft_q1(states, actions)
-        q_value2 = self.soft_q2(states, actions)
+        q_value1: Tensor = self.soft_q1(states, actions)
+        q_value2: Tensor = self.soft_q2(states, actions)
 
-        loss = self.policyLoss(q_value1, q_value2)
+        loss: Tensor = self.policyLoss(q_value1, q_value2)
 
         loss.backward()
         self.policy_optimizer.step()
 
     def act(self, state: Tensor) -> Tensor:
         with torch.inference_mode():
+            action_noise = torch.normal(
+                torch.tensor([0.0]), torch.tensor([self.action_noise_std])
+            )
+
             state = state if self.dont_unsqueeze else state.unsqueeze(0)
             action = self.policy(state).squeeze(0)
+            action = (action + action_noise).clamp(
+                self.action_range[0], self.action_range[1]
+            )
         return action
 
     def logprob(self, state: Tensor, action: Tensor) -> Tensor:
@@ -130,17 +154,24 @@ class AgentTd3(Agent):
             )
             for states, actions, rewards, dones, next_states, _ in dataloader:
                 self._update_step_q(states, actions, rewards, dones, next_states)
-                self._update_step_policy(states)
 
-                self.target_policy = copy_parameters(
-                    self.policy, self.target_policy, self.soft_tau
-                )
                 self.target_q1 = copy_parameters(
                     self.soft_q1, self.target_q1, self.soft_tau
                 )
                 self.target_q2 = copy_parameters(
                     self.soft_q2, self.target_q2, self.soft_tau
                 )
+
+                if self.q_update == self.policy_update_delay:
+                    self._update_step_policy(states)
+
+                    self.target_policy = copy_parameters(
+                        self.policy, self.target_policy, self.soft_tau
+                    )
+
+                    self.q_update = 0
+                else:
+                    self.q_update += 1
 
     def save_obs(
         self,
