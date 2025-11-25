@@ -29,9 +29,9 @@ class QLoss(nn.Module):
         log_prob = self.distribution.logprob(next_action_datas, next_actions)
 
         target_value = torch.min(target_next_q1, target_next_q2) - alpha * log_prob
-        target_q_value = (reward + (1 - done) * self.gamma * target_value).detach()
+        target_q_value = (reward + self.gamma * (1 - done) * target_value).detach()
 
-        q_value_loss1 = ((target_q_value - predicted_q1).pow(2) * 0.5).mean()
-        q_value_loss2 = ((target_q_value - predicted_q2).pow(2) * 0.5).mean()
+        q_value_loss1 = (target_q_value - predicted_q1).pow(2).mean()
+        q_value_loss2 = (target_q_value - predicted_q2).pow(2).mean()
 
         return q_value_loss1 + q_value_loss2

@@ -4,7 +4,7 @@ import torch
 from torch import Tensor, device
 from torch.nn import Module
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader, RandomSampler
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.helpers.pytorch_utils import copy_parameters
@@ -143,15 +143,34 @@ class AgentTd3(Agent):
         return torch.tensor([0], device=self.device)
 
     def update(self, config: str = "") -> None:
-        for _ in range(self.epochs):
-            indices = torch.randperm(len(self.memory))[: self.batch_size - 1]
-            indices = torch.concat(
-                (indices, torch.tensor([len(self.memory) - 1])), dim=0
-            )
+        dataloader = DataLoader(
+            self.memory,
+            self.batch_size,
+            sampler=RandomSampler(self.memory, False),
+        )
 
-            dataloader = DataLoader(
-                self.memory, self.batch_size, sampler=SubsetRandomSampler(indices)
-            )
+        i = 0
+        if self.q_update == self.policy_update_delay:
+            for states, actions, rewards, dones, next_states, _ in dataloader:
+                self._update_step_q(states, actions, rewards, dones, next_states)
+                self._update_step_policy(states)
+
+                self.target_q1 = copy_parameters(
+                    self.soft_q1, self.target_q1, self.soft_tau
+                )
+                self.target_q2 = copy_parameters(
+                    self.soft_q2, self.target_q2, self.soft_tau
+                )
+
+                self.target_policy = copy_parameters(
+                    self.policy, self.target_policy, self.soft_tau
+                )
+
+                if i == self.epochs:
+                    break
+
+            self.q_update = 0
+        else:
             for states, actions, rewards, dones, next_states, _ in dataloader:
                 self._update_step_q(states, actions, rewards, dones, next_states)
 
@@ -162,16 +181,10 @@ class AgentTd3(Agent):
                     self.soft_q2, self.target_q2, self.soft_tau
                 )
 
-                if self.q_update == self.policy_update_delay:
-                    self._update_step_policy(states)
+                if i == self.epochs:
+                    break
 
-                    self.target_policy = copy_parameters(
-                        self.policy, self.target_policy, self.soft_tau
-                    )
-
-                    self.q_update = 0
-                else:
-                    self.q_update += 1
+            self.q_update += 1
 
     def save_obs(
         self,
