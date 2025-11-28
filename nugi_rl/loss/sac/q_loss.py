@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from nugi_rl.distribution.base import Distribution
+from nugi_rl.loss.hubber_loss import HuberLoss
 
 
 class QLoss(nn.Module):
@@ -13,6 +14,7 @@ class QLoss(nn.Module):
 
         self.gamma = gamma
         self.distribution = distribution
+        self.huber_loss = HuberLoss()
 
     def forward(
         self,
@@ -31,7 +33,7 @@ class QLoss(nn.Module):
         target_value = torch.min(target_next_q1, target_next_q2) - alpha * log_prob
         target_q_value = (reward + self.gamma * (1 - done) * target_value).detach()
 
-        q_value_loss1 = (target_q_value - predicted_q1).pow(2).mean()
-        q_value_loss2 = (target_q_value - predicted_q2).pow(2).mean()
+        q1_loss = self.huber_loss(predicted_q1, target_q_value)
+        q2_loss = self.huber_loss(predicted_q2, target_q_value)
 
-        return q_value_loss1 + q_value_loss2
+        return q1_loss + q2_loss

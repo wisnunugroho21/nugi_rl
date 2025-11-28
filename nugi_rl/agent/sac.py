@@ -50,8 +50,8 @@ class AgentSac(Agent):
         self.distribution = distribution
         self.memory = memory
 
-        self.qLoss = q_loss
-        self.policyLoss = policy_loss
+        self.qLoss = torch.compile(q_loss, fullgraph=True)
+        self.policyLoss = torch.compile(policy_loss, fullgraph=True)
 
         self.device = device
         self.q_update = 1

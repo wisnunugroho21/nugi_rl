@@ -11,6 +11,6 @@ class EntropyLoss(nn.Module):
         self.entropy_coef = entropy_coef
         self.distribution = distribution
 
-    def forward(self, action_datas: tuple) -> Tensor:
+    def forward(self, action_datas: Tensor) -> Tensor:
         dist_entropy = self.distribution.entropy(action_datas).mean()
         return -1 * self.entropy_coef * dist_entropy

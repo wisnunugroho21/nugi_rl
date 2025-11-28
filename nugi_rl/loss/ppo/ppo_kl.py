@@ -1,4 +1,3 @@
-import torch
 from torch import Tensor
 
 from nugi_rl.distribution.base import Distribution

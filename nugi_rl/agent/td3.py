@@ -56,8 +56,8 @@ class AgentTd3(Agent):
 
         self.memory = memory
 
-        self.qLoss = q_loss
-        self.policyLoss = policy_loss
+        self.qLoss = torch.compile(q_loss, fullgraph=True)
+        self.policyLoss = torch.compile(policy_loss, fullgraph=True)
 
         self.device = device
         self.q_update = 0
@@ -93,15 +93,7 @@ class AgentTd3(Agent):
         predicted_q1: Tensor = self.soft_q1(states, actions)
         predicted_q2: Tensor = self.soft_q2(states, actions)
 
-        action_noise = torch.normal(torch.tensor([0.0]), torch.tensor([1.0]))
-        action_noise = action_noise.clamp(
-            self.target_action_noise[0], self.target_action_noise[1]
-        )
-
         target_next_actions: Tensor = self.target_policy(next_states)
-        target_next_actions = (target_next_actions + action_noise).clamp(
-            self.action_range[0], self.action_range[1]
-        )
 
         target_next_q1: Tensor = self.target_q1(next_states, target_next_actions)
         target_next_q2: Tensor = self.target_q2(next_states, target_next_actions)
