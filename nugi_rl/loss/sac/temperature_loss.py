@@ -5,13 +5,19 @@ from nugi_rl.distribution.base import Distribution
 
 
 class TemperatureLoss(nn.Module):
-    def __init__(self, distribution: Distribution, desired_alpha: int = -6):
+    def __init__(self, distribution: Distribution, desired_alpha: float = -6):
         super().__init__()
 
         self.distribution = distribution
         self.desired_alpha = desired_alpha
 
-    def forward(self, action_datas: Tensor, actions: Tensor, alpha: Tensor) -> Tensor:
+    def forward(
+        self,
+        alpha: Tensor,
+        action_datas: Tensor,
+        actions: Tensor,
+    ) -> Tensor:
         log_prob = self.distribution.logprob(action_datas, actions).detach()
-        policy_loss = (-alpha * log_prob - alpha * self.desired_alpha).mean()
-        return policy_loss
+        entropy_loss = (self.desired_alpha - alpha * log_prob).mean()
+
+        return entropy_loss

@@ -17,6 +17,6 @@ class HuberLoss(nn.Module):
 
         l2_loss = 0.5 * alpha.square()
         l1_loss = self.delta * (alpha.abs() - 0.5 * self.delta)
-        loss = torch.where(alpha.abs() <= self.delta, l2_loss, l1_loss)
+        loss = torch.where(alpha.abs() <= self.delta, l2_loss, l1_loss).mean()
 
-        return loss.mean()
+        return loss

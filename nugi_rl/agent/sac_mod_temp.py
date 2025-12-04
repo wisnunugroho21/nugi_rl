@@ -3,7 +3,7 @@ from torch import Tensor, device
 from torch.nn import Module
 from torch.optim import Optimizer
 
-from nugi_rl.agent.sac import AgentSac
+from nugi_rl.agent.sac_modified import AgentSACModified
 from nugi_rl.distribution.base import Distribution
 from nugi_rl.loss.sac.policy_loss import PolicyLoss
 from nugi_rl.loss.sac.q_loss import QLoss
@@ -11,7 +11,7 @@ from nugi_rl.loss.sac.temperature_loss import TemperatureLoss
 from nugi_rl.memory.policy.base import PolicyMemory
 
 
-class AgentSACtemperature(AgentSac):
+class AgentSACModTemp(AgentSACModified):
     def __init__(
         self,
         soft_q1: Module,
@@ -28,10 +28,12 @@ class AgentSACtemperature(AgentSac):
         batch_size: int = 32,
         epochs: int = 1,
         soft_tau: float = 0.95,
+        policy_update_delay: int = 2,
         folder: str = "model",
         device: device = torch.device("cuda:0"),
         target_q1: Module | None = None,
         target_q2: Module | None = None,
+        target_policy: Module | None = None,
         dont_unsqueeze=False,
     ) -> None:
         super().__init__(
@@ -48,14 +50,16 @@ class AgentSACtemperature(AgentSac):
             batch_size,
             epochs,
             soft_tau,
+            policy_update_delay,
             folder,
             device,
             target_q1,
             target_q2,
+            target_policy,
             dont_unsqueeze,
         )
 
-        self.temperature_loss = torch.compile(temperature_loss, fullgraph=True)
+        self.temperature_loss = temperature_loss
 
     def _update_step_policy(self, states: Tensor) -> None:
         self.policy_optimizer.zero_grad()
@@ -83,7 +87,7 @@ class AgentSACtemperature(AgentSac):
     ) -> None:
         self.soft_q_optimizer.zero_grad()
 
-        next_action_datas, alpha = self.policy(next_states)
+        next_action_datas, alpha = self.target_policy(next_states)
         next_actions = self.distribution.sample(next_action_datas)
 
         predicted_q1 = self.soft_q1(states, actions)

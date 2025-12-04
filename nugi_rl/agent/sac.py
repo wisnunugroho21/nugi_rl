@@ -4,7 +4,7 @@ import torch
 from torch import Tensor, device
 from torch.nn import Module
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader, RandomSampler
 
 from nugi_rl.agent.base import Agent
 from nugi_rl.distribution.base import Distribution
@@ -50,8 +50,8 @@ class AgentSac(Agent):
         self.distribution = distribution
         self.memory = memory
 
-        self.qLoss = torch.compile(q_loss, fullgraph=True)
-        self.policyLoss = torch.compile(policy_loss, fullgraph=True)
+        self.qLoss = q_loss
+        self.policyLoss = policy_loss
 
         self.device = device
         self.q_update = 1
@@ -146,25 +146,26 @@ class AgentSac(Agent):
         return logprobs
 
     def update(self, config: str = "") -> None:
-        for _ in range(self.epochs):
-            indices = torch.randperm(len(self.memory))[: self.batch_size - 1]
-            indices = torch.concat(
-                (indices, torch.tensor([len(self.memory) - 1])), dim=0
+        dataloader = DataLoader(
+            self.memory,
+            self.batch_size,
+            sampler=RandomSampler(self.memory, False),
+        )
+
+        i = 0
+        for states, actions, rewards, dones, next_states, _ in dataloader:
+            self._update_step_q(states, actions, rewards, dones, next_states)
+            self._update_step_policy(states)
+
+            self.target_q1 = copy_parameters(
+                self.soft_q1, self.target_q1, self.soft_tau
+            )
+            self.target_q2 = copy_parameters(
+                self.soft_q2, self.target_q2, self.soft_tau
             )
 
-            dataloader = DataLoader(
-                self.memory, self.batch_size, sampler=SubsetRandomSampler(indices)
-            )
-            for states, actions, rewards, dones, next_states, _ in dataloader:
-                self._update_step_q(states, actions, rewards, dones, next_states)
-                self._update_step_policy(states)
-
-                self.target_q1 = copy_parameters(
-                    self.soft_q1, self.target_q1, self.soft_tau
-                )
-                self.target_q2 = copy_parameters(
-                    self.soft_q2, self.target_q2, self.soft_tau
-                )
+            if i == self.epochs:
+                break
 
     def save_obs(
         self,

@@ -32,13 +32,13 @@ batch_size = 32  # The size of batch for each update
 epochs = 5  # The amount of epochs for each update
 learning_rate = 1e-3
 
-action_noise_std = 0.1
+action_noise_std = 0.2
 target_action_noise = (-0.2, 0.2)
 action_range = (-1.0, 1.0)
 policy_update_delay = 2
 
 device_name = "cpu"
-env_name = "MountainCarContinuous-v0"
+env_name = "Pendulum-v1"
 folder = "weights"
 
 state_dim = None
