@@ -7,7 +7,7 @@ from nugi_rl.loss.sac.q_loss import QLoss
 
 
 class ModifiedQLoss(QLoss):
-    def __init__(self, distribution: Distribution, gamma: float = 0.95):
+    def __init__(self, distribution: Distribution, gamma: float = 0.99):
         super().__init__(distribution, gamma)
 
         self.gamma = gamma

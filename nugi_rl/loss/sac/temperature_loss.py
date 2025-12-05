@@ -18,6 +18,6 @@ class TemperatureLoss(nn.Module):
         actions: Tensor,
     ) -> Tensor:
         log_prob = self.distribution.logprob(action_datas, actions).detach()
-        entropy_loss = (self.desired_alpha - alpha * log_prob).mean()
+        entropy_loss = alpha * (self.desired_alpha + log_prob).mean()
 
         return entropy_loss

@@ -1,6 +1,8 @@
 import gymnasium as gym
+import numpy as np
 import torch
 from gymnasium import Env
+from gymnasium.wrappers import RescaleAction, RescaleObservation
 from torch import Tensor, device
 
 from nugi_rl.environment.base import Environment
@@ -8,7 +10,23 @@ from nugi_rl.environment.base import Environment
 
 class GymWrapper(Environment):
     def __init__(self, env: Env, agent_device: device) -> None:
-        self.env = env
+        obs_shape = np.array(env.observation_space.shape)
+        min_obs = np.array([-1.0])
+        max_obs = np.array([1.0])
+
+        self.env = RescaleObservation(
+            env, np.repeat(min_obs, obs_shape), np.repeat(max_obs, obs_shape)
+        )
+
+        if type(env.action_space) is gym.spaces.Discrete:
+            act_shape = np.array(env.action_space.shape)
+            min_act = np.array([-1.0])
+            max_act = np.array([1.0])
+
+            self.env = RescaleAction(
+                self.env, np.repeat(min_act, act_shape), np.repeat(max_act, act_shape)
+            )
+
         self.agent_device = agent_device
 
     def is_discrete(self) -> bool:
@@ -24,11 +42,10 @@ class GymWrapper(Environment):
         if self.env.action_space.shape is None:
             return 0
 
-        return (
-            self.env.action_space.n
-            if type(self.env.action_space) is gym.spaces.Discrete
-            else self.env.action_space.shape[0]
-        )
+        if type(self.env.action_space) is gym.spaces.Discrete:
+            return self.env.action_space.n
+
+        return self.env.action_space.shape[0]
 
     def reset(self) -> Tensor:
         next_state, _ = self.env.reset()

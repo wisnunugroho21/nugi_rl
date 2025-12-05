@@ -13,9 +13,9 @@ class Policy_Model(nn.Module):
 
         self.nn_layer = nn.Sequential(
             nn.Linear(state_dim, 256),
-            nn.SiLU(),
+            nn.ReLU(),
             nn.Linear(256, 64),
-            nn.SiLU(),
+            nn.ReLU(),
             nn.Linear(64, 2 * action_dim),
         )
 
@@ -24,11 +24,13 @@ class Policy_Model(nn.Module):
         # )
 
     def forward(self, states: Tensor) -> Tensor:
-        x = self.nn_layer(states)
+        x: Tensor = self.nn_layer(states)
         mean = torch.tanh(x[:, : self.action_dim])
         std = torch.sigmoid(x[:, self.action_dim :])
 
-        return torch.stack([mean, std])
+        y = torch.stack([mean, std])
+
+        return y
 
 
 class Q_Model(nn.Module):
@@ -51,5 +53,4 @@ class Q_Model(nn.Module):
 
     def forward(self, states: Tensor, actions: Tensor) -> Tensor:
         x = torch.cat((states, actions), -1)
-
         return self.nn_layer(x)
