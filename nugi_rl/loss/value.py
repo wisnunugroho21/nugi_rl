@@ -1,6 +1,7 @@
-import torch
 import torch.nn as nn
 from torch import Tensor
+
+from nugi_rl.loss.hubber_loss import HuberLoss
 
 
 class ValueLoss(nn.Module):
@@ -9,18 +10,19 @@ class ValueLoss(nn.Module):
 
         self.value_clip = value_clip
         self.value_loss_coef = value_loss_coef
+        self.huber_loss = HuberLoss()
 
     def forward(
         self, values: Tensor, returns: Tensor, old_values: Tensor | None = None
     ) -> Tensor:
         if self.value_clip is None or old_values is None:
-            loss = ((returns - values).pow(2) * 0.5).mean()
+            loss = self.huber_loss(values, returns)
         else:
             old_values = old_values.detach()
-
-            vpredclipped = old_values + torch.clamp(
-                values - old_values, -self.value_clip, self.value_clip
+            vpredclipped = old_values + (values - old_values).clamp(
+                -self.value_clip, self.value_clip
             )
-            loss = ((returns - vpredclipped).pow(2) * 0.5).mean()
+
+            loss = self.huber_loss(vpredclipped, returns)
 
         return self.value_loss_coef * loss

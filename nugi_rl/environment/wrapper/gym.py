@@ -18,7 +18,9 @@ class GymWrapper(Environment):
             env, np.repeat(min_obs, obs_shape), np.repeat(max_obs, obs_shape)
         )
 
-        if type(env.action_space) is gym.spaces.Discrete:
+        self.env = env
+
+        if type(env.action_space) is not gym.spaces.Discrete:
             act_shape = np.array(env.action_space.shape)
             min_act = np.array([-1.0])
             max_act = np.array([1.0])

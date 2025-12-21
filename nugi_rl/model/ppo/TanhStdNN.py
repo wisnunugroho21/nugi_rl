@@ -14,13 +14,12 @@ class Policy_Model(nn.Module):
             nn.SiLU(),
             nn.Linear(128, 256),
             nn.SiLU(),
-            nn.Linear(256, 128),
+            nn.Linear(256, 72),
             nn.SiLU(),
         )
 
         self.mean_layer = nn.Sequential(nn.Linear(64, action_dim), nn.Tanh())
-
-        self.std_layer = nn.Sequential(nn.Linear(64, action_dim), nn.Sigmoid())
+        self.std_layer = nn.Sequential(nn.Linear(8, action_dim), nn.Sigmoid())
 
     def forward(self, states: Tensor) -> Tensor:
         x = self.nn_layer(states)
@@ -39,9 +38,9 @@ class Value_Model(nn.Module):
             nn.SiLU(),
             nn.Linear(128, 256),
             nn.SiLU(),
-            nn.Linear(256, 128),
+            nn.Linear(256, 64),
             nn.SiLU(),
-            nn.Linear(128, 1),
+            nn.Linear(64, 1),
         )
 
     def forward(self, states: Tensor) -> Tensor:

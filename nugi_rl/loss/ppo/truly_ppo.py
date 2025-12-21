@@ -9,8 +9,8 @@ class TrulyPpo(Ppo):
     def __init__(
         self,
         distribution: Distribution,
-        policy_kl_range: float = 0.0008,
-        policy_params: float = 20,
+        policy_kl_range: float = 0.03,
+        policy_params: float = 5,
     ):
         super().__init__()
 

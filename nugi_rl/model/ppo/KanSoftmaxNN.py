@@ -1,19 +1,18 @@
 import torch.nn as nn
 from torch import Tensor
 
+from nugi_rl.model.components.ReLUKAN import ReLUKAN
+
 
 class Policy_Model(nn.Module):
     def __init__(self, state_dim: int, action_dim: int):
         super(Policy_Model, self).__init__()
 
+        mid_dim = (state_dim + action_dim) * 2 + 1
+
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.SiLU(),
-            nn.Linear(128, 256),
-            nn.SiLU(),
-            nn.Linear(256, 64),
-            nn.SiLU(),
-            nn.Linear(64, action_dim),
+            ReLUKAN(state_dim, mid_dim),
+            ReLUKAN(mid_dim, action_dim),
             nn.Softmax(-1),
         )
 
@@ -26,14 +25,11 @@ class Value_Model(nn.Module):
     def __init__(self, state_dim: int):
         super(Value_Model, self).__init__()
 
+        mid_dim = state_dim * 2 + 1
+
         self.nn_layer = nn.Sequential(
-            nn.Linear(state_dim, 128),
-            nn.SiLU(),
-            nn.Linear(128, 256),
-            nn.SiLU(),
-            nn.Linear(256, 64),
-            nn.SiLU(),
-            nn.Linear(64, 1),
+            ReLUKAN(state_dim, mid_dim),
+            ReLUKAN(mid_dim, 1),
         )
 
     def forward(self, states: Tensor) -> Tensor:
